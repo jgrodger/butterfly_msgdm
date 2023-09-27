@@ -1,0 +1,175 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+
+```{r}
+
+here::i_am("Scripts/Rmd_Scripts/explore_butterflies.Rmd")
+
+library(conflicted)
+
+library(here)
+
+library(sgo)
+
+library(sf)
+
+library(tidyterra)
+
+library(scales)
+
+library(tidyverse)
+
+library(segmented)
+
+library(tmap)
+
+library(Hmisc)
+
+
+conflicts_prefer(dplyr::filter)
+conflicts_prefer(dplyr::select)
+conflicts_prefer(dplyr::mutate)
+```
+
+```{r}
+#this is the polygon for great Britain in including shetlands, outer hebrides and isle of man
+bounds <- readRDS(here("./Data./Input_Polygon_Data./gb_multipolygon_incl_ork_shet.rds"))
+
+
+sites <- readRDS(here("./Data/Processed_Data/processed_sites.rds"))
+
+site.by.species.2018 <- readRDS(here("./Data/Processed_Data/site_by_species_2018.rds"))
+
+
+any(is.na(sites[,4:5]))
+```
+  
+```{r}
+
+# get site data for sites with lat and long
+withlatlong  <- sites %>% 
+  filter(is.na(longitude) == FALSE)%>% 
+   select(-gridref)
+
+# get site data for sites without lat and long
+nolatlong <- sites %>% 
+  filter(is.na(longitude) == TRUE)  %>% 
+          select(-c(longitude, latitude))
+
+#get easting and wesing for points with latitude and longitude
+pts <- sgo_points(withlatlong, coords = c("longitude", "latitude"), epsg=4277)#this epsg for long and lat
+bng.pts1 <- sgo_lonlat_bng(pts)
+
+#get easting and northings for points without latitude and longitude
+bng.pts2 <- sgo_ngr_bng(nolatlong, col="gridref")
+
+pts.df1 <- as.data.frame(bng.pts1)
+pts.df2 <- as.data.frame(bng.pts2)
+
+#put together sites data with eastings and northings
+sites.bng <- rbind(pts.df1, pts.df2)
+
+# put together eastings 
+tomerge <- select(sites, -site.name)
+
+sites<- merge(sites.bng, tomerge, by = "site")
+
+ngr.1km.data <- sites %>%
+     sgo_points(coords=c("x", "y"), epsg=27700)  %>%
+         sgo_bng_ngr(digits = 4)   %>%
+              as.data.frame()   %>%
+                select(c(ngr, site))   %>%
+                    rename(ngr.1km =ngr)   %>%
+                      mutate(ngr.1km =  str_replace_all(ngr.1km, " ", ""))
+
+
+sites<- merge(sites, ngr.1km.data, by = "site")
+str(sites)
+
+
+sites <- mutate(sites, ngr.1km =  str_replace_all(ngr.1km, " ", ""))
+
+sites$site <- paste("site", sites$site, sep = "_")
+
+sites <- column_to_rownames(sites, var = "site")
+
+```
+
+
+
+## Plot Sites
+```{r}
+
+plot.points <- st_as_sf(sites, coords=c("x","y"), remove = FALSE, crs = 27700)#I want to keep coords in the dataframe
+
+#get a set of points for each unique grid cell
+
+print("sites")
+nrow(plot.points)
+
+basemap <-tm_shape(bounds) +
+  tm_borders()
+pointsmap <- basemap + 
+tm_shape(plot.points) +
+  tm_symbols(size = 0.05, col = "blue")
+
+pointsmap2 <- basemap + 
+tm_shape(plot.points) +
+  tm_symbols(size = 0.5, col = "blue")
+
+
+print(pointsmap)
+print(pointsmap2)
+```
+
+
+```{r}
+sitevec.2018 <- site.by.species.2018 %>%
+    rownames() %>%
+      str_sub(2) #removes the first element of each string (keeps from position 2)
+
+
+sites.2018 <- sites %>%
+  mutate(site = as.character(site))%>%
+    filter(site %in% sitevec.2018)
+
+
+
+```
+
+## Plot 2018 Sites
+```{r}
+
+plot.points <- st_as_sf(sites.2018, coords=c("x","y"), remove = FALSE, crs = 27700)#I want to keep coords in the dataframe
+
+#get a set of points for each unique grid cell
+
+print("sites")
+nrow(plot.points)
+
+basemap <-tm_shape(bounds) +
+  tm_borders()
+pointsmap <- basemap + 
+tm_shape(plot.points) +
+  tm_symbols(size = 0.05, col = "blue")
+
+pointsmap2 <- basemap + 
+tm_shape(plot.points) +
+  tm_symbols(size = 0.5, col = "blue")
+
+
+print(pointsmap)
+print(pointsmap2)
+
+
+#isle of man and channell islands should probably be excluded
+```
+```{r}
+
+
+write_rds(sites, file = here("./Data/Processed_Data/processed_sites_with_ngr.rds"))
+```
+

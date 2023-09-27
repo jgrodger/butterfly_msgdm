@@ -1,0 +1,431 @@
+---
+title: "Process_butterflies"
+output: html_notebook
+---
+
+
+
+## Data cleaning, obtaining site by species matrices
+```{r}
+
+here::i_am("Scripts//Rmd_Scripts//Process_CSV_data.Rmd")
+
+library(conflicted)
+library(tidyverse)
+library(here)
+
+library(foreach)
+library(doParallel)
+library(doSNOW)
+
+library(spaa)
+
+
+conflicts_prefer(snow::stopCluster)
+conflicts_prefer(snow::makeCluster)
+conflicts_prefer(dplyr::filter)
+conflicts_prefer(dplyr::mutate)
+
+#filter <- dplyr::filter
+
+```
+```{r}
+(cl = makeCluster(parallel::detectCores()-2, type = "SOCK")) # Initialize all cores except for two
+registerDoSNOW(cl)
+
+
+records <- read_csv(here("./Data/CSV_Data/ukbms_Rogers_10-3-23.csv"))
+
+#In the CSV, I  added in column headings, did a sort and added in extra columns to help correct entries in incorrect columns
+#note, some sites have incomplete info, one site remains with latitude and longitude in wrong columns and no other info, such sites are filtered in this file
+
+
+sites <- read_csv(here("./Data/CSV_Data/ukbms_Rogers_sites_10-3-23_to_correct.csv"))
+
+
+species <- read_csv(here("./Data/CSV_Data/ukbms_Rogers_species_10-3-23.csv"))
+
+```
+
+```{r}
+head(records)
+summary(records$YEAR)
+```
+
+```{r}
+head(sites)
+nrow(sites)
+```
+
+## clean and organise site data
+```{r}
+
+
+names(sites)
+sites <- sites %>%
+  rename(site = SITENO,
+         site.name =  SITENAME,
+         gridref = GRIDREF,
+         longitude = LONGITUDE,
+         latitude = LATITUDE) %>% 
+  #here we move values that are in the wrong columns to the correct columns
+  mutate(site.name = case_when(paste2cols == 1 ~ paste(site.name, gridref, sep = "_"),
+                             paste3cols == 1 ~ paste(site.name, gridref, longitude, sep = "_"),
+                             .default = as.character(site.name)),
+         gridref = case_when(paste2cols == 1 ~ as.character(longitude),
+                             paste3cols == 1 ~ as.character(latitude),
+                             .default = as.character(gridref)),
+         longitude = case_when(paste2cols == 1 ~ as.numeric(latitude),
+                             paste3cols == 1 ~ as.numeric(extracol1),
+                             .default = as.numeric(longitude)), 
+         latitude = case_when(paste2cols == 1 ~ as.numeric(extracol1),
+                             paste3cols == 1 ~ as.numeric(extracol2),
+                             .default = as.numeric(latitude))) %>% 
+  select(-c(extracol1, extracol2, paste2cols, paste3cols))
+
+
+#still not right
+
+# for inspection only, sites that have no co-ordinates or grid square reference
+bad.sites <- filter(sites, is.na(longitude) == T &  is.na(gridref) ==T)
+
+#remove irish sites, which have uneven number of characters in the gridref (they start with a single letter)
+sites <- sites %>%
+                mutate(str.len.gridref = str_length(gridref),# a variable showing number of characters in gridref
+                       even = str.len.gridref %% 2 == 0)  #whether above variable is even
+
+
+irish.sites <- filter(sites, even == F)  #for inspection only
+
+#can be used
+sites <-  filter(sites, is.na(longitude) == F |  is.na(gridref) == F,#remove 51 sites with neither a gridref nor longlat
+                even == T) %>% #filter 138 Irish sites
+                    select(-c(even, str.len.gridref))
+
+#one wonky site not picked up above
+sites <- filter(sites, gridref != "Lurgan") #can move this to Process_CSV_data
+
+
+         
+```
+
+
+```{r}
+head(species)
+nrow(species)
+```
+#rename variables
+#filter species and records to exclude unknown species and moths, as well as surveys where no butterflies were seen
+
+```{r}
+
+species <- species %>% 
+  rename( species.no = SPECIES, 
+         common.name = COMMON_NAME,
+         sci.name = SCI_NAME,
+         strategy = STRATEGY,
+         habitat = HABITAT) %>% 
+  filter (is.na(include) == FALSE) #this filters out non-butterflies and "unidentified" from species list
+
+species <- species %>% 
+  mutate(species.no = as.character(species.no))
+
+
+records<- records %>%
+    rename(site = SITE, 
+        species.no = SPECIES,
+        year = YEAR,
+        month = MONTH, 
+        day = DAY, 
+        week.no = WEEKNO, 
+        day.no = DAYNO, 
+        count = COUNT)%>% 
+   mutate(species.no = as.character(species.no))
+
+print("rows of records")
+nrow(records)
+
+records <- records %>% 
+  filter (species.no %in% species$species.no) #this filters out records that were not butterflies or were not identified
+      
+
+print("rows of records")
+nrow(records)
+
+
+records <- records %>% 
+  filter ( site %in% sites$site)
+
+
+print("rows of records")
+nrow(records)
+
+```
+
+```{r}
+records<- records %>%
+  mutate(survey.info = paste(site, year, month, day, sep = "_"), 
+         site.year = paste(site, year, sep = "_"))
+
+surveys <- records %>% 
+  distinct(survey.info, .keep_all = TRUE)
+
+sum1 <-  surveys %>%
+  group_by (site, year)  %>% 
+summarise(n = n())
+print("surveys per site per year")
+summary(sum1$n)
+hist(sum1$n)
+
+
+sites.per.year <- sum1 %>% 
+  group_by(year)%>% 
+summarise(sites = n())
+print("sites per year")
+summary(sites.per.year$sites)
+plot(sites~year, data = sites.per.year)
+
+#years per site summar
+years.per.site <- sum1 %>% 
+  group_by(site)%>% 
+summarise(years = n())
+print("years per site")
+summary(years.per.site$years)
+hist(years.per.site$years)
+
+
+
+```
+
+```{r}
+site.and.year <- merge(sum1, sites, by = "site")
+
+#x should be the above site.and.year
+#condit is a condition to filter by
+
+
+#filter_() might stop working, deprecated...
+get.sites.in.date.range <- function(x, condit){
+  sites.out <- x %>%
+  filter_(condit)%>%
+   select(site)%>%
+      distinct
+
+sites.out <- sites.out[['site']]
+  return(sites.out)
+}
+
+
+sites.1975 <- get.sites.in.date.range(site.and.year, "year == 1975")
+sites.1980 <- get.sites.in.date.range(site.and.year, "year == 1980")
+sites.1985 <- get.sites.in.date.range(site.and.year, "year == 1985")
+sites.1990 <- get.sites.in.date.range(site.and.year, "year == 1990")
+sites.1995 <- get.sites.in.date.range(site.and.year, "year == 1995")
+sites.2000 <- get.sites.in.date.range(site.and.year, "year == 2000")
+sites.2005 <- get.sites.in.date.range(site.and.year, "year == 2005")
+sites.2010 <- get.sites.in.date.range(site.and.year, "year == 2010")
+sites.2015 <- get.sites.in.date.range(site.and.year, "year == 2015")
+sites.2018 <- get.sites.in.date.range(site.and.year, "year == 2018")
+sites.2019 <- get.sites.in.date.range(site.and.year, "year == 2019")
+sites.2022 <- get.sites.in.date.range(site.and.year, "year == 2022")
+
+
+site.snapshots.to.map <- list(
+  sites.1975,
+  sites.1980, 
+  sites.1985, 
+  sites.1990, 
+  sites.1995, 
+  sites.2000, 
+  sites.2005,
+  sites.2010,
+  sites.2015,
+  sites.2018, 
+  sites.2019, 
+  sites.2022)
+
+
+```
+
+# records.site.year gives the number of records for each species in each site in each year
+
+#records.site gives the total number of records for each species in each site over all years
+
+```{r}
+
+
+
+records.site.year <-  records %>%
+  group_by (site, year, species.no)  %>% 
+summarise(annual.records = sum(count))
+
+
+#records.site.year.1 <- records.site.year
+
+#records.site.year$site <- paste("site", records.site.year$site, sep = "_")
+#records.site.year$species.no <- paste("species", records.site.year$species.no, sep = "_")
+
+
+records.site <-  records %>%
+  group_by (site, species.no)  %>% 
+summarise(total.records = sum(count))
+```
+```{r}
+head(records.site)
+```
+
+
+
+
+```{r}
+source(here("./Scripts/R_Scripts/get_site_by_species.R"))
+```
+
+#get site by species matrices as desired 
+```{r}
+
+# parallel::detectCores()
+
+#get site by species matrix for 2018
+
+#I am doing this for 2018 data only for now
+
+all.sites.in.a.year.data <- records.site.year %>%
+  ungroup() %>%  #can't perform the following operations on grouped data
+   filter(annual.records != 0, #my function assumes no row present when species is absent
+          year ==2018) %>% #choose a year
+  select(-year) 
+
+all.sites.in.a.year.data$site <- paste("site", all.sites.in.a.year.data$site, sep = "_")
+all.sites.in.a.year.data$species.no <- paste("species", all.sites.in.a.year.data$species.no, sep = "_")
+
+site.by.species.2018 <- get.site.by.species(data = all.sites.in.a.year.data, sites = site, species = species.no, output = "presence.absence")
+
+#get year by species matrix for all sites with greater than 40 years of records
+
+#prepare records data 
+records.site.year.no.zeros <- records.site.year %>%
+  ungroup() %>%  #can't perform the following operations on grouped data
+   filter(annual.records != 0)  %>% #my function assumes no row present when species is absent
+        mutate (year = as.character(year))
+#get a vector of the chosen sites
+use.sites <- years.per.site %>%
+  filter(years >= 40)  %>%
+    select(-years) %>%
+     unlist() %>%
+        as.numeric
+
+#make a list to year by species matrices (which are actually dataframes)
+year.by.species.matrices <- list()
+
+# for loop to do it for each of the chosen sites and insert into list
+  for (i in 1:length(use.sites)){
+   one.site.over.years.data <- records.site.year.no.zeros %>%
+      filter(site == use.sites[i]) 
+     
+   
+one.site.over.years.data$species.no <- paste("species", one.site.over.years.data$species.no, sep = "_")
+   
+    year.by.species.matrices[[i]] <- get.site.by.species(data = one.site.over.years.data, sites = year, species = species.no, output = "presence.absence")
+  }
+
+#name the list elements after the sites
+namevec <- vector()
+
+length(namevec)<- length(use.sites)
+
+  for (i in 1:length(use.sites)){
+namevec[i] <- paste("site",  use.sites[i], sep = "_")
+  }
+
+names(year.by.species.matrices) <- namevec
+
+#inspect output
+str(year.by.species.matrices, max.level = 1)
+
+check1 <- year.by.species.matrices[[1]]
+
+head(year.by.species.matrices[[1]])
+
+#below from package spaa not workign
+##spaacheck <- data.frame(data2mat(check))
+#data(testdata)
+#spdf<- data.frame(data2mat(testdata))
+
+#this would give a site by species matrix for all years combined
+#site.by.species.all.years <- get.site.by.species(data = records.site, sites = site, species = species.no, output = "presence.absence")
+
+#head(site.by.species.all.years)
+
+```
+```{r}
+records.for.time <- records.site.year.no.zeros %>%
+  filter(site %in% use.sites)%>%
+  mutate(site.year = paste(site, year, sep = "_"))
+
+check <- filter(records.for.time, year == 2000)
+
+print(Sys.time())
+
+ check.matrix <- get.site.by.species(data = records.for.time, sites = site.year, species = species.no, output = "presence.absence")
+
+ print(Sys.time())
+ 
+ 
+site.year.by.species <- get.site.by.species(data = records.for.time, sites = site.year, species = species.no, output = "presence.absence")
+
+```
+
+
+```{r}
+surveys.site.year <- records%>%
+  select (c(site, year, survey.info))  %>% 
+    distinct()
+
+
+surveys.site.year <- surveys  %>% 
+  group_by(site, year)   %>% 
+      summarise(surveys = n())
+```
+
+
+```{r}
+records.40.years <- records %>%
+  filter(site %in% use.sites, 
+         count != 0)
+
+
+check <- filter(records.40.years, year == 2010)
+
+print(Sys.time())
+
+
+```
+
+```{r}
+stopCluster(cl)
+```
+
+
+# save processed data
+```{r}
+#write_rds(records.site, file = here("./Data/Processed_Data/records_site_year_all_years.rds"))
+
+
+write_rds(site.year.by.species, file = here("./Data/Processed_Data/site_year_by_species.rds"))
+write_rds(records, file = here("./Data/Processed_Data/processed_records.rds"))
+write_rds(sites, file = here("./Data/Processed_Data/processed_sites.rds"))
+write_rds(species, file = here("./Data/Processed_Data/processed_species.rds"))
+write_rds(site.snapshots.to.map, file = here("./Data/Processed_Data/site_snapshots_to_map.rds"))
+write_rds(use.sites, file = here("./Data/Processed_Data/sites_with_at_least_40_years.rds"))
+write_rds(site.by.species.2018, file = here("./Data/Processed_Data/site_by_species_2018.rds"))
+write_rds(year.by.species.matrices, file = here("./Data/Processed_Data/year_by_species_matrices.rds"))
+write_rds(surveys.site.year, file = here("./Data/Processed_Data/surveys_site_year.rds"))
+```
+
+
+
+
+
+
+
