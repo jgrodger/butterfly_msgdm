@@ -1,0 +1,187 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+## this combines land use and climate data (already containing topography) for all sites
+
+
+### Note this is using long term averages for climate and data for landcover is recent
+
+
+
+## setup
+```{r}
+
+#The here package enables easy file referencing by using the top-level directory of a file project to easily build file paths."
+#about here package: https://here.r-lib.org/articles/here.html
+#https://github.com/jennybc/here_here
+#by running this before loading the package, we can get a message to check the correct root is being used
+here::i_am("Scripts/Rmd_Scripts/butterflies_combine_env_data.Rmd")
+
+library(tidyverse)
+library(here)
+
+
+
+# library(readr)
+# 
+# library(segmented)
+# 
+# library(sgo)
+
+
+```
+
+
+## Load data
+```{r}
+
+
+sites <- readRDS(here("./Data/Processed_Data/processed_sites_with_ngr.rds"))
+
+
+site.by.climate <- readRDS(here("./Data/input_climate_Data/annual_climate_1km.rds"))
+
+
+site.by.lc <- readRDS(here("./Data/input_landcover_Data/lc_1km.rds"))
+
+
+site.year.by.obs <- readRDS(here("./Data/Processed_Data/surveys_site_year.rds"))
+
+
+
+# dataframe with number of species and observations per site
+site.by.pollution <- readRDS(here("./Data/Input_Pollution_And_Pesticides_Data/mean_pollution_with_gridrefs.rds"))
+
+# dataframe with number of species and observations per site
+site.by.pesticides <- readRDS(here("./Data/Input_Pollution_And_Pesticides_Data/pesticides_with_gridrefs.rds"))
+```
+
+# get a daframe of site-year (each site in each year) by observations, then site by log(observartions)
+```{r}
+
+#get log obs and rename according to my msgdm conventions
+
+site.year.by.obs <- site.year.by.obs %>%
+           ungroup () %>%
+              rename(observations = surveys) %>%
+                  mutate(log.observations = log(observations))
+
+#for ease of inspection
+site.year.by.obs$site <- paste("site", site.year.by.obs$site, sep = "_")
+
+#for use (especially filtering/subsetting) in many sites and years analyses
+site.year.by.obs$site.year <- paste(site.year.by.obs$site, site.year.by.obs$year, sep = "_")
+
+site.year.by.obs <- data.frame(site.year.by.obs) #this is because it starts as a tibble, and setting row names on a tibble is deprecated (and certain operations make them disappear)
+
+#For use in msgdm many sites by years analyses
+rownames(site.year.by.obs) <- site.year.by.obs$site.year
+
+
+
+# dataframe with number of species and observations per site
+site.by.pollution <- readRDS(here("Data" ,"Input_Pollution_And_Pesticides_Data", "mean_pollution_with_gridrefs.rds"))
+
+# dataframe with number of species and observations per site
+site.by.pesticides <- readRDS(here("Data" ,"Input_Pollution_And_Pesticides_Data", "pesticides_with_gridrefs.rds"))
+
+```
+
+
+
+
+
+## Choose landcover classes later,
+
+
+## Get log % cover for the sites
+```{r}
+#now we need the transformed land cover composition of the grid cells
+logplusone <- function(x)
+{log(x + 1)}
+
+site.by.lc.logs <- site.by.lc %>%
+  mutate(across(colnames(site.by.lc), logplusone)) 
+```
+
+#rownames to column for merging
+```{r}
+
+
+
+
+site.by.climate <- rownames_to_column(site.by.climate, var = "ngr.1km")
+
+
+site.by.lc.logs <- rownames_to_column(site.by.lc.logs, var = "ngr.1km")
+
+
+
+sites <- rownames_to_column(sites, var = "site")
+
+
+
+```
+
+#combine environmental data across sites
+```{r}
+
+
+#filter climate data and land use to grid cells with sites 
+
+
+site.by.climate <- site.by.climate %>%  
+                       filter(site.by.climate$ngr.1km %in% sites$ngr.1km)
+
+
+
+site.by.lc.logs <- site.by.lc.logs %>%  
+                       filter(site.by.lc.logs$ngr.1km %in% sites$ngr.1km)
+
+
+
+site.by.pollution <- site.by.pollution %>%  
+                       filter(site.by.pollution$ngr.1km %in% sites$ngr.1km)
+
+
+
+site.by.pesticides <- site.by.pesticides %>%  
+                       filter(site.by.pesticides$ngr.1km %in% sites$ngr.1km)
+
+
+#extract site data needed to merge 
+sites.ngr <- select(sites, site, ngr.1km)
+
+site.by.env <- merge(sites.ngr, site.by.climate, by = "ngr.1km", all.x = FALSE, all.y = FALSE) #there are several sites in some grid cells, hence larger number of rows here than in site.by.climate
+
+
+site.by.env <- merge(site.by.env, site.by.lc.logs, by = "ngr.1km") 
+
+site.by.env <- merge(site.by.env, site.by.pollution, by = "ngr.1km")
+
+site.by.pesticides <- site.by.pesticides %>%
+  select(-c(x, y))
+
+site.by.env <- merge(site.by.env, site.by.pesticides, by = "ngr.1km")
+#not adding in observations here as different years have different observations
+```
+
+
+## obtain a site-year by environmental data dataset
+
+### Note this is using long term averages for climate and data for landcover is recent
+```{r}
+site.year.by.env <- merge(site.year.by.obs, site.by.env, by = "site", all.x = TRUE)
+
+rownames(site.year.by.env) <- site.year.by.env$site.year
+```
+
+
+```{r}
+write_rds(site.year.by.env, file = here("./Data/Processed_Data/site_year_by_env.rds"))
+write_rds(site.by.env, file = here("./Data/Processed_Data/site_by_env.rds"))
+write_rds(site.year.by.obs, file = here("./Data/Processed_Data/site_year_by_obs.rds"))
+```
+
