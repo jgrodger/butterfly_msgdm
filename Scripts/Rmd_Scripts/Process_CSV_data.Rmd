@@ -103,7 +103,7 @@ sites <-  filter(sites, is.na(longitude) == F |  is.na(gridref) == F,#remove 51 
                     select(-c(even, str.len.gridref))
 
 #one wonky site not picked up above
-sites <- filter(sites, gridref != "Lurgan") #can move this to Process_CSV_data
+sites <- filter(sites, gridref != "Lurgan") 
 
 
          
@@ -111,6 +111,7 @@ sites <- filter(sites, gridref != "Lurgan") #can move this to Process_CSV_data
 
 
 ```{r}
+dplyr::last_dplyr_warnings()
 head(species)
 nrow(species)
 ```
@@ -177,6 +178,11 @@ print("surveys per site per year")
 summary(sum1$n)
 hist(sum1$n)
 
+sum2 <- sum1 %>%
+  mutate(n = as.character(n)) %>%
+  group_by(n) %>%
+      summarise(freq.survey = n())
+sum2
 
 sites.per.year <- sum1 %>% 
   group_by(year)%>% 
@@ -191,14 +197,20 @@ years.per.site <- sum1 %>%
 summarise(years = n())
 print("years per site")
 summary(years.per.site$years)
-hist(years.per.site$years)
+hist(years.per.site$years, xlim  = c(0, 50))
 
 
 
 ```
-
 ```{r}
 site.and.year <- merge(sum1, sites, by = "site")
+
+str(site.and.year$year)
+```
+
+
+```{r}
+
 
 #x should be the above site.and.year
 #condit is a condition to filter by
@@ -214,6 +226,9 @@ get.sites.in.date.range <- function(x, condit){
 sites.out <- sites.out[['site']]
   return(sites.out)
 }
+
+
+sites.5.years <- get.sites.in.date.range(site.and.year, "year >= 2015 & year <=2019")
 
 
 sites.1975 <- get.sites.in.date.range(site.and.year, "year == 1975")
@@ -281,7 +296,7 @@ head(records.site)
 source(here("./Scripts/R_Scripts/get_site_by_species.R"))
 ```
 
-#get site by species matrices as desired 
+#get site by species matrices for 2018
 ```{r}
 
 # parallel::detectCores()
@@ -290,17 +305,53 @@ source(here("./Scripts/R_Scripts/get_site_by_species.R"))
 
 #I am doing this for 2018 data only for now
 
-all.sites.in.a.year.data <- records.site.year %>%
+all.sites.in.a.period.data <- records.site.year %>%
   ungroup() %>%  #can't perform the following operations on grouped data
    filter(annual.records != 0, #my function assumes no row present when species is absent
           year ==2018) %>% #choose a year
-  select(-year) 
+            mutate(site = paste("site", site, sep = "_"),
+                     species.no = paste("species", species.no, sep = "_"))%>%
+          select(-year) 
 
-all.sites.in.a.year.data$site <- paste("site", all.sites.in.a.year.data$site, sep = "_")
-all.sites.in.a.year.data$species.no <- paste("species", all.sites.in.a.year.data$species.no, sep = "_")
 
-site.by.species.2018 <- get.site.by.species(data = all.sites.in.a.year.data, sites = site, species = species.no, output = "presence.absence")
 
+site.by.species.2018 <- get.site.by.species(data = all.sites.in.a.period.data, sites = site, species = species.no, output = "presence.absence")
+
+
+```
+
+
+#get site by species matrices for 2015-2019
+```{r}
+
+# parallel::detectCores()
+
+#get site by species matrix for 2018
+
+#I am doing this for 2018 data only for now
+
+all.sites.in.a.period.data <- records.site.year %>%
+  ungroup() %>%  #can't perform the following operations on grouped data
+   filter(annual.records != 0, #my function assumes no row present when species is absent
+          year >= 2015 & year <= 2019) %>% #choose a year
+              mutate(site = paste("site", site, sep = "_"),
+                     species.no = paste("species", species.no, sep = "_"), 
+                     year = as.character(species.no)) %>% 
+            group_by(site, species.no) %>%
+                summarise(total.records = sum(annual.records))%>%
+  ungroup()
+
+
+site.by.species.2015.to.2019 <- get.site.by.species(data = all.sites.in.a.period.data, sites = site, species = species.no, output = "presence.absence")
+
+
+```
+
+
+
+
+
+```{r}
 #get year by species matrix for all sites with greater than 40 years of records
 
 #prepare records data 
@@ -357,6 +408,7 @@ head(year.by.species.matrices[[1]])
 
 #head(site.by.species.all.years)
 
+
 ```
 ```{r}
 records.for.time <- records.site.year.no.zeros %>%
@@ -373,7 +425,6 @@ print(Sys.time())
  
  
 site.year.by.species <- get.site.by.species(data = records.for.time, sites = site.year, species = species.no, output = "presence.absence")
-
 ```
 
 
