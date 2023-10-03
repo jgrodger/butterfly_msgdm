@@ -15,9 +15,10 @@ output: html_notebook
 here::i_am("Scripts/Rmd_Scripts/butterflies_combine_env_data.Rmd")
 
 library(tidyverse)
+library(conflicted)
 library(here)
 
-
+conflict_prefer("filter", "dplyr", "stats")
 
 # library(readr)
 # 
@@ -57,6 +58,9 @@ site.by.trees <-  readRDS(here("./Data/Input_Environmental_Data/trees_1km_df.rds
 site.by.conifer.dominance <-  readRDS(here("./Data/Input_Environmental_Data/conifer_dominance_1km_df.rds"))
 
 site.by.nitrogen <- readRDS(here("./Data/Input_Environmental_Data/nitro.rds"))
+
+
+site.by.wetness <- readRDS(here("./Data/Input_Environmental_Data/topographic_wetness_df.rds"))
 
 #site.by.climate <- readRDS(here("./Data/input_climate_Data/annual_climate_1km.rds"))
 
@@ -155,6 +159,10 @@ site.by.conifer.dominance <-select(site.by.conifer.dominance, -c(x, y))
 
 
 site.by.nitrogen <-select(site.by.nitrogen, total.n, ngr.1km)
+
+site.by.wetness <- site.by.wetness %>%
+  rename(topgraphic.wetness = Band1) %>%
+  select(-c(x,y))
 ```
 
 #filter site data to selected sites
@@ -186,6 +194,9 @@ site.by.env <- merge(site.by.env, site.by.conifer.dominance, by = "ngr.1km")
 
 
 site.by.env <- merge(site.by.env, site.by.nitrogen, by = "ngr.1km")
+
+
+site.by.env <- merge(site.by.env, site.by.wetness, by = "ngr.1km")
 
 ```
 
