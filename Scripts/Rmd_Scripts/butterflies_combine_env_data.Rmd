@@ -40,12 +40,8 @@ conflict_prefer("filter", "dplyr", "stats")
 # Still need to replace this with occurrence over multiple years
 site.by.species <- readRDS(here("./Data/Processed_Data/site_by_species_2018.rds"))
 
-
-
 #get site by xy
 sites <- readRDS(here("./Data/Processed_Data/processed_sites_with_ngr.rds"))
-
-
 
 site.by.humans <- readRDS(here("./Data/Input_Environmental_Data/human_popn.rds"))
 
@@ -62,10 +58,9 @@ site.by.nitrogen <- readRDS(here("./Data/Input_Environmental_Data/nitro.rds"))
 
 site.by.wetness <- readRDS(here("./Data/Input_Environmental_Data/topographic_wetness_df.rds"))
 
-#site.by.climate <- readRDS(here("./Data/input_climate_Data/annual_climate_1km.rds"))
+site.by.temp <- readRDS(here("./Data/Input_Environmental_Data/mean_temp_df.rds"))
 
-#site by landcover
-#site.by.lc <- readRDS(here("./Data/input_landcover_Data/lc_1km.rds"))
+site.by.prec <- readRDS(here("./Data/Input_Environmental_Data/mean_prec_df.rds"))
 
 
 
@@ -74,14 +69,6 @@ surveys.site.year <- readRDS(here("./Data/Processed_Data/surveys_site_year.rds")
 #sites.with.40 <- readRDS(here("./Data/Processed_Data/sites_with_at_least_40_years.rds"))
 
 
-
-# dataframe with number of species and observations per site
-#site.by.pollution <- readRDS(here("./Data/Input_Pollution_And_Pesticides_Data/mean_pollution_with_gridrefs.rds"))
-
-# dataframe with number of species and observations per site
-#site.by.pesticides <- readRDS(here("./Data/Input_Pollution_And_Pesticides_Data/pesticides_with_gridrefs.rds"))
-
-#site.by.obs <- 
 ```
 
 # get a daframe of site by observations, then site by log(observartions)
@@ -163,6 +150,16 @@ site.by.nitrogen <-select(site.by.nitrogen, total.n, ngr.1km)
 site.by.wetness <- site.by.wetness %>%
   rename(topgraphic.wetness = Band1) %>%
   select(-c(x,y))
+
+site.by.temp <- site.by.temp %>%
+  rename(mean.ann.temp = mean) %>%
+  select(-c(x,y))
+
+
+site.by.prec <- site.by.prec %>%
+  rename(mean.ann.rain = mean) %>%
+  select(-c(x,y))
+
 ```
 
 #filter site data to selected sites
@@ -198,71 +195,16 @@ site.by.env <- merge(site.by.env, site.by.nitrogen, by = "ngr.1km")
 
 site.by.env <- merge(site.by.env, site.by.wetness, by = "ngr.1km")
 
+
+site.by.env <- merge(site.by.env, site.by.temp, by = "ngr.1km")
+
+
+site.by.env <- merge(site.by.env, site.by.prec, by = "ngr.1km")
+
 ```
 
 
-#delete no longer relevant below
 ```{r}
-
-
-
-site.by.climate <- rownames_to_column(site.by.climate, var = "ngr.1km")
-
-
-site.by.lc.logs <- rownames_to_column(site.by.lc.logs, var = "ngr.1km")
-
-
-site.by.log.obs <- rownames_to_column(site.by.log.obs, var = "site")
-
-#filter climate data to only include sites with topography and climate data
-site.by.climate <- site.by.climate %>%  
-                       filter(is.na(topography)== FALSE,
-                         is.na(tas)== FALSE)
-
-
-
-site.by.climate <- site.by.climate %>%  
-                       filter(site.by.climate$ngr.1km %in% sites.2018$ngr.1km)
-
-
-
-site.by.lc.logs <- site.by.lc.logs %>%  
-                       filter(site.by.lc.logs$ngr.1km %in% sites.2018$ngr.1km)
-
-
-site.by.log.obs <- site.by.log.obs %>%  
-                       filter(site.by.log.obs$site %in% sites.2018$site)
-
-
-site.by.pollution <- site.by.pollution %>%  
-                       filter(site.by.pollution$ngr.1km %in% sites.2018$ngr.1km)
-
-site.by.pesticides <- site.by.pesticides %>%  
-                       filter(site.by.pesticides$ngr.1km %in% sites.2018$ngr.1km)
-
-
-
-
-
-site.by.lc.logs <- site.by.lc.logs %>%
-  select(-c(x, y))
-
-
-site.by.env <- merge(site.by.env, site.by.lc.logs, by = "ngr.1km")
-
-site.by.pollution <- site.by.pollution %>%
-  select(-c(x, y))
-
-
-site.by.env <- merge(site.by.env, site.by.pollution, by = "ngr.1km")
-
-site.by.pesticides <- site.by.pesticides %>%
-  select(-c(x, y))
-
-site.by.env <- merge(site.by.env, site.by.pesticides, by = "ngr.1km")
-
-
-site.by.env <- merge(site.by.env, site.by.log.obs, by = "site")
 
 
 
@@ -292,17 +234,6 @@ check <- check %>%
 
 check
 ```
-
-
-
-
-
-
-
-
-
-
-
 
 
 ```{r}
