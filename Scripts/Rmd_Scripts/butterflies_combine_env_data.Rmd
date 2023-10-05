@@ -55,6 +55,7 @@ site.by.conifer.dominance <-  readRDS(here("./Data/Input_Environmental_Data/coni
 
 site.by.nitrogen <- readRDS(here("./Data/Input_Environmental_Data/nitro.rds"))
 
+site.by.pesticide.risk <- readRDS(here("./Data/Input_Environmental_Data/pesticide_df.rds"))
 
 site.by.wetness <- readRDS(here("./Data/Input_Environmental_Data/topographic_wetness_df.rds"))
 
@@ -70,6 +71,13 @@ surveys.site.year <- readRDS(here("./Data/Processed_Data/surveys_site_year.rds")
 
 
 ```
+
+#as a check, turn all input into spatrast and plot
+```{r}
+
+```
+
+
 
 # get a daframe of site by observations, then site by log(observartions)
 ```{r}
@@ -147,6 +155,13 @@ site.by.conifer.dominance <-select(site.by.conifer.dominance, -c(x, y))
 
 site.by.nitrogen <-select(site.by.nitrogen, total.n, ngr.1km)
 
+
+site.by.pesticide.risk <- site.by.pesticide.risk %>%
+  rename(pesticide.risk = pest)%>%
+  select(-c(x, y)) 
+
+
+
 site.by.wetness <- site.by.wetness %>%
   rename(topgraphic.wetness = Band1) %>%
   select(-c(x,y))
@@ -193,6 +208,11 @@ site.by.env <- merge(site.by.env, site.by.conifer.dominance, by = "ngr.1km")
 site.by.env <- merge(site.by.env, site.by.nitrogen, by = "ngr.1km")
 
 
+
+site.by.env <- merge(site.by.env, site.by.pesticide.risk, by = "ngr.1km")
+
+
+
 site.by.env <- merge(site.by.env, site.by.wetness, by = "ngr.1km")
 
 
@@ -224,7 +244,7 @@ site.by.xy <- select(site.by.env, x, y)
 
 
 
-
+## to do:  change this to the 2015-2019 selection of sites
 ## look at the percentage of cells that each species occurs in
 ```{r}
 check <- data.frame(colMeans(site.by.species))
