@@ -16,6 +16,9 @@ here::i_am("Scripts/Rmd_Scripts/butterflies_combine_env_data.Rmd")
 
 library(tidyverse)
 library(conflicted)
+library(terra)
+library(sf)
+library(tmap)
 library(here)
 
 conflict_prefer("filter", "dplyr", "stats")
@@ -32,13 +35,22 @@ conflict_prefer("filter", "dplyr", "stats")
 
 ## Load data
 ```{r}
+
+#load polygon to use to crop as map extents a bit different
+
+gb <- readRDS(here("./Data/Input_Environmental_Data/gb_multipolygon.rds"))
+
+str(gb, max.level = 1)
+
+crs(gb)
+
 #r markdowns and notebooks default to using the directory where they are stored as the working directory
 
 
 #site by species matrix
 
 # Still need to replace this with occurrence over multiple years
-site.by.species <- readRDS(here("./Data/Processed_Data/site_by_species_2018.rds"))
+site.by.species <- readRDS(here("./Data/Processed_Data/site_by_species_2015_to_2019.rds"))
 
 #get site by xy
 sites <- readRDS(here("./Data/Processed_Data/processed_sites_with_ngr.rds"))
@@ -75,6 +87,38 @@ surveys.site.year <- readRDS(here("./Data/Processed_Data/surveys_site_year.rds")
 #as a check, turn all input into spatrast and plot
 ```{r}
 
+
+
+# a function to make raster, crop and plot it
+
+#Always does first layer only if multiple layers
+
+plot.df <- function(df, ext){
+  rast <- rast(df, crs = "EPSG:27700")
+rast <- crop(rast[[1]], ext)
+plot(rast)
+}
+
+
+plot.df(df = site.by.temp, ext = gb)
+
+
+plot.df(df = site.by.prec, ext = gb)
+
+plot.df(df = site.by.wetness, ext = gb)
+
+plot.df(df = site.by.trees, ext = gb)
+
+
+plot.df(df = site.by.ph, ext = gb)
+
+
+plot.df(df = site.by.humans, ext = gb)
+
+
+plot.df(df = site.by.nitrogen, ext = gb)
+
+
 ```
 
 
@@ -99,21 +143,6 @@ site.by.log.obs <- site.by.obs %>%
 
 
 
-## Choose landcover classes,
-
-
-
-
-
-
-#To do, choose appropriat variables for butterflies
-
-
-
-
-
-
-#this is just copied from ladybirds
 
 ## Get log % cover for the sites
 ```{r}
@@ -187,10 +216,13 @@ site.by.prec <- site.by.prec %>%
 
 #filter sites to the desired set 
 
-sites.2018 <- sites %>%
+#sites.2018 <- sites %>%
+#     filter(sites$site %in% site.by.species$site)
+
+sites.kept <- sites %>%
      filter(sites$site %in% site.by.species$site)
 
-sites.ngr <- select(sites.2018,site,  ngr.1km)
+sites.ngr <- select(sites.kept,site,  ngr.1km)
 
 
 
@@ -202,7 +234,6 @@ site.by.env <- merge(site.by.env, site.by.humans, by = "ngr.1km")
 site.by.env <- merge(site.by.env, site.by.trees, by = "ngr.1km")
 
 
-site.by.env <- merge(site.by.env, site.by.conifer.dominance, by = "ngr.1km")
 
 
 site.by.env <- merge(site.by.env, site.by.nitrogen, by = "ngr.1km")
@@ -222,6 +253,87 @@ site.by.env <- merge(site.by.env, site.by.temp, by = "ngr.1km")
 site.by.env <- merge(site.by.env, site.by.prec, by = "ngr.1km")
 
 ```
+
+
+
+## Plot  Sites
+```{r}
+
+plot.points <- st_as_sf(site.by.env, coords=c("x","y"), remove = FALSE, crs = 27700)#I want to keep coords in the dataframe
+
+#get a set of points for each unique grid cell
+
+print("sites")
+nrow(plot.points)
+
+basemap <-tm_shape(gb) +
+  tm_borders()
+pointsmap <- basemap + 
+tm_shape(plot.points) +
+  tm_symbols(size = 0.05, col = "blue")
+
+pointsmap2 <- basemap + 
+tm_shape(plot.points) +
+  tm_symbols(size = 0.5, col = "blue")
+
+
+print(pointsmap)
+print(pointsmap2)
+
+
+#isle of man and channell islands should probably be excluded
+```
+#to do:separate WCS and other surveys!
+#to do:query sites with too many surveys
+
+```{r}
+
+```
+
+
+
+```{r}
+hist(site.by.env$mean.ann.temp)
+hist(site.by.env$mean.ann.rain)
+hist(site.by.env$topgraphic.wetness )#note typo to be corrected
+hist(site.by.env$ph)
+hist(site.by.env$tree.density)
+#hist(site.by.env$human.density)
+hist(site.by.env$total.n )
+#hist(site.by.env$pesticide.risk)
+
+```
+
+#transfrom skew variables as spline will work better
+
+```{r}
+site.by.env <- site.by.env %>%
+    mutate (log.humans = log2(human.density),
+          log.pesticide.risk = log2(pesticide.risk +1), 
+          .keep = "unused")#remove original columns
+
+#note zeros in pesticide risk!
+hist(site.by.env$log.humans)
+hist(site.by.env$log.pesticide.risk)
+```
+
+
+```{r}
+cor(site.by.env[, 3:12], method = "pearson")
+```
+
+
+```{r}
+cor(site.by.env[, 3:12], method = "spearman")
+
+
+```
+#to do: exclude outliers
+
+```{r}
+
+```
+
 
 
 ```{r}
