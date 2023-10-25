@@ -44,8 +44,14 @@ get.site.by.species <- function(data, sites, species, output = c("obs.count", "p
   data$sites.species <- factor(data$sites.species, levels = levels.frame$site.species.factorial)
   
   #here we count occurrence of each species in each square, including zeros
+  
+  #this only works for presence data
+ # species.sum <- data %>%
+ #   count(sites.species, .drop = F)
+  
   species.sum <- data %>%
-    count(sites.species, .drop = F)
+    group_by(site.species) %>%
+    summarise(sites.species, .drop = F
   
   #To understand why we need "\\." instead of merely "." we need to understand regular expressions in r
   #apparently "." has a meaning and we need to escape that by using "\\."

@@ -128,6 +128,9 @@ plot.df(df = site.by.nitrogen, ext = gb)
 
 surveys.site.year$site <- paste("site", surveys.site.year$site, sep = "_")
 
+
+
+
 site.by.obs <- surveys.site.year %>%
   ungroup() %>%
     filter(year ==2018)  %>%
@@ -137,9 +140,27 @@ site.by.obs <- surveys.site.year %>%
 
 site.by.log.obs <- site.by.obs %>%
   mutate(log.observations = log(observations), .keep = "none")
+
+
+
 ```
 
+#check surveys per site per year
+```{r}
+surveys.site.year <- surveys.site.year %>%
+  filter (year %in% 2015:2019)
 
+hist(surveys.site.year$surveys).
+
+sum <- surveys.site.year %>%
+         mutate(surveys = as.character(surveys),
+           year = as.character(year)) %>%
+  group_by (year, surveys) %>%
+  summarise(n = n())
+
+
+
+```
 
 
 
@@ -298,9 +319,9 @@ hist(site.by.env$mean.ann.rain)
 hist(site.by.env$topgraphic.wetness )#note typo to be corrected
 hist(site.by.env$ph)
 hist(site.by.env$tree.density)
-#hist(site.by.env$human.density)
+hist(site.by.env$human.density)
 hist(site.by.env$total.n )
-#hist(site.by.env$pesticide.risk)
+hist(site.by.env$pesticide.risk)
 
 ```
 

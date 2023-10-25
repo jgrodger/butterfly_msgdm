@@ -14,9 +14,9 @@ library(conflicted)
 library(tidyverse)
 library(here)
 
-library(foreach)
-library(doParallel)
-library(doSNOW)
+#library(foreach)
+#library(doParallel)
+#library(doSNOW)
 
 library(spaa)
 
@@ -30,8 +30,8 @@ conflicts_prefer(dplyr::mutate)
 
 ```
 ```{r}
-(cl = makeCluster(parallel::detectCores()-2, type = "SOCK")) # Initialize all cores except for two
-registerDoSNOW(cl)
+#(cl = makeCluster(parallel::detectCores()-2, type = "SOCK")) # Initialize all cores except for two
+#registerDoSNOW(cl)
 
 
 records <- read_csv(here("./Data/CSV_Data/ukbms_Rogers_10-3-23.csv"))
@@ -240,6 +240,8 @@ sites.2000 <- get.sites.in.date.range(site.and.year, "year == 2000")
 sites.2005 <- get.sites.in.date.range(site.and.year, "year == 2005")
 sites.2010 <- get.sites.in.date.range(site.and.year, "year == 2010")
 sites.2015 <- get.sites.in.date.range(site.and.year, "year == 2015")
+sites.2016 <- get.sites.in.date.range(site.and.year, "year == 2016")
+sites.2017 <- get.sites.in.date.range(site.and.year, "year == 2017")
 sites.2018 <- get.sites.in.date.range(site.and.year, "year == 2018")
 sites.2019 <- get.sites.in.date.range(site.and.year, "year == 2019")
 sites.2022 <- get.sites.in.date.range(site.and.year, "year == 2022")
@@ -289,8 +291,25 @@ summarise(total.records = sum(count))
 head(records.site)
 ```
 
+# 2015-2019 data
+
+```{r}
 
 
+records.site.5year <- records.site.year %>%
+  filter(year %in% 2015:2019) %>% 
+  group_by(site, species.no) %>%
+  summarise(total.records = sum(annual.records))
+
+records.site.5year$species.no <- paste("species", records.site.5year$species.no , sep = "_")
+
+site.by.obs.5.year <- pivot_wider(records.site.5year,
+                                  names_from = species.no,
+                                  values_from = total.records)
+```
+
+
+#below may not be needed, see above
 
 ```{r}
 source(here("./Scripts/R_Scripts/get_site_by_species.R"))
@@ -326,9 +345,7 @@ site.by.species.2018 <- get.site.by.species(data = all.sites.in.a.period.data, s
 
 # parallel::detectCores()
 
-#get site by species matrix for 2018
-
-#I am doing this for 2018 data only for now
+#get site by species matrix for 2015-2019
 
 all.sites.in.a.period.data <- records.site.year %>%
   ungroup() %>%  #can't perform the following operations on grouped data
@@ -344,9 +361,37 @@ all.sites.in.a.period.data <- records.site.year %>%
 
 site.by.species.2015.to.2019 <- get.site.by.species(data = all.sites.in.a.period.data, sites = site, species = species.no, output = "presence.absence")
 
+#get the sites in all 5 years
+
+
 
 ```
 
+#get the 
+```{r}
+#https://besjournals.onlinelibrary.wiley.com/doi/full/10.1111/2041-210X.12613
+
+
+site.by.species.2015.to.2019.obs <- get.site.by.species(data = all.sites.in.a.period.data, sites = site, species = species.no, output = "obs.count")
+
+site.by.species.2015.to.2019.obs <- site.by.species.2015.to.2019
+
+```
+
+
+
+#here I restrict the sites to only include those in all years. but actually, I intended to check coverage. working on this above
+```{r}
+all.year.sites <- sites.2015[sites.2015 %in% sites.2016]
+all.year.sites <- all.year.sites[all.year.sites %in% sites.2017]
+all.year.sites <- all.year.sites[all.year.sites %in% sites.2018]
+all.year.sites <- all.year.sites[all.year.sites %in% sites.2019]
+
+all.year.sites <- paste( paste("site", all.year.sites, sep = "_"))
+
+site.by.species.2015.to.2019 <- filter(site.by.species.2015.to.2019, 
+                                       rownames(site.by.species.2015.to.2019) %in% all.year.sites)
+```
 
 
 
@@ -410,6 +455,8 @@ head(year.by.species.matrices[[1]])
 
 
 ```
+
+
 ```{r}
 records.for.time <- records.site.year.no.zeros %>%
   filter(site %in% use.sites)%>%
@@ -454,7 +501,7 @@ print(Sys.time())
 ```
 
 ```{r}
-stopCluster(cl)
+#stopCluster(cl)
 ```
 
 
@@ -469,6 +516,8 @@ write_rds(sites, file = here("./Data/Processed_Data/processed_sites.rds"))
 write_rds(species, file = here("./Data/Processed_Data/processed_species.rds"))
 write_rds(site.snapshots.to.map, file = here("./Data/Processed_Data/site_snapshots_to_map.rds"))
 write_rds(use.sites, file = here("./Data/Processed_Data/sites_with_at_least_40_years.rds"))
+write_rds(site.by.species.2015.to.2019, file = here("./Data/Processed_Data/site_by_species_2015_to_2019.rds"))
+
 write_rds(site.by.species.2018, file = here("./Data/Processed_Data/site_by_species_2018.rds"))
 write_rds(year.by.species.matrices, file = here("./Data/Processed_Data/year_by_species_matrices.rds"))
 write_rds(surveys.site.year, file = here("./Data/Processed_Data/surveys_site_year.rds"))
@@ -476,6 +525,23 @@ write_rds(surveys.site.year, file = here("./Data/Processed_Data/surveys_site_yea
 
 
 
+```{r}
+
+
+starwars %>% count(species)
+
+
+starwars %>% 
+  group_by(species) %>% 
+    summarise(n = n())
+
+head(starwars)
+
+
+starwars %>% 
+  group_by(species) %>% 
+    summarise(totmass = sum(mass))
+```
 
 
 
