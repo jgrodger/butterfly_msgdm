@@ -20,6 +20,10 @@ library(here)
 
 library(spaa)
 
+library(sgo)
+
+
+library(iNEXT)
 
 conflicts_prefer(snow::stopCluster)
 conflicts_prefer(snow::makeCluster)
@@ -28,7 +32,10 @@ conflicts_prefer(dplyr::mutate)
 
 #filter <- dplyr::filter
 
+
 ```
+
+
 ```{r}
 #(cl = makeCluster(parallel::detectCores()-2, type = "SOCK")) # Initialize all cores except for two
 #registerDoSNOW(cl)
@@ -42,6 +49,7 @@ records <- read_csv(here("./Data/CSV_Data/ukbms_Rogers_10-3-23.csv"))
 
 sites <- read_csv(here("./Data/CSV_Data/ukbms_Rogers_sites_10-3-23_to_correct.csv"))
 
+sites.more.info <- read_csv(here("./Data/CSV_Data/ukbmsSiteLocationData1976-2019.csv"))
 
 species <- read_csv(here("./Data/CSV_Data/ukbms_Rogers_species_10-3-23.csv"))
 
@@ -51,7 +59,9 @@ species <- read_csv(here("./Data/CSV_Data/ukbms_Rogers_species_10-3-23.csv"))
 head(records)
 summary(records$YEAR)
 ```
+## this shows that column names need attention
 
+## inspecting the dataframe shows some info is in the wrong columns
 ```{r}
 head(sites)
 nrow(sites)
@@ -60,7 +70,7 @@ nrow(sites)
 ## clean and organise site data
 ```{r}
 
-
+#rename columns
 names(sites)
 sites <- sites %>%
   rename(site = SITENO,
@@ -83,8 +93,6 @@ sites <- sites %>%
                              .default = as.numeric(latitude))) %>% 
   select(-c(extracol1, extracol2, paste2cols, paste3cols))
 
-
-#still not right
 
 # for inspection only, sites that have no co-ordinates or grid square reference
 bad.sites <- filter(sites, is.na(longitude) == T &  is.na(gridref) ==T)
@@ -115,10 +123,59 @@ dplyr::last_dplyr_warnings()
 head(species)
 nrow(species)
 ```
+#add in missing longitude and latitude for 20 sites
+```{r}
+
+#obtain longitude and latitude using sgo
+
+#just work with rows with missing dtaa
+for.longlat <- sites %>% 
+  filter(is.na(longitude) == TRUE)
+
+#get eastings and northings first
+for.longlat <- sgo_ngr_bng(for.longlat, col = "gridref")
+
+#get latitude and longitude
+for.longlat <- sgo_bng_lonlat(for.longlat)
+
+#get a dataframe of rows with missing dat to add them into
+check <-sites %>%
+filter(is.na(longitude) == TRUE) %>%
+  rename(long = longitude, 
+         lat = latitude)
+
+#add in longitude and latitude
+check$long <- for.longlat$x
+
+
+check$lat <- for.longlat$y
+
+
+check <- select(check,
+                site, long, lat)
+
+#merge with the sites data
+sites <- merge(sites, all = T, check, by = "site")
+
+#put data into the correct column and remove now extraneous columns
+
+sites1 <- sites1 %>%
+  mutate(
+    longitude = ifelse(is.na(longitude) == TRUE, long, longitude),
+    latitude = ifelse(is.na(latitude) == TRUE, lat, latitude)
+  ) %>%
+  select(-c(lat, long))
+
+ 
+```
+
+
 #rename variables
 #filter species and records to exclude unknown species and moths, as well as surveys where no butterflies were seen
 
 ```{r}
+
+#rename columns in species and...
 
 species <- species %>% 
   rename( species.no = SPECIES, 
@@ -126,12 +183,13 @@ species <- species %>%
          sci.name = SCI_NAME,
          strategy = STRATEGY,
          habitat = HABITAT) %>% 
-  filter (is.na(include) == FALSE) #this filters out non-butterflies and "unidentified" from species list
+  filter (is.na(include) == FALSE) #filter out non-butterflies and "unidentified" from species list
 
+#so we can use it for summarising data etc later
 species <- species %>% 
   mutate(species.no = as.character(species.no))
 
-
+#rename columns in records
 records<- records %>%
     rename(site = SITE, 
         species.no = SPECIES,
@@ -164,6 +222,8 @@ nrow(records)
 ```
 
 ```{r}
+
+#create columns to identify survey events and site-year combinations
 records<- records %>%
   mutate(survey.info = paste(site, year, month, day, sep = "_"), 
          site.year = paste(site, year, sep = "_"))
@@ -171,12 +231,13 @@ records<- records %>%
 surveys <- records %>% 
   distinct(survey.info, .keep_all = TRUE)
 
+#surveys per site per year
 sum1 <-  surveys %>%
   group_by (site, year)  %>% 
 summarise(n = n())
 print("surveys per site per year")
 summary(sum1$n)
-hist(sum1$n)
+hist(sum1$n, main = "Surveys per site per year")
 
 sum2 <- sum1 %>%
   mutate(n = as.character(n)) %>%
@@ -184,6 +245,7 @@ sum2 <- sum1 %>%
       summarise(freq.survey = n())
 sum2
 
+#get plot of sites surveyed per year by year
 sites.per.year <- sum1 %>% 
   group_by(year)%>% 
 summarise(sites = n())
@@ -191,7 +253,7 @@ print("sites per year")
 summary(sites.per.year$sites)
 plot(sites~year, data = sites.per.year)
 
-#years per site summar
+#years per site summary and histogram
 years.per.site <- sum1 %>% 
   group_by(site)%>% 
 summarise(years = n())
@@ -289,13 +351,14 @@ summarise(total.records = sum(count))
 ```
 ```{r}
 head(records.site)
+head(records.site.year)
 ```
 
 # 2015-2019 data
 
 ```{r}
 
-
+#to get the total records for each species in each site over  years:
 records.site.5year <- records.site.year %>%
   filter(year %in% 2015:2019) %>% 
   group_by(site, species.no) %>%
@@ -303,16 +366,148 @@ records.site.5year <- records.site.year %>%
 
 records.site.5year$species.no <- paste("species", records.site.5year$species.no , sep = "_")
 
-site.by.obs.5.year <- pivot_wider(records.site.5year,
-                                  names_from = species.no,
-                                  values_from = total.records)
+#get a site by species dataframe with counts of observations
+site.by.obs.5.year.counts <- records.site.5year %>%
+  pivot_wider(names_from = species.no,
+              values_from = total.records) %>%
+  column_to_rownames(var = "site")
+
+# change NAs to zeros: these were cases 
+site.by.obs.5.year.counts[is.na(site.by.obs.5.year.counts)] <- 0
+
+#aggregate Thymelicus lineola and T.sylvestris records
+
+"#due to difficulties in field identification, we aggregated Essex Skipper Thymelicus lineola and Small #Skipper Thymelicus sylvestris into one taxon) "
+
+site.by.obs.5.year.counts <- site.by.obs.5.year.counts %>%
+  mutate(species_1000 = species_119 + species_120) %>%
+  select(-c(species_119, species_120))
+
+#check if any sites have zero observations
+any(rowSums(site.by.obs.5.year.counts) == TRUE)
+
+site.by.obs.5.year.counts <- site.by.obs.5.year.counts[rowSums(site.by.obs.5.year.counts) > 0, ]
+
+#make a presence absence site by species matrix
+site.by.obs.5.year.presabs <- site.by.obs.5.year.counts
+
+site.by.obs.5.year.presabs[site.by.obs.5.year.presabs[, ] > 0] <- 1
+```
+
+## make a row for combined species in species data 
+```{r}
+
+str(species)
+#contents for new row
+new.row <- c ("1000", "Combined Skippers", "Thymelicus lineola-sylvestris", "Wider countryside sp", "Grassland", 1)
+
+#add new row and remove two old rows
+species <- rbind(species, new.row) %>%
+  filter(species.no != "119" & species.no !="120")
 ```
 
 
-#below may not be needed, see above
+
+#check coverage
+```{r}
+
+#Transpose sity by counts matrix for use  by iNEXT package functions
+check.coverage <- t(site.by.obs.5.year.counts)
+
+
+#DataInfo() performs the first part of what iNEXT() does in seconds. the whole iNEXT() function would have to be left overnight for the whole dataset
+#https://cran.r-project.org/web/packages/iNEXT/vignettes/Introduction.pdf
+
+coverage <- DataInfo(check.coverage,  datatype="abundance")
+
+hist(coverage$SC)
+
+hist(coverage$SC, ylim = c(0, 50))
+
+
+hist(coverage$SC, xlim = c(0.95, 1), breaks = 1000)
+
+quantile(coverage$SC, seq(from = 0, to = 1, by = 0.01))
+
+
+#it seems reasonable to include sites with greater than 0.95 coverage and surveyed over the flowering period
+
+cov.merge <- coverage %>%
+  select(Assemblage, n, S.obs, SC)
+
+names(cov.merge) <- c("site", "total.butterflies", "richness", "coverage")
+
+sites <- merge(sites, cov.merge, all.y = T)
+
+
+
+```
+
+
+
+#prepare additional site info from Rob
+```{r}
+sites.more.info <- sites.more.info %>%
+  select(-c("Site Name", "Gridreference"))
+ 
+names(sites.more.info) <- c("site", "easting", "northing", "length", "country", "no.sections", "no.yrs.surveyed", "first.year", "last.year", "survey.type" )
+
+
+
+#interestingly, around 100 sites were not in 
+sites <- merge(sites, sites.more.info, by = "site", all.x = TRUE)
+
+sum3 <- sites %>%
+  group_by(survey.type) %>%
+  summarise(n = n(),
+            richness = mean(richness),
+            butterflies = mean(total.butterflies),
+            coverage = mean(coverage)
+      )
+sum3
+  
+```
+
+# obtain number of surveys
+```{r}
+sum1<- sum1 %>%
+  filter(site %in% sites$site, 
+         year %in% 2015:2019)
+
+str(sum1)
+
+#sites sampled per year
+sum4 <- sum1 %>% 
+  mutate(site = as.character(site),
+         year = as.character(year))%>%
+  group_by(site) %>%
+  summarise(years.sampled = n(),
+            total.surveys = sum(n),
+            min.surveys = min(n))
+
+
+sites <- merge(sites, sum4, by = "site")
+```
 
 ```{r}
-source(here("./Scripts/R_Scripts/get_site_by_species.R"))
+plot(richness~coverage, data = sites)
+
+plot(coverage~total.surveys.x, data = sites)
+
+plot(coverage~years.sampled.x, data = sites)
+
+check <- filter(sites,
+                coverage > 0.95,
+                total.surveys.x >= 30,
+                years.sampled.x >= 3)
+```
+
+
+
+#no longer needed
+
+```{r}
+#source(here("./Scripts/R_Scripts/get_site_by_species.R"))
 ```
 
 #get site by species matrices for 2018
@@ -324,17 +519,17 @@ source(here("./Scripts/R_Scripts/get_site_by_species.R"))
 
 #I am doing this for 2018 data only for now
 
-all.sites.in.a.period.data <- records.site.year %>%
-  ungroup() %>%  #can't perform the following operations on grouped data
-   filter(annual.records != 0, #my function assumes no row present when species is absent
-          year ==2018) %>% #choose a year
-            mutate(site = paste("site", site, sep = "_"),
-                     species.no = paste("species", species.no, sep = "_"))%>%
-          select(-year) 
-
-
-
-site.by.species.2018 <- get.site.by.species(data = all.sites.in.a.period.data, sites = site, species = species.no, output = "presence.absence")
+# all.sites.in.a.period.data <- records.site.year %>%
+#   ungroup() %>%  #can't perform the following operations on grouped data
+#    filter(annual.records != 0, #my function assumes no row present when species is absent
+#           year ==2018) %>% #choose a year
+#             mutate(site = paste("site", site, sep = "_"),
+#                      species.no = paste("species", species.no, sep = "_"))%>%
+#           select(-year) 
+# 
+# 
+# 
+# site.by.species.2018 <- get.site.by.species(data = all.sites.in.a.period.data, sites = site, species = species.no, output = "presence.absence")
 
 
 ```
@@ -347,19 +542,19 @@ site.by.species.2018 <- get.site.by.species(data = all.sites.in.a.period.data, s
 
 #get site by species matrix for 2015-2019
 
-all.sites.in.a.period.data <- records.site.year %>%
-  ungroup() %>%  #can't perform the following operations on grouped data
-   filter(annual.records != 0, #my function assumes no row present when species is absent
-          year >= 2015 & year <= 2019) %>% #choose a year
-              mutate(site = paste("site", site, sep = "_"),
-                     species.no = paste("species", species.no, sep = "_"), 
-                     year = as.character(species.no)) %>% 
-            group_by(site, species.no) %>%
-                summarise(total.records = sum(annual.records))%>%
-  ungroup()
-
-
-site.by.species.2015.to.2019 <- get.site.by.species(data = all.sites.in.a.period.data, sites = site, species = species.no, output = "presence.absence")
+# all.sites.in.a.period.data <- records.site.year %>%
+#   ungroup() %>%  #can't perform the following operations on grouped data
+#    filter(annual.records != 0, #my function assumes no row present when species is absent
+#           year >= 2015 & year <= 2019) %>% #choose a year
+#               mutate(site = paste("site", site, sep = "_"),
+#                      species.no = paste("species", species.no, sep = "_"), 
+#                      year = as.character(species.no)) %>% 
+#             group_by(site, species.no) %>%
+#                 summarise(total.records = sum(annual.records))%>%
+#   ungroup()
+# 
+# 
+# site.by.species.2015.to.2019 <- get.site.by.species(data = all.sites.in.a.period.data, sites = site, species = species.no, output = "presence.absence")
 
 #get the sites in all 5 years
 
