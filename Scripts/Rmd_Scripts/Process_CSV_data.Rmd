@@ -129,8 +129,7 @@ sites <-  filter(sites, is.na(longitude) == F |  is.na(gridref) == F,#remove 51 
 #one wonky site not picked up above
 sites <- filter(sites, gridref != "Lurgan") 
 
-
-         
+     
 ```
 
 
@@ -233,7 +232,10 @@ sites<- merge(sites, pts.df1, by = "site")
 ```
 
 
-#filter species and records to exclude unknown species and moths, as well as surveys where no butterflies were seen,  and migrant, vagrant, extinct species
+### filter species and records to exclude unknown species and moths, as well as surveys where no butterflies were seen,  and migrant, vagrant, extinct species
+
+
+### filter sites to those included in records
 
 ```{r}
 
@@ -282,7 +284,18 @@ records <- records %>%
 print("rows of records")
 nrow(records)
 
+
+head(records)
+
+
+
+ #filter site down to only sites that are present in records
+sites <- sites %>%
+  filter(site %in% unique(records$site))
+ 
 ```
+## add columns to records to identify survey events and site-year combinations
+
 
 ```{r}
 
@@ -292,34 +305,48 @@ records<- records %>%
          site.year.month = paste(site, year, month, sep = "_"),
          site.year = paste(site, year, sep = "_"))
 
-surveys <- records %>% 
-  distinct(survey.info, .keep_all = TRUE)
+```
 
-#find out how many months each site was surveyed each year
-survey.months <- records %>% 
-  distinct(site.year.month, .keep_all = TRUE)
 
-sum.months <- survey.months %>%
+
+
+## create a dataframe with one row for every year-site combination number of months for each site year (only when surveys carried out,no zeros)
+
+
+```{r}
+#find out how many months each site was surveyed each year and plot versus latitude
+sum.months <- records %>% 
+  distinct(site.year.month, .keep_all = TRUE) %>%
   group_by(site, year)%>%
   summarise(months.surveyed = n())
 
+sum.months <- sum.months %>% 
+      merge(
+        select(
+          sites, site, easting, northing), by = "site")  %>% 
+  mutate(site.year = paste(site, year, sep = "_"))
+
 table(as.character(sum.months$months.surveyed))
 
-to.merge <- select(sites,
-                   site, easting, northing)
-
-sum.months <- merge(sum.months, to.merge, by = "site")
-
+#small tendency for more northerly sites to be surveyed in fewer months
 plot(months.surveyed~northing, data = sum.months)
 
+#this is exploration, should be averaged per site first really
 m1 <- lm(months.surveyed~northing, data = sum.months)
 
 summary(m1)
+```
+## check distribution of number of surveys per site per year, plot number of sites surveyed per year in dataset, add years of surveys per site to site info
+```{r}
+
 
 #surveys per site per year
-sum1 <-  surveys %>%
+sum1 <-   records %>% 
+  distinct(survey.info, .keep_all = TRUE) %>%
   group_by (site, year)  %>% 
 summarise(n = n())
+
+#inspect frequency distribution of surveys per site per year
 print("surveys per site per year")
 summary(sum1$n)
 hist(sum1$n, main = "Surveys per site per year")
@@ -329,6 +356,15 @@ sum2 <- sum1 %>%
   group_by(n) %>%
       summarise(freq.survey = n())
 sum2
+
+#inspecting this shows that this site was surveyed multiple times per week in these years
+check<- records %>%
+  filter(site == 4831, year == 2019)%>% 
+  distinct(survey.info, .keep_all = TRUE)
+
+check<- records %>%
+  filter(site == 4, year == 1976)%>% 
+  distinct(survey.info, .keep_all = TRUE)
 
 #get plot of sites surveyed per year by year
 sites.per.year <- sum1 %>% 
@@ -352,19 +388,14 @@ hist(years.per.site$years.surveyed, xlim  = c(0, 50))
 
 
 
-sites <- merge(sites, years.per.site)
-
-```
-```{r}
-site.and.year <- merge(sum1, sites, by = "site")
-
-str(site.and.year$year)
+sites <- merge(sites, years.per.site)  
 ```
 
+## Get vectors of sites time periods
 
 ```{r}
 
-
+# a function to get a vector of site names for sites sampled in a r period
 #x should be the above site.and.year
 #condit is a condition to filter by
 
@@ -380,6 +411,8 @@ sites.out <- sites.out[['site']]
   return(sites.out)
 }
 
+# dataframe of sites and years sampled
+site.and.year <- dplyr::select(sum1, site, year)
 
 sites.5.years <- get.sites.in.date.range(site.and.year, "year >= 2015 & year <=2019")
 
@@ -417,35 +450,49 @@ site.snapshots.to.map <- list(
 
 ```
 
-# records.site.year gives the number of records for each species in each site in each year
+## Get records per species per year, filtered to only site-year combinations that meet certain criteria.
 
-#records.site gives the total number of records for each species in each site over all years
+### months with survey records: >= 5
+
+### records.site.year gives the number of records for each species in each site in each year
 
 ```{r}
 
+#site year combinations to keep   
+site.years.keep <- sum.months %>%
+  dplyr::select(site.year, months.surveyed) %>%
+  filter(months.surveyed >= 5)
 
 
+#filter records per site per year to the desired site-year combinations
 records.site.year <-  records %>%
   group_by (site, year, species.no)  %>% 
-summarise(annual.records = sum(count))
+summarise(annual.records = sum(count))   %>% 
+  mutate(site.year = paste(site, year, sep = "_"))   %>%
+     merge(site.years.keep, #here we filter by merging, keeping only desired site-year combinations
+           by = "site.year",
+           all.y = TRUE)
 
 
-#records.site.year.1 <- records.site.year
+#how many years per site in the filtered data?
+sum.5.year <- records.site.year %>% 
+  dplyr::select(site.year, site, year) %>%
+  filter(year %in% 2015:2019)%>%
+  distinct() %>%
+  group_by(site) %>%
+  summarise(years.15.19 = n())
+  
 
-#records.site.year$site <- paste("site", records.site.year$site, sep = "_")
-#records.site.year$species.no <- paste("species", records.site.year$species.no, sep = "_")
+table(sum.5.year$years.15.19)
 
+sites<- merge(sites, sum.5.year, by = "site", all.x = TRUE)
 
-records.site <-  records %>%
-  group_by (site, species.no)  %>% 
-summarise(total.records = sum(count))
 ```
 ```{r}
-head(records.site)
 head(records.site.year)
 ```
 
-# 2015-2019 data
+# 2015-2019 data, combining T. sylvestris and T. lineola
 
 ```{r}
 
@@ -463,7 +510,7 @@ site.by.obs.5.year.counts <- records.site.5year %>%
               values_from = total.records) %>%
   column_to_rownames(var = "site")
 
-# change NAs to zeros: these were cases 
+# change NAs to zeros: these were cases when there wasn't a zero count record for a species that wasn't recorded in a survey
 site.by.obs.5.year.counts[is.na(site.by.obs.5.year.counts)] <- 0
 
 #aggregate Thymelicus lineola and T.sylvestris records
@@ -475,8 +522,9 @@ site.by.obs.5.year.counts <- site.by.obs.5.year.counts %>%
   dplyr::select(-c(species_119, species_120))
 
 #check if any sites have zero observations
-any(rowSums(site.by.obs.5.year.counts) == TRUE)
+any(rowSums(site.by.obs.5.year.counts) == 0)
 
+#this was needed under previous filtering scheme, keepining in here in case needed again
 site.by.obs.5.year.counts <- site.by.obs.5.year.counts[rowSums(site.by.obs.5.year.counts) > 0, ]
 
 #make a presence absence site by species matrix
@@ -500,6 +548,8 @@ species <- rbind(species, new.row) %>%
 
 
 #check coverage
+
+#sites filtered down to sites in 2015-2019
 ```{r}
 
 #Transpose sity by counts matrix for use  by iNEXT package functions
@@ -536,7 +586,7 @@ sites <- merge(sites, cov.merge, all.y = T)
 
 
 
-#prepare additional site info from Rob
+#prepare additional site info from Rob, check which monitoring site data is present (UKBMS, NA)
 ```{r}
 sites.more.info <- sites.more.info %>%
   dplyr::select(-c("Site Name", "Gridreference", "Easting", "Northing","No. yrs surveyed", "First year surveyed", "Last year surveyed"))
@@ -545,7 +595,7 @@ names(sites.more.info) <- c("site", "length", "country", "no.sections",  "survey
 
 
 
-#66 here sites  were not in site data from Rob maybe added post 2019?
+#66 here sites  were not in site data from Rob , they must have been filtered out from the data he used for some reason
 sites <- merge(sites, sites.more.info, by = "site", all.x = TRUE)
 
 sum3 <- sites %>%
@@ -556,28 +606,6 @@ sum3 <- sites %>%
             coverage = mean(coverage)
       )
 sum3
-  
-names(sites.more.info)
-```
-
-# obtain number of surveys in 2015 to 2019 and how many of these years had surveys
-```{r}
-sum4<- sum1 %>%
-  filter(site %in% sites$site, 
-         year %in% 2015:2019)
-
-
-#sites sampled per year
-sum5 <- sum4 %>% 
-  mutate(site = as.character(site),
-         year = as.character(year))%>%
-  group_by(site) %>%
-  summarise(years.sampled.15.to.19 = n(),
-            total.surveys.15.to.19 = sum(n))
-
-
-sites <- merge(sites, sum5, by = "site")
-
 
 ```
 
@@ -586,9 +614,8 @@ sites <- merge(sites, sum5, by = "site")
 ```{r}
 plot(richness~coverage, data = sites)
 
-plot(coverage~total.surveys.15.to.19, data = sites)
 
-plot(coverage~years.sampled.15.to.19, data = sites)
+plot(coverage~years.15.19, data = sites)
 
 ```
 
@@ -655,45 +682,57 @@ table(sites$country)
 # print(pointsmap)
 # print(pointsmap2)
 ```
+
+
 #filter to sites with sufficient coverage and effort
+
+#filter site by species matrix to selected sites
 ```{r}
 
-sites.spatial <- filter(sites,
-                coverage >= 0.9,
-                total.surveys.15.to.19 >= 30,
-                years.sampled.15.to.19 >= 3)
+
+sites.spatial <- sites %>% 
+                filter(coverage >= 0.9,
+                years.15.19 >= 3)
+
+#this is the one to export!
+site.by.obs.5.year.presabs1 <- site.by.obs.5.year.presabs %>%
+  filter(rownames(site.by.obs.5.year.presabs) %in% sites.spatial$site)
 ```
 
 
 ## Plot Sites
 ```{r}
 
-plot.points <- st_as_sf(sites.spatial, coords=c("easting","northing"), remove = FALSE, crs = 27700)#I want to keep coords in the dataframe
-
-#get a set of points for each unique grid cell
-
-print("sites")
-nrow(plot.points)
-
-basemap <-tm_shape(bounds.2) +
-  tm_borders()
-pointsmap <- basemap + 
-tm_shape(plot.points) +
-  tm_symbols(size = 0.05, col = "blue")
-
-pointsmap2 <- basemap + 
-tm_shape(plot.points) +
-  tm_symbols(size = 0.5, col = "blue")
-
-
-print(pointsmap)
-print(pointsmap2)
+# plot.points <- st_as_sf(sites.spatial, coords=c("easting","northing"), remove = FALSE, crs = 27700)#I want to keep coords in the dataframe
+# 
+# #get a set of points for each unique grid cell
+# 
+# print("sites")
+# nrow(plot.points)
+# 
+# basemap <-tm_shape(bounds.2) +
+#   tm_borders()
+# pointsmap <- basemap + 
+# tm_shape(plot.points) +
+#   tm_symbols(size = 0.05, col = "blue")
+# 
+# pointsmap2 <- basemap + 
+# tm_shape(plot.points) +
+#   tm_symbols(size = 0.5, col = "blue")
+# 
+# 
+# print(pointsmap)
+# print(pointsmap2)
 ```
 #there is a need to check how I get number of years, as one of the chosen sites only has 33
 
 #there is a need to consider criteria for using a year's observations, as some years have few surveys. ? decide on a minimum number of surveys per year
 
 #get year by species matrices for a set of sites
+
+
+# change above, sites restricted to 2015-2019 now
+
 ```{r}
 #get year by species matrix for all sites with greater than 40 years of records
 
@@ -758,7 +797,6 @@ head(year.by.species.matrices[[1]])
 
 # save processed data
 ```{r}
-#write_rds(records.site, file = here("./Data/Processed_Data/records_site_year_all_years.rds"))
 
 
 write_rds(site.year.by.species, file = here("./Data/Processed_Data/site_year_by_species.rds"))
