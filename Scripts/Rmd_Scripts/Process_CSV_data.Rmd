@@ -83,10 +83,9 @@ head(sites)
 nrow(sites)
 ```
 
-## clean and organise site data
+## rename columns in datasets, clean site data
 ```{r}
-
-#rename columns
+#rename columns in sites
 names(sites)
 sites <- sites %>%
   rename(site = SITENO,
@@ -109,100 +108,189 @@ sites <- sites %>%
                              .default = as.numeric(latitude))) %>% 
   dplyr::select(-c(extracol1, extracol2, paste2cols, paste3cols))
 
+sites.more.info <- sites.more.info %>%
+  dplyr::select(-c("Site Name", "Gridreference", "Easting", "Northing","No. yrs surveyed", "First year surveyed", "Last year surveyed"))
+ 
+names(sites.more.info) <- c("site", "length", "country", "no.sections",  "survey.type" )
+
+
+
+
+#rename columns in species 
+
+species <- species %>% 
+  rename( species.no = SPECIES, 
+         common.name = COMMON_NAME,
+         sci.name = SCI_NAME,
+         strategy = STRATEGY,
+         habitat = HABITAT) 
+#so we can use it for summarising data etc later
+species <- species %>% 
+  mutate(species.no = as.character(species.no))
+
+#rename columns in records
+records<- records %>%
+    rename(site = SITE, 
+        species.no = SPECIES,
+        year = YEAR,
+        month = MONTH, 
+        day = DAY, 
+        week.no = WEEKNO, 
+        day.no = DAYNO, 
+        count = COUNT)%>% 
+   mutate(species.no = as.character(species.no))
+
+
+
+print("rows of records")
+nrow(records)
+
+
+print("rows of sites")
+nrow(sites)
+
+
+print("rows of species")
+nrow(species)
+
+```
+#filter sites to those represented in records
+
+# merge in additional site info
+```{r}
+
+# some sites  were not in site data from Rob , they must have been filtered out from the data he used for some reason
+print("number of sites before merging operation")
+nrow(sites)
+
+sites <- merge(sites, sites.more.info, by = "site", all.x = TRUE)
+
+print("number of sites after merging operation")
+nrow(sites)
+
+names(sites)
+
+table(sites$survey.type)
+
+```
+
+
+```{r}
+
+
+
+sites <- sites %>% 
+  filter(site %in% unique(records$site))
+
+
+print("sites after removing sites not represented in records")
+nrow(sites)
+
+table(sites$survey.type)
+```
+## sites with inadequate locality info were nor represented in records, already removed
+```{r}
 
 # for inspection only, sites that have no co-ordinates or grid square reference
 
 
-bad.sites <- filter(sites, is.na(longitude) == T &  is.na(gridref) ==T)
+bad.sites <- filter(sites, is.na(longitude) == T &  is.na(gridref) ==T, 
+                    gridref != "Lurgan")
+
+
+
 
 print("number of sites with inadequate locality info")
 nrow(bad.sites)
 
+```
+
+
+
+
 #remove irish sites, which have uneven number of characters in the gridref (they start with a single letter)
+
+
+```{r}
+
+
+table(sites$country)
+
+#this may be redundant but it is done to remove  Irish sites
 sites <- sites %>%
                 mutate(str.len.gridref = str_length(gridref),# a variable showing number of characters in gridref
                        even = str.len.gridref %% 2 == 0)  #whether above variable is even
 
 
-irish.sites <- filter(sites, even == F)  #for inspection only
-
-
-print("number of Northern Irish sites")
-nrow(irish.sites)
-
-
-print("number of sites before filterin out ones without locality info and ones in Ireland")
-nrow(sites)
-
 #can be used
-sites <-  filter(sites, is.na(longitude) == F |  is.na(gridref) == F,#remove 51 sites with neither a gridref nor longlat
-                even == T) %>% #filter 138 Irish sites
+sites <- sites%>%
+  filter(even == T,
+         country != "Channel Isles" & country != "Isle of Man",
+               site != 1791 & site != 1837) %>% #filter 138 Irish sites
                     dplyr::select(-c(even, str.len.gridref))
 
-#one wonky site not picked up above
-sites <- filter(sites, gridref != "Lurgan") 
+
+records <- records %>%
+  filter(site %in% sites$site)
+
+ 
+
+species <- species %>% 
+  filter (species.no %in% unique(records$species.no)) #species after filtering out Ireland,  Channel Islands, Lundy, Scilly, Isle of Man"
+
+print("number of sites after filtering sites in Ireland, Channel Islands, Lundy, Scilly, Isle of Man")
+nrow(sites)
 
 
-print("number of sites after filtering out ones without locality info and ones in Ireland")
-nrow(sites)     
-```
+print("records after filtering sites in Ireland, Channel Islands, Lundy, Scilly, Isle of Man")
+nrow(records)
 
 
-```{r}
-dplyr::last_dplyr_warnings()
-head(species)
+
+print("species after filtering sites in Ireland, Channel Islands, Lundy, Scilly, Isle of Man")
 nrow(species)
+
+
+
+table(sites$country)
 ```
-#add in missing longitude and latitude for 20 sites
+
+
+
+## filter out species non-butterflies and "unidentified" from species
 ```{r}
+species <- species %>% 
+  filter (is.na(include) == FALSE)  #filter out non-butterflies and unidentified from species list
+
+
+records <- records %>%
+  filter(species.no %in% species$species.no)
+
+sites <- sites %>% 
+  filter(site %in% unique(records$site))
+
+print("records after removing non-butterflies and unidentified")
+nrow(records)
+
+
+print("sites after removing non-butterflies and unidentified")
+nrow(sites)
+
+print("species after removing non-butterflies and unidentified")
+nrow(species)
+
+
+```
+
+
+#add easting and northing
+```{r}
+#check if all sites have latitude
+any(is.na(sites$latitude))
 
 #obtain longitude and latitude using sgo
 
-#just work with rows with missing dtaa
-for.longlat <- sites %>% 
-  filter(is.na(longitude) == TRUE)
-
-#get eastings and northings first
-for.longlat <- sgo_ngr_bng(for.longlat, col = "gridref")
-
-#get latitude and longitude
-for.longlat <- sgo_bng_lonlat(for.longlat)
-
-#get a dataframe of rows with missing data to add them into
-addin <-sites %>%
-filter(is.na(longitude) == TRUE) %>%
-  rename(long = longitude, 
-         lat = latitude)
-
-#add in longitude and latitude
-addin$long <- for.longlat$x
-
-
-addin$lat <- for.longlat$y
-
-
-addin <- dplyr::select(addin,
-                site, long, lat)
-
-#merge with the sites data
-
-print("number of sites before merging operation")
-nrow(sites)
-sites <- merge(sites, all = T, addin, by = "site")
-
-print("number of sites after merging operation")
-nrow(sites)
-
-#put data into the correct column and remove now extraneous columns
-
-sites <- sites %>%
-  mutate(
-    longitude = ifelse(is.na(longitude) == TRUE, long, longitude),
-    latitude = ifelse(is.na(latitude) == TRUE, lat, latitude)
-  ) %>%
-  dplyr::select(-c(lat, long))
-
-#get easting and wesing for points with latitude and longitude
+#get easting and northing for points with latitude and longitude
 pts <- sgo_points(sites, coords = c("longitude", "latitude"), epsg=4277)#this epsg for long and lat
 bng.pts1 <- sgo_lonlat_bng(pts)
 
@@ -254,84 +342,6 @@ sites<- merge(sites, pts.df1, by = "site")
 # print(pointsmap2)
 ```
 
-
-### filter species and records to exclude unknown species and moths, as well as surveys where no butterflies were seen,  and migrant, vagrant, extinct species
-
-
-### filter sites to those included in records
-
-```{r}
-
-#rename columns in species and...
-
-
-print("number of species in original species sheet")
-nrow(species)
-
-species <- species %>% 
-  rename( species.no = SPECIES, 
-         common.name = COMMON_NAME,
-         sci.name = SCI_NAME,
-         strategy = STRATEGY,
-         habitat = HABITAT) %>% 
-  filter (is.na(include) == FALSE,
-          strategy == "Wider countryside sp"| strategy == "Habitat specialist") #filter out non-butterflies and "unidentified" from species list
-
-print("number of species after removing moths, migrants, and unidentified spp")
-nrow(species)
-
-#so we can use it for summarising data etc later
-species <- species %>% 
-  mutate(species.no = as.character(species.no))
-
-#rename columns in records
-records<- records %>%
-    rename(site = SITE, 
-        species.no = SPECIES,
-        year = YEAR,
-        month = MONTH, 
-        day = DAY, 
-        week.no = WEEKNO, 
-        day.no = DAYNO, 
-        count = COUNT)%>% 
-   mutate(species.no = as.character(species.no))
-
-print("rows of records")
-nrow(records)
-
-print("number of records for all species including moths and migrant butterflies")
-nrow(records)
-
-records <- records %>% 
-  filter (species.no %in% species$species.no) #this filters out records that were not butterflies or were not identified
-      
-
-print("number of records of butterflies excluding migrants")
-nrow(records)
-
-
-
-records <- records %>% 
-  filter ( site %in% sites$site)
-
-
-print("number of records for remaining butterflies  in remaining sites")
-nrow(records)
-
-
-head(records)
-
-
-
- #filter site down to only sites that are present in records
-sites <- sites %>%
-  filter(site %in% unique(records$site))
-
-
-print("number of sites with records data after filtering records data")
-nrow(records)
- 
-```
 ## add columns to records to identify survey events and site-year combinations
 
 
@@ -348,6 +358,37 @@ records<- records %>%
 
 
 
+#remove migrant, note two extinct species  considered extinct before records started, and so any records now are eigher migrants or from butterfly farms, can be removed with migrants
+
+#https://butterfly-conservation.org/butterflies/large-tortoiseshell
+#https://butterfly-conservation.org/butterflies/black-veined-white
+```{r}
+
+table(species$strategy)
+
+species <- species %>% 
+  filter (strategy == "Wider countryside sp"| strategy == "Habitat specialist") #migrants
+
+
+records <- records %>%
+  filter(species.no %in% species$species.no)
+
+sites <- sites %>% 
+  filter(site %in% unique(records$site))
+
+
+print("records after removing migrants and extinct")
+nrow(records)
+
+
+print("sites after removing on-butterflies and unidentified")
+nrow(sites)
+
+print("species after removing on-butterflies and unidentified")
+nrow(species)
+
+```
+
 ## create a dataframe with one row for every year-site combination number of months for each site year (only when surveys carried out,no zeros)
 
 
@@ -358,6 +399,7 @@ sum.months <- records %>%
   group_by(site, year)%>%
   summarise(months.surveyed = n())
 
+#add data to make a plot
 sum.months <- sum.months %>% 
       merge(
         select(
@@ -373,29 +415,35 @@ plot(months.surveyed~northing, data = sum.months)
 m1 <- lm(months.surveyed~northing, data = sum.months)
 
 summary(m1)
+
 ```
+
+
+
+
+
 ## check distribution of number of surveys per site per year, plot number of sites surveyed per year in dataset, add years of surveys per site to site info
 ```{r}
 
 
 #surveys per site per year
-sum1 <-   records %>% 
+surveys.site.year <-   records %>% 
   distinct(survey.info, .keep_all = TRUE) %>%
   group_by (site, year)  %>% 
 summarise(n = n())
 
 #inspect frequency distribution of surveys per site per year
 print("surveys per site per year")
-summary(sum1$n)
-hist(sum1$n, main = "Surveys per site per year")
+summary(surveys.site.year$n)
+hist(surveys.site.year$n, main = "Surveys per site per year")
 
-sum2 <- sum1 %>%
+sum2 <- surveys.site.year %>%
   mutate(n = as.character(n)) %>%
   group_by(n) %>%
       summarise(freq.survey = n())
 sum2
-
-#inspecting this shows that this site was surveyed multiple times per week in these years
+# I thought it odd that some sites had more surveys than there are weeks in a year
+#inspecting shows that these sites were surveyed multiple times per week in these years
 check<- records %>%
   filter(site == 4831, year == 2019)%>% 
   distinct(survey.info, .keep_all = TRUE)
@@ -405,7 +453,7 @@ check<- records %>%
   distinct(survey.info, .keep_all = TRUE)
 
 #get plot of sites surveyed per year by year
-sites.per.year <- sum1 %>% 
+sites.per.year <- surveys.site.year %>% 
   group_by(year)%>% 
 summarise(sites = n())
 print("sites per year")
@@ -413,7 +461,7 @@ summary(sites.per.year$sites)
 plot(sites~year, data = sites.per.year)
 
 #years per site summary and histogram
-years.per.site <- sum1 %>% 
+years.per.site <- surveys.site.year %>% 
   group_by(site)%>% 
 summarise(years.surveyed = n(),
           first.year = min(year),
@@ -453,7 +501,7 @@ sites.out <- sites.out[['site']]
 }
 
 # dataframe of sites and years sampled
-site.and.year <- dplyr::select(sum1, site, year)
+site.and.year <- dplyr::select(surveys.site.year, site, year)
 
 sites.5.years <- get.sites.in.date.range(site.and.year, "year >= 2015 & year <=2019")
 
@@ -491,40 +539,92 @@ site.snapshots.to.map <- list(
 
 ```
 
-## Get records per species per year, filtered to only site-year combinations that meet certain criteria.
-
-### months with survey records: >= 5
+## Get records per species per year, filtered to only site-year combinations that meet : 
+##months with survey records: >= 5, for at least three years
 
 ### records.site.year gives the number of records for each species in each site in each year
 
 ```{r}
 
-#site year combinations to keep   
-site.years.keep <- sum.months %>%
-  dplyr::select(site.year, months.surveyed) %>%
-  filter(months.surveyed >= 5)
+#summarise records to get records per site per years
 
-
-#filter records per site per year to the desired site-year combinations
 records.site.year <-  records %>%
   group_by (site, year, species.no)  %>% 
 summarise(annual.records = sum(count))   %>% 
-  mutate(site.year = paste(site, year, sep = "_"))   %>%
-     merge(site.years.keep, #here we filter by merging, keeping only desired site-year combinations
-           by = "site.year",
-           all.y = TRUE)
+  mutate(site.year = paste(site, year, sep = "_"))  
 
 
-#how many years per site in the filtered data?
-sum.5.year <- records.site.year %>% 
-  dplyr::select(site.year, site, year) %>%
-  filter(year %in% 2015:2019)%>%
-  distinct() %>%
+
+#how many years per site for the years 2015-2019 in the filtered data?
+sum.5.year <- sum.months %>% 
+  dplyr::select(site.year, site, year, months.surveyed) %>%
+  filter(year %in% 2015:2019) %>%
   group_by(site) %>%
   summarise(years.15.19 = n())
   
+print("number of sites in 2015-2019")
+nrow(sum.5.year )
 
-table(sum.5.year$years.15.19)
+
+#yes, I know this is a copy and paste of the lines above
+#how many years per site for the years 2015-2019 with at least 5 months data?
+sum.5.year <- sum.months %>% 
+  dplyr::select(site.year, site, year, months.surveyed) %>%
+  filter(year %in% 2015:2019,
+        months.surveyed >=5 ) %>%
+  group_by(site) %>%
+  summarise(years.15.19 = n())
+  
+print("number of sites in 2015-2019 with at least 5 months data")
+nrow(sum.5.year )
+
+sites.keep <- filter(sum.5.year,
+                     years.15.19>=3)
+  
+print("number of sites in 2015-2019 with at least 5 months data in at least three years")
+nrow(sum.5.year )
+
+#site year combinations to keep (site-years surveyed in at least 5 months, sites with at least three years such data)  
+site.years.keep <- sum.months %>%
+  filter(year %in% 2015:2019,
+         months.surveyed >=5,
+         site %in% sites.keep$site) 
+
+print("check that I have same number of sites in site.year.keep and in")
+length(unique(site.years.keep$site))
+
+  
+print("number of sites in 2015-2019 with years surveyed in at least 5 months, sites with at least three years such data")
+length(unique(site.years.keep$site) )
+
+
+#filter records per site per year 2015-2019
+records.site.5.year <-  records.site.year %>%
+  filter(site.year %in% site.years.keep$site.year)
+
+
+print("records in 2015-2019 dataset")
+nrow(records.site.5.year)
+
+
+print("sites in 2015-2019 dataset")
+length(unique(records.site.5.year$site))
+
+print("species in 2015-2019 dataset")
+length(unique(records.site.5.year$species.no))
+
+print("records in 2015-2019 dataset")
+nrow(records.site.5.year)
+
+
+print("sites in 2015-2019 dataset")
+length(unique(records.site.5.year$site))
+
+print("species in 2015-2019 dataset")
+length(unique(records.site.5.year$species.no))
+
+
+#table(sum.5.year$years.15.19)
 
 print("number of sites before merging operation")
 nrow(sites)
@@ -532,31 +632,44 @@ sites <- merge(sites, sum.5.year, by = "site", all.x = TRUE)
 print("number of sites after merging operation")
 nrow(sites)
 
+
 ```
+
+
+
+
 ```{r}
 head(records.site.year)
 ```
 
-# 2015-2019 data, combining T. sylvestris and T. lineola
 
+# Get site by species count matrix
 ```{r}
 
-#to get the total records for each species in each site over  years:
-records.site.5year <- records.site.year %>%
-  filter(year %in% 2015:2019) %>% 
-  group_by(site, species.no) %>%
-  summarise(total.records = sum(annual.records))
 
-records.site.5year$species.no <- paste("species", records.site.5year$species.no , sep = "_")
+records.site.5.year$species.no <- paste("species", records.site.5.year$species.no, sep = "_")
+
+aggregated.records <- records.site.5.year %>%
+  dplyr::select(-site.year)%>%
+  group_by(site, species.no)%>%
+    summarise(total.records = sum(annual.records))
+  
 
 #get a site by species dataframe with counts of observations
-site.by.obs.5.year.counts <- records.site.5year %>%
+site.by.obs.5.year.counts <- aggregated.records %>%
   pivot_wider(names_from = species.no,
               values_from = total.records) %>%
   column_to_rownames(var = "site")
 
 # change NAs to zeros: these were cases when there wasn't a zero count record for a species that wasn't recorded in a survey
 site.by.obs.5.year.counts[is.na(site.by.obs.5.year.counts)] <- 0
+
+
+```
+# for 2015-2019 records combine T. sylvestris and T. lineola, then get site by species presence absence mat
+```{r}
+
+
 
 #aggregate Thymelicus lineola and T.sylvestris records
 
@@ -569,14 +682,26 @@ site.by.obs.5.year.counts <- site.by.obs.5.year.counts %>%
 #check if any sites have zero observations
 any(rowSums(site.by.obs.5.year.counts) == 0)
 
+check<- filter(site.by.obs.5.year.counts, rowSums(site.by.obs.5.year.counts) == 0)
+
+check1<- filter(records, site == 3325, year %in% 2015:2019)
+
+
 #this was needed under previous filtering scheme, keepining in here in case needed again
 site.by.obs.5.year.counts <- site.by.obs.5.year.counts[rowSums(site.by.obs.5.year.counts) > 0, ]
 
+print("sites and species in matrix")
+dim(site.by.obs.5.year.counts)
 #make a presence absence site by species matrix
 site.by.obs.5.year.presabs <- site.by.obs.5.year.counts
 
 site.by.obs.5.year.presabs[site.by.obs.5.year.presabs[, ] > 0] <- 1
+
+
+print("sites in 2015-2019 dataset")
+nrow(site.by.obs.5.year.presabs)
 ```
+
 
 ## make a row for combined species in species data 
 ```{r}
@@ -599,7 +724,7 @@ nrow(species)
 
 #check coverage
 
-#sites filtered down to sites in 2015-2019
+#sites filtered down to those with adequate coverage
 ```{r}
 
 #Transpose sity by counts matrix for use  by iNEXT package functions
@@ -621,44 +746,29 @@ hist(coverage$SC, xlim = c(0.95, 1), breaks = 1000)
 quantile(coverage$SC, seq(from = 0, to = 1, by = 0.01))
 
 
-#it seems reasonable to include sites with greater than 0.95 coverage and surveyed over the flowering period
+#it seems reasonable to include sites with greater than 0.9 coverage and surveyed over at least 5 months in at least three years
 
 cov.merge <- coverage %>%
-  dplyr::select(Assemblage, n, S.obs, SC)
-
+  dplyr::select(Assemblage, n, S.obs, SC) 
 names(cov.merge) <- c("site", "total.butterflies", "richness", "coverage")
 
 
 
-print("number sites before filtering for time period")
-nrow(sites)
-sites.15.19 <- merge(sites, cov.merge, all.y = T)
-
-
-print("number sites after filtering for time period")
-nrow(sites.15.19)
 
 ```
 
 
 
-#prepare additional site info from Rob, check which monitoring site data is present (UKBMS, NA)
+
 ```{r}
-sites.more.info <- sites.more.info %>%
-  dplyr::select(-c("Site Name", "Gridreference", "Easting", "Northing","No. yrs surveyed", "First year surveyed", "Last year surveyed"))
- 
-names(sites.more.info) <- c("site", "length", "country", "no.sections",  "survey.type" )
 
+sites.15.19 <- sites %>%
+  filter(site %in% sites.keep$site)
 
+sites.15.19 <- merge(
+  sites.15.19, cov.merge, by = "site"
+)
 
-#66 sites  were not in site data from Rob , they must have been filtered out from the data he used for some reason
-print("number of sites before merging operation")
-nrow(sites.15.19)
-
-sites.15.19 <- merge(sites.15.19, sites.more.info, by = "site", all.x = TRUE)
-
-print("number of sites after merging operation")
-nrow(sites.15.19)
 
 sum3 <- sites.15.19 %>%
   group_by(survey.type) %>%
@@ -679,77 +789,16 @@ plot(richness~coverage, data = sites.15.19)
 
 plot(coverage~years.15.19, data = sites.15.19)
 
+m2 <- lm(richness~coverage, data = sites.15.19)
+
+summary(m2)
+
+check<- filter(sites.15.19, coverage > 0.995)
+m3 <- lm(richness~coverage, data = check)
+
+summary(m3)
 ```
 
-## Plot Sites
-```{r}
-
-# plot.points <- st_as_sf(sites.15.19, coords=c("easting","northing"), remove = FALSE, crs = 27700)#I want to keep coords in the dataframe
-# 
-# #get a set of points for each unique grid cell
-# 
-# print("sites")
-# nrow(plot.points)
-# 
-# basemap <-tm_shape(bounds) +
-#   tm_borders()
-# pointsmap <- basemap + 
-# tm_shape(plot.points) +
-#   tm_symbols(size = 0.05, col = "blue")
-# 
-# pointsmap2 <- basemap + 
-# tm_shape(plot.points) +
-#   tm_symbols(size = 0.5, col = "blue")
-# 
-# 
-# print(pointsmap)
-# print(pointsmap2)
-```
-```{r}
-table(sites.15.19$country)
-
-print("number of sites before filtering out channel islands, isles of man, lundy and scilly")
-nrow(sites.15.19)
-
-sites.15.19<- filter(sites.15.19,
-               country != "Channel Isles" & country != "Isle of Man",
-               site != 1791 & site != 1837)
-
-
-print("number of sites after filtering out channel islands and isle of man, lundy and scilly")
-nrow(sites.15.19)
-
-table(sites.15.19$country)
-
-
-#sites 1791 on Lundy in the Solent and 1837 on Scilly isles
-
-
-```
-## Plot Sites
-```{r}
-# 
-# plot.points <- st_as_sf(sites.15.19, coords=c("easting","northing"), remove = FALSE, crs = 27700)#I want to keep coords in the dataframe
-# 
-# #get a set of points for each unique grid cell
-# 
-# print("sites.15.19")
-# nrow(plot.points)
-# 
-# basemap <-tm_shape(bounds.2) +
-#   tm_borders()
-# pointsmap <- basemap + 
-# tm_shape(plot.points) +
-#   tm_symbols(size = 0.05, col = "blue")
-# 
-# pointsmap2 <- basemap + 
-# tm_shape(plot.points) +
-#   tm_symbols(size = 0.5, col = "blue")
-# 
-# 
-# print(pointsmap)
-# print(pointsmap2)
-```
 
 
 #filter to sites with sufficient coverage and effort
@@ -757,12 +806,14 @@ table(sites.15.19$country)
 #filter site by species matrix to selected sites
 ```{r}
 
-print("number of sites before filtering out adequate coverage and years of sampling")
+print("number of sites before filtering out adequate coverage ")
 nrow(sites.15.19)
 
 sites.spatial <- sites.15.19 %>% 
-                filter(coverage >= 0.9,
-                years.15.19 >= 3)
+                filter(coverage >= 0.9)
+
+print("minimum coverage in selected sites")
+min(sites.spatial$coverage)
 
 print("number of sites after filtering out adequate coverage and years of sampling")
 nrow(sites.spatial)
@@ -770,6 +821,8 @@ nrow(sites.spatial)
 #this is the one to export!
 site.by.obs.5.year.presabs1 <- site.by.obs.5.year.presabs %>%
   filter(rownames(site.by.obs.5.year.presabs) %in% sites.spatial$site)
+
+table(sites$country)
 ```
 
 
@@ -800,11 +853,11 @@ print(pointsmap)
 
 
 
-### get sites and years surveyed in more than 5 months 
+### get 
 ```{r}
 
 #years per site summary and histogram
-years.per.site <- sum1 %>% 
+years.per.site <- surveys.site.year %>% 
   mutate(site.year = paste(site, year, sep = "_")) %>%
   filter(site.year %in% site.years.keep$site.year)%>%
   group_by(site)%>% 
