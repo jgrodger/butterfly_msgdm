@@ -539,6 +539,56 @@ site.snapshots.to.map <- list(
 
 ```
 
+```{r}
+table(records$week.no)
+
+names(records)
+
+check <- distinct(records, week.no, .keep_all = TRUE)
+
+#divide the prescribed sampling period into 4 quarters
+#to have same length, i incluce last week of March (week 0) in first period and first week of October in 4th period
+
+records <- mutate(records, 
+                  sampling.period = case_match(week.no,
+                    -7:-1 ~ "pre-april",
+                    0:6 ~ "per1",
+                    7: 13 ~ "per2",
+                    14:20 ~ "per3",
+                    21:27 ~ "per4",
+                    28:40 ~ "post-september"))
+
+#get the number of surveys per period in each site in each year
+surveys.by.period <- records %>%
+  distinct(survey.info, .keep_all = TRUE) %>%
+  group_by(site, year, sampling.period) %>%
+          summarise(surveys.per.period = n())
+
+
+#make number of surveys per period into colums by pivot wider
+surveys.by.period2 <- surveys.by.period %>%
+  pivot_wider(names_from = sampling.period,
+              values_from = surveys.per.period,
+              values_fill = 0)  %>%
+  mutate(site.year = paste(site, year, sep = "_"), 
+         all.4 = per1 > 0 & per2 > 0 & per3 > 0 & per4 > 0) %>%
+  ungroup()%>%
+  dplyr::select(-c(site, year))
+
+records <- merge(records, surveys.by.period2, by = "site.year")
+
+head(records)
+  
+```
+
+
+#filter records to site years sampled in 4 main periods
+```{r}
+
+```
+
+
+
 ## Get records per species per year, filtered to only site-year combinations that meet : 
 ##months with survey records: >= 5, for at least three years
 
@@ -566,8 +616,10 @@ print("number of sites in 2015-2019")
 nrow(sum.5.year )
 
 
-#yes, I know this is a copy and paste of the lines above
+#yes, I know this is mostly a copy and paste with 4th line below added
+
 #how many years per site for the years 2015-2019 with at least 5 months data?
+
 sum.5.year <- sum.months %>% 
   dplyr::select(site.year, site, year, months.surveyed) %>%
   filter(year %in% 2015:2019,
@@ -578,23 +630,19 @@ sum.5.year <- sum.months %>%
 print("number of sites in 2015-2019 with at least 5 months data")
 nrow(sum.5.year )
 
-sites.keep <- filter(sum.5.year,
-                     years.15.19>=3)
-  
-print("number of sites in 2015-2019 with at least 5 months data in at least three years")
-nrow(sum.5.year )
 
-#site year combinations to keep (site-years surveyed in at least 5 months, sites with at least three years such data)  
+table(sum.5.year$years.15.19)
+
+sites.keep <- filter(sum.5.year,
+                     years.15.19 >= 2)
+  
+#site year combinations to keep (site-years surveyed in at least 5 months, sites with at least two years such data)  
 site.years.keep <- sum.months %>%
   filter(year %in% 2015:2019,
          months.surveyed >=5,
          site %in% sites.keep$site) 
 
-print("check that I have same number of sites in site.year.keep and in")
-length(unique(site.years.keep$site))
-
-  
-print("number of sites in 2015-2019 with years surveyed in at least 5 months, sites with at least three years such data")
+print("number of sites in 2015-2019 with years surveyed in at least 5 months, sites with at least two  years such data")
 length(unique(site.years.keep$site) )
 
 
@@ -606,25 +654,13 @@ records.site.5.year <-  records.site.year %>%
 print("records in 2015-2019 dataset")
 nrow(records.site.5.year)
 
-
-print("sites in 2015-2019 dataset")
+#check it is the same number of sites
+print("remaining sites in 2015-2019 dataset")
 length(unique(records.site.5.year$site))
 
 print("species in 2015-2019 dataset")
 length(unique(records.site.5.year$species.no))
 
-print("records in 2015-2019 dataset")
-nrow(records.site.5.year)
-
-
-print("sites in 2015-2019 dataset")
-length(unique(records.site.5.year$site))
-
-print("species in 2015-2019 dataset")
-length(unique(records.site.5.year$species.no))
-
-
-#table(sum.5.year$years.15.19)
 
 print("number of sites before merging operation")
 nrow(sites)
@@ -786,8 +822,18 @@ sum3
 ```{r}
 plot(richness~coverage, data = sites.15.19)
 
+plot(richness~coverage, data = sites.15.19, xlim = c(0.96, 1))
 
-plot(coverage~years.15.19, data = sites.15.19)
+# Step 1: Call the pdf command to start the plot
+pdf(file = "rich+cov.pdf",  
+    width = 4, # The width of the plot in inches
+    height = 4) # The height of the plot in inches
+
+plot(richness~coverage, data = sites.15.19, xlim = c(0.96, 1))
+
+
+# Step 3: Run dev.off() to create the file!
+dev.off()
 
 m2 <- lm(richness~coverage, data = sites.15.19)
 
@@ -810,7 +856,7 @@ print("number of sites before filtering out adequate coverage ")
 nrow(sites.15.19)
 
 sites.spatial <- sites.15.19 %>% 
-                filter(coverage >= 0.9)
+                filter(coverage >= 0.99)
 
 print("minimum coverage in selected sites")
 min(sites.spatial$coverage)
@@ -841,14 +887,25 @@ basemap <-tm_shape(bounds.2) +
 pointsmap <- basemap +
 tm_shape(plot.points) +
   tm_symbols(size = 0.05, col = "blue")
-# 
-# pointsmap2 <- basemap + 
-# tm_shape(plot.points) +
-#   tm_symbols(size = 0.5, col = "blue")
-# 
-# 
+
+pointsmap2 <- basemap +
+tm_shape(plot.points) +
+  tm_symbols(size = 0.5, alpha = 0.5, col = "blue")
+
+
 print(pointsmap)
-# print(pointsmap2)
+print(pointsmap2)
+
+pdf(file = "map_sites.pdf",  
+    width = 4, # The width of the plot in inches
+    height = 4) # The height of the plot in inches
+
+print(pointsmap2)
+
+
+# Step 3: Run dev.off() to create the file!
+dev.off()
+
 ```
 
 
@@ -879,6 +936,7 @@ str(sites.multiyear)
 
 ```
 
+#below needs to be updated, 
 
 ```{r}
 #get year by species matrix for all sites with greater than 40 years of records
