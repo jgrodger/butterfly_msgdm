@@ -73,6 +73,8 @@ bounds.2 <- readRDS(here("./Data./Input_Environmental_Data./gb_multipolygon.rds"
 
 ```{r}
 head(records)
+print("records")
+nrow(records)
 summary(records$YEAR)
 ```
 ## this shows that column names need attention
@@ -192,13 +194,12 @@ table(sites$survey.type)
 ```{r}
 
 # for inspection only, sites that have no co-ordinates or grid square reference
-
-
 bad.sites <- filter(sites, is.na(longitude) == T &  is.na(gridref) ==T, 
                     gridref != "Lurgan")
 
 
 
+#the sites with inadequate info were not in records data
 
 print("number of sites with inadequate locality info")
 nrow(bad.sites)
@@ -228,12 +229,6 @@ sites <- sites%>%
          country != "Channel Isles" & country != "Isle of Man",
                site != 1791 & site != 1837) %>% #filter 138 Irish sites
                     dplyr::select(-c(even, str.len.gridref))
-
-
-records <- records %>%
-  filter(site %in% sites$site)
-
- 
 
 species <- species %>% 
   filter (species.no %in% unique(records$species.no)) #species after filtering out Ireland,  Channel Islands, Lundy, Scilly, Isle of Man"
@@ -422,63 +417,6 @@ summary(m1)
 
 
 
-## check distribution of number of surveys per site per year, plot number of sites surveyed per year in dataset, add years of surveys per site to site info
-```{r}
-
-
-#surveys per site per year
-surveys.site.year <-   records %>% 
-  distinct(survey.info, .keep_all = TRUE) %>%
-  group_by (site, year)  %>% 
-summarise(n = n())
-
-#inspect frequency distribution of surveys per site per year
-print("surveys per site per year")
-summary(surveys.site.year$n)
-hist(surveys.site.year$n, main = "Surveys per site per year")
-
-sum2 <- surveys.site.year %>%
-  mutate(n = as.character(n)) %>%
-  group_by(n) %>%
-      summarise(freq.survey = n())
-sum2
-# I thought it odd that some sites had more surveys than there are weeks in a year
-#inspecting shows that these sites were surveyed multiple times per week in these years
-check<- records %>%
-  filter(site == 4831, year == 2019)%>% 
-  distinct(survey.info, .keep_all = TRUE)
-
-check<- records %>%
-  filter(site == 4, year == 1976)%>% 
-  distinct(survey.info, .keep_all = TRUE)
-
-#get plot of sites surveyed per year by year
-sites.per.year <- surveys.site.year %>% 
-  group_by(year)%>% 
-summarise(sites = n())
-print("sites per year")
-summary(sites.per.year$sites)
-plot(sites~year, data = sites.per.year)
-
-#years per site summary and histogram
-years.per.site <- surveys.site.year %>% 
-  group_by(site)%>% 
-summarise(years.surveyed = n(),
-          first.year = min(year),
-          last.year = max(year))
-
-
-print("years per site")
-summary(years.per.site$years.surveyed)
-hist(years.per.site$years.surveyed, xlim  = c(0, 50))
-
-
-print("number of sites before merging operation")
-nrow(sites)
-sites <- merge(sites, years.per.site)  
-print("number of sites after merging operation")
-nrow(sites)
-```
 
 ## Get vectors of sites time periods
 
@@ -487,7 +425,6 @@ nrow(sites)
 # a function to get a vector of site names for sites sampled in a r period
 #x should be the above site.and.year
 #condit is a condition to filter by
-
 
 #filter_() might stop working, deprecated...
 get.sites.in.date.range <- function(x, condit){
@@ -501,44 +438,44 @@ sites.out <- sites.out[['site']]
 }
 
 # dataframe of sites and years sampled
-site.and.year <- dplyr::select(surveys.site.year, site, year)
+site.and.year <- dplyr::select(records, site, year)
 
 sites.5.years <- get.sites.in.date.range(site.and.year, "year >= 2015 & year <=2019")
 
 
-sites.1975 <- get.sites.in.date.range(site.and.year, "year == 1975")
-sites.1980 <- get.sites.in.date.range(site.and.year, "year == 1980")
-sites.1985 <- get.sites.in.date.range(site.and.year, "year == 1985")
-sites.1990 <- get.sites.in.date.range(site.and.year, "year == 1990")
-sites.1995 <- get.sites.in.date.range(site.and.year, "year == 1995")
-sites.2000 <- get.sites.in.date.range(site.and.year, "year == 2000")
-sites.2005 <- get.sites.in.date.range(site.and.year, "year == 2005")
-sites.2010 <- get.sites.in.date.range(site.and.year, "year == 2010")
-sites.2015 <- get.sites.in.date.range(site.and.year, "year == 2015")
-sites.2016 <- get.sites.in.date.range(site.and.year, "year == 2016")
-sites.2017 <- get.sites.in.date.range(site.and.year, "year == 2017")
-sites.2018 <- get.sites.in.date.range(site.and.year, "year == 2018")
-sites.2019 <- get.sites.in.date.range(site.and.year, "year == 2019")
-sites.2022 <- get.sites.in.date.range(site.and.year, "year == 2022")
-
-
-site.snapshots.to.map <- list(
-  sites.1975,
-  sites.1980, 
-  sites.1985, 
-  sites.1990, 
-  sites.1995, 
-  sites.2000, 
-  sites.2005,
-  sites.2010,
-  sites.2015,
-  sites.2018, 
-  sites.2019, 
-  sites.2022)
+# sites.1975 <- get.sites.in.date.range(site.and.year, "year == 1975")
+# sites.1980 <- get.sites.in.date.range(site.and.year, "year == 1980")
+# sites.1985 <- get.sites.in.date.range(site.and.year, "year == 1985")
+# sites.1990 <- get.sites.in.date.range(site.and.year, "year == 1990")
+# sites.1995 <- get.sites.in.date.range(site.and.year, "year == 1995")
+# sites.2000 <- get.sites.in.date.range(site.and.year, "year == 2000")
+# sites.2005 <- get.sites.in.date.range(site.and.year, "year == 2005")
+# sites.2010 <- get.sites.in.date.range(site.and.year, "year == 2010")
+# sites.2015 <- get.sites.in.date.range(site.and.year, "year == 2015")
+# sites.2016 <- get.sites.in.date.range(site.and.year, "year == 2016")
+# sites.2017 <- get.sites.in.date.range(site.and.year, "year == 2017")
+# sites.2018 <- get.sites.in.date.range(site.and.year, "year == 2018")
+# sites.2019 <- get.sites.in.date.range(site.and.year, "year == 2019")
+# sites.2022 <- get.sites.in.date.range(site.and.year, "year == 2022")
+# 
+# 
+# site.snapshots.to.map <- list(
+#   sites.1975,
+#   sites.1980, 
+#   sites.1985, 
+#   sites.1990, 
+#   sites.1995, 
+#   sites.2000, 
+#   sites.2005,
+#   sites.2010,
+#   sites.2015,
+#   sites.2018, 
+#   sites.2019, 
+#  sites.2022)
 
 
 ```
-
+## check the distribution of surveys over sampling weeks and make a variable for records which denotes which sampling period in the year each survey was done. Summarise to find the number of years for each site (2015-2019) that sampling happened in all 4 sampling periods covering March-September and add the info to records
 ```{r}
 table(records$week.no)
 
@@ -571,22 +508,86 @@ surveys.by.period2 <- surveys.by.period %>%
               values_from = surveys.per.period,
               values_fill = 0)  %>%
   mutate(site.year = paste(site, year, sep = "_"), 
-         all.4 = per1 > 0 & per2 > 0 & per3 > 0 & per4 > 0) %>%
-  ungroup()%>%
-  dplyr::select(-c(site, year))
+         all.4 = per1 > 0 & per2 > 0 & per3 > 0 & per4 > 0) %>% #this is the criterion for inclusion, being sampled in all 4 periods
+  ungroup()
 
-records <- merge(records, surveys.by.period2, by = "site.year")
 
-head(records)
+#get the site-years with sampling in all 4 periods in 2015 to 2019
+surveys.by.period3  <- surveys.by.period2 %>% 
+  filter(all.4 = TRUE, 
+         year %in% 2015:2019) %>% 
+  group_by(site) %>%
+  summarise(well.sampled.years = n())
+
+#Check how many sites were well sampled in 1, 2 , 3, 4 or 5 years
+table(surveys.by.period3$well.sampled.years)
+
+surveys.all.4 <- select(surveys.by.period2, site.year, all.4)
+
+
+records <- merge(records, surveys.all.4, by = "site.year", all.x = TRUE)
+
+#add this info to records
+records <- merge(records, surveys.by.period3, by = "site", all.x = TRUE)
+
+check <- head(records, 100)
+
   
 ```
 
 
-#filter records to site years sampled in 4 main periods
+
 ```{r}
 
+
+print("filter to 2015-2019")
+records.keep <- records %>% 
+  filter(year %in% 2015:2019)
+
+print("number of records")
+nrow(records.keep)
+
+
+print("number of sites")
+length(unique(records.keep$site))
+
+print("number of species")
+length(unique(records.keep$species.no))
+
+print("filter to sites with two well sampled years")
+
+records.keep <- records.keep %>% 
+  filter(well.sampled.years >= 2)
+
+print("number of records")
+nrow(records.keep)
+
+
+print("number of sites")
+length(unique(records.keep$site))
+
+print("number of species")
+length(unique(records.keep$species.no))
 ```
 
+
+```{r}
+#summarise records to get records per site per years
+
+records.site.5.year <-  records.keep %>%
+  group_by (site, year, species.no)  %>% 
+summarise(annual.records = sum(count))   %>% 
+  mutate(site.year = paste(site, year, sep = "_")) 
+
+
+print("number of sites")
+length(unique(records.site.5.year$site))
+
+print("number of species")
+length(unique(records.site.5.year$species.no))
+
+
+```
 
 
 ## Get records per species per year, filtered to only site-year combinations that meet : 
@@ -596,77 +597,85 @@ head(records)
 
 ```{r}
 
-#summarise records to get records per site per years
-
-records.site.year <-  records %>%
-  group_by (site, year, species.no)  %>% 
-summarise(annual.records = sum(count))   %>% 
-  mutate(site.year = paste(site, year, sep = "_"))  
+ 
 
 
+# 
+# #how many years per site for the years 2015-2019 in the filtered data?
+# sum.5.year <- sum.months %>% 
+#   dplyr::select(site.year, site, year, months.surveyed) %>%
+#   filter(year %in% 2015:2019) %>%
+#   group_by(site) %>%
+#   summarise(years.15.19 = n())
+#   
+# print("number of sites in 2015-2019")
+# nrow(sum.5.year )
+# 
 
-#how many years per site for the years 2015-2019 in the filtered data?
-sum.5.year <- sum.months %>% 
-  dplyr::select(site.year, site, year, months.surveyed) %>%
-  filter(year %in% 2015:2019) %>%
-  group_by(site) %>%
-  summarise(years.15.19 = n())
-  
-print("number of sites in 2015-2019")
-nrow(sum.5.year )
 
 
-#yes, I know this is mostly a copy and paste with 4th line below added
+#old criterion, at least 5 months sampled
+# sum.5.year <- sum.months %>% 
+#   dplyr::select(site.year, site, year, months.surveyed) %>%
+#   filter(year %in% 2015:2019,
+#         months.surveyed >=5 ) %>%
+#   group_by(site) %>%
+#   summarise(years.15.19 = n())
+#   
+# print("number of sites in 2015-2019 with at least 5 months data")
+# nrow(sum.5.year )
 
 #how many years per site for the years 2015-2019 with at least 5 months data?
 
-sum.5.year <- sum.months %>% 
-  dplyr::select(site.year, site, year, months.surveyed) %>%
-  filter(year %in% 2015:2019,
-        months.surveyed >=5 ) %>%
-  group_by(site) %>%
-  summarise(years.15.19 = n())
-  
-print("number of sites in 2015-2019 with at least 5 months data")
-nrow(sum.5.year )
-
-
-table(sum.5.year$years.15.19)
-
-sites.keep <- filter(sum.5.year,
-                     years.15.19 >= 2)
-  
-#site year combinations to keep (site-years surveyed in at least 5 months, sites with at least two years such data)  
-site.years.keep <- sum.months %>%
-  filter(year %in% 2015:2019,
-         months.surveyed >=5,
-         site %in% sites.keep$site) 
-
-print("number of sites in 2015-2019 with years surveyed in at least 5 months, sites with at least two  years such data")
-length(unique(site.years.keep$site) )
-
-
-#filter records per site per year 2015-2019
-records.site.5.year <-  records.site.year %>%
-  filter(site.year %in% site.years.keep$site.year)
-
-
-print("records in 2015-2019 dataset")
-nrow(records.site.5.year)
-
-#check it is the same number of sites
-print("remaining sites in 2015-2019 dataset")
-length(unique(records.site.5.year$site))
-
-print("species in 2015-2019 dataset")
-length(unique(records.site.5.year$species.no))
-
-
-print("number of sites before merging operation")
-nrow(sites)
-sites <- merge(sites, sum.5.year, by = "site", all.x = TRUE)
-print("number of sites after merging operation")
-nrow(sites)
+# 
+# #This is mostly a copy and paste with 4th line below added
+# sum.5.year <- sum.months %>% 
+#   dplyr::select(site.year, site, year, months.surveyed) %>%
+#   filter(year %in% 2015:2019,
+#         well.sampled.years >=2 ) %>%
+#   group_by(site) %>%
+#   summarise(years.15.19 = n())
+#   
+# print("number of sites in 2015-2019 with at least 5 months data")
+# nrow(sum.5.year )
+# 
+# 
+# table(sum.5.year$years.15.19)
+# 
+# sites.keep <- filter(sum.5.year,
+#                      years.15.19 >= 2)
+#   
+# #site year combinations to keep (site-years surveyed in at least 5 months, sites with at least two years such data)  
+# site.years.keep <- sum.months %>%
+#   filter(year %in% 2015:2019,
+#          months.surveyed >=5,
+#          site %in% sites.keep$site) 
+# 
+# print("number of sites in 2015-2019 with years surveyed in at least 5 months, sites with at least two  years such data")
+# length(unique(site.years.keep$site) )
+# 
+# 
+# #filter records per site per year 2015-2019
+# records.site.5.year <-  records.site.year %>%
+#   filter(site.year %in% site.years.keep$site.year)
+# 
+# 
+# print("records in 2015-2019 dataset")
+# nrow(records.site.5.year)
+# 
+# #check it is the same number of sites
+# print("remaining sites in 2015-2019 dataset")
+# length(unique(records.site.5.year$site))
+# 
+# print("species in 2015-2019 dataset")
+# length(unique(records.site.5.year$species.no))
+# 
+# 
+# print("number of sites before merging operation")
+# nrow(sites)
+# sites <- merge(sites, sum.5.year, by = "site", all.x = TRUE)
+# print("number of sites after merging operation")
+# nrow(sites)
 
 
 ```
@@ -675,7 +684,7 @@ nrow(sites)
 
 
 ```{r}
-head(records.site.year)
+head(records.site.5.year)
 ```
 
 
@@ -694,11 +703,9 @@ aggregated.records <- records.site.5.year %>%
 #get a site by species dataframe with counts of observations
 site.by.obs.5.year.counts <- aggregated.records %>%
   pivot_wider(names_from = species.no,
-              values_from = total.records) %>%
+              values_from = total.records,
+              values_fill = 0) %>% # for cases when there wasn't a zero count record for a species that wasn't recorded in a survey, should still be zero
   column_to_rownames(var = "site")
-
-# change NAs to zeros: these were cases when there wasn't a zero count record for a species that wasn't recorded in a survey
-site.by.obs.5.year.counts[is.na(site.by.obs.5.year.counts)] <- 0
 
 
 ```
@@ -715,16 +722,8 @@ site.by.obs.5.year.counts <- site.by.obs.5.year.counts %>%
   mutate(species_1000 = species_119 + species_120) %>%
   dplyr::select(-c(species_119, species_120))
 
-#check if any sites have zero observations
+print("check if any sites have zero observations")
 any(rowSums(site.by.obs.5.year.counts) == 0)
-
-check<- filter(site.by.obs.5.year.counts, rowSums(site.by.obs.5.year.counts) == 0)
-
-check1<- filter(records, site == 3325, year %in% 2015:2019)
-
-
-#this was needed under previous filtering scheme, keepining in here in case needed again
-site.by.obs.5.year.counts <- site.by.obs.5.year.counts[rowSums(site.by.obs.5.year.counts) > 0, ]
 
 print("sites and species in matrix")
 dim(site.by.obs.5.year.counts)
@@ -799,7 +798,7 @@ names(cov.merge) <- c("site", "total.butterflies", "richness", "coverage")
 ```{r}
 
 sites.15.19 <- sites %>%
-  filter(site %in% sites.keep$site)
+  filter(site %in% cov.merge$site)
 
 sites.15.19 <- merge(
   sites.15.19, cov.merge, by = "site"
@@ -809,16 +808,16 @@ sites.15.19 <- merge(
 sum3 <- sites.15.19 %>%
   group_by(survey.type) %>%
   summarise(n = n(),
-            richness = mean(richness),
-            butterflies = mean(total.butterflies),
-            coverage = mean(coverage)
+            mean.richness = mean(richness),
+            mean.individuals = mean(total.butterflies),
+            mean.coverage = mean(coverage)
       )
 sum3
 
 ```
 
 
-
+#I think we should check sensitivity to different coverage thresholds
 ```{r}
 plot(richness~coverage, data = sites.15.19)
 
@@ -839,12 +838,29 @@ m2 <- lm(richness~coverage, data = sites.15.19)
 
 summary(m2)
 
-check<- filter(sites.15.19, coverage > 0.995)
+check<- filter(sites.15.19, coverage >= 0.99)
 m3 <- lm(richness~coverage, data = check)
 
-summary(m3)
+
+check1<- filter(sites.15.19, coverage >= 0.9975)
+m4 <- lm(richness~coverage, data = check1)
+
+
+summary(m4)
 ```
 
+```{r}
+library(segmented)
+
+
+m5<- segmented(m2, psi = c(0.995))
+
+summary(m5)
+
+plot(m5)
+
+plot(m5, xlim = c(0.95,1), res=TRUE, col=2, conf.level=.95)
+```
 
 
 #filter to sites with sufficient coverage and effort
@@ -906,6 +922,107 @@ print(pointsmap2)
 # Step 3: Run dev.off() to create the file!
 dev.off()
 
+```
+
+
+
+
+## check distribution of number of surveys per site per year, plot number of sites surveyed per year in dataset, add years of surveys per site to site info
+```{r}
+
+
+#surveys per site per year
+surveys.site.year <-   records %>% 
+  distinct(survey.info, .keep_all = TRUE) %>%
+  group_by (site, year)  %>% 
+summarise(n = n())
+
+#inspect frequency distribution of surveys per site per year
+print("surveys per site per year")
+summary(surveys.site.year$n)
+hist(surveys.site.year$n, main = "Surveys per site per year")
+
+sum2 <- surveys.site.year %>%
+  mutate(n = as.character(n)) %>%
+  group_by(n) %>%
+      summarise(freq.survey = n())
+sum2
+# I thought it odd that some sites had more surveys than there are weeks in a year
+#inspecting shows that these sites were surveyed multiple times per week in these years
+check<- records %>%
+  filter(site == 4831, year == 2019)%>% 
+  distinct(survey.info, .keep_all = TRUE)
+
+check<- records %>%
+  filter(site == 4, year == 1976)%>% 
+  distinct(survey.info, .keep_all = TRUE)
+
+#get plot of sites surveyed per year by year
+sites.per.year <- surveys.site.year %>% 
+  group_by(year)%>% 
+summarise(sites = n())
+print("sites per year")
+summary(sites.per.year$sites)
+plot(sites~year, data = sites.per.year)
+
+#years per site summary and histogram
+years.per.site <- surveys.site.year %>% 
+  group_by(site)%>% 
+summarise(years.surveyed = n(),
+          first.year = min(year),
+          last.year = max(year))
+
+
+print("years per site")
+summary(years.per.site$years.surveyed)
+hist(years.per.site$years.surveyed, xlim  = c(0, 50))
+
+
+print("number of sites before merging operation")
+nrow(sites)
+sites <- merge(sites, years.per.site)  
+print("number of sites after merging operation")
+nrow(sites)
+```
+#filter records to site.years with sampling in all 4 periods
+```{r}
+records.multiyear <- records %>%
+  filter(all.4 == TRUE)
+print("all 4 sampling periods")
+print("records")
+nrow(records.multiyear)
+print("sites")
+length(unique(records.multiyear$site))
+
+records.multiyear <- records.multiyear %>%
+  filter(all.4 == TRUE)
+print("all 4 sampling periods")
+print("records")
+nrow(records.multiyear)
+print("sites")
+length(unique(records$site))
+
+```
+
+
+
+
+```{r}
+
+records.site.5.year$species.no <- paste("species", records.site.5.year$species.no, sep = "_")
+
+aggregated.records <- records.site.5.year %>%
+  dplyr::select(-site.year)%>%
+  group_by(site, species.no)%>%
+    summarise(total.records = sum(annual.records))
+  
+
+#get a site by species dataframe with counts of observations
+site.by.obs.5.year.counts <- aggregated.records %>%
+  pivot_wider(names_from = species.no,
+              values_from = total.records,
+              values_fill = 0) %>% # for cases when there wasn't a zero count record for a species that wasn't recorded in a survey, should still be zero
+  column_to_rownames(var = "site")
 ```
 
 
