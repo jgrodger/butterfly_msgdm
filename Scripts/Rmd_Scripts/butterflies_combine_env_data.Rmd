@@ -3,7 +3,7 @@ title: "R Notebook"
 output: html_notebook
 ---
 
-#this is copied from ladybirds, I have imported butterfly data but filtering and processing to get all the right size matrices is needed
+
 
 ## setup
 ```{r}
@@ -21,7 +21,7 @@ library(sf)
 library(tmap)
 library(here)
 
-conflict_prefer("filter", "dplyr", "stats")
+conflicts_prefer(dplyr::filter)
 
 # library(readr)
 # 
@@ -50,20 +50,21 @@ crs(gb)
 #site by species matrix
 
 # Still need to replace this with occurrence over multiple years
-site.by.species <- readRDS(here("./Data/Processed_Data/site_by_species_2015_to_2019.rds"))
+site.by.species <- readRDS(here("./Data/Processed_Data/site_by_obs_5_year_pres_abs.rds"))
 
 #get site by xy
-sites <- readRDS(here("./Data/Processed_Data/processed_sites_with_ngr.rds"))
+sites <- readRDS(here("./Data/Processed_Data/processed_5_year_sites.rds"))
+
+species <-  readRDS(here("./Data/Processed_Data/species_5_year.rds"))
 
 site.by.humans <- readRDS(here("./Data/Input_Environmental_Data/human_popn.rds"))
 
-site.by.humans <- data.frame(site.by.humans)#ideally should have been saved as a df before writing as rds
- 
+
 site.by.ph <- readRDS(here("./Data/Input_Environmental_Data/ph_1km_df.rds"))
 
 site.by.trees <-  readRDS(here("./Data/Input_Environmental_Data/trees_1km_df.rds"))
 
-site.by.conifer.dominance <-  readRDS(here("./Data/Input_Environmental_Data/conifer_dominance_1km_df.rds"))
+#site.by.conifer.dominance <-  readRDS(here("./Data/Input_Environmental_Data/conifer_dominance_1km_df.rds"))
 
 site.by.nitrogen <- readRDS(here("./Data/Input_Environmental_Data/nitro.rds"))
 
@@ -107,100 +108,77 @@ plot.df(df = site.by.prec, ext = gb)
 
 plot.df(df = site.by.wetness, ext = gb)
 
-plot.df(df = site.by.trees, ext = gb)
 
 
 plot.df(df = site.by.ph, ext = gb)
 
 
-plot.df(df = site.by.humans, ext = gb)
-
+plot.df(df = site.by.trees, ext = gb)
 
 plot.df(df = site.by.nitrogen, ext = gb)
 
 
-```
+plot.df(site.by.pesticide.risk, ext = gb)
 
+plot.df(df = site.by.humans, ext = gb)
 
-
-# get a daframe of site by observations, then site by log(observartions)
-```{r}
-
-surveys.site.year$site <- paste("site", surveys.site.year$site, sep = "_")
-
-
-
-
-site.by.obs <- surveys.site.year %>%
-  ungroup() %>%
-    filter(year ==2018)  %>%
-      select(-year)  %>%
-     rename(observations = surveys)  %>%
-      column_to_rownames(var = "site")
-
-site.by.log.obs <- site.by.obs %>%
-  mutate(log.observations = log(observations), .keep = "none")
 
 
 
 ```
-
-#check surveys per site per year
 ```{r}
-surveys.site.year <- surveys.site.year %>%
-  filter (year %in% 2015:2019)
-
-hist(surveys.site.year$surveys).
-
-sum <- surveys.site.year %>%
-         mutate(surveys = as.character(surveys),
-           year = as.character(year)) %>%
-  group_by (year, surveys) %>%
-  summarise(n = n())
-
-
-
-```
-
-
-
-
-## Get log % cover for the sites
-```{r}
-
-#keep all vars for now
-#site.by.lc <- site.by.lc  %>%
-  #  dplyr::select(bro.wood.1, con.wood.2, arable.3, imp.grass.4, seminat.grass.5to8, heath.9to10, freshwater.14, coastal.15to19, #urban.20, suburban.21)
 
 #now we need the transformed land cover composition of the grid cells
-logplusone <- function(x)
-{log(x + 1)}
+log10_plusone <- function(x)
+{log10(x + 1)}
 
-#site.by.lc.logs <- site.by.lc %>%
-#  mutate(across(colnames(site.by.lc), logplusone)) 
+
+site.by.log10.pesticide.risk <- site.by.pesticide.risk %>%
+  mutate(log10.pesticide.risk = log10_plusone(pest)) %>%
+  select(x, y, log10.pesticide.risk, ngr.1km) #also gets it in correct order
+
+
+
+site.by.log10.humans <- site.by.humans %>%
+  mutate(log10.humans = log10_plusone(gbr_pd_2017_1km)) %>%
+  select(x, y, log10.humans, ngr.1km) #also gets it in correct order
+
+
+plot.df(site.by.log10.pesticide.risk, ext = gb)
+
+
+plot.df(site.by.log10.humans, ext = gb)
 ```
-
 
 ## get variable names as desired in dataframes
 
 ```{r}
 #get site as a variable in the sites and site by species data frames
 
-sites <- rownames_to_column(sites, var = "site")
 
-site.by.species <- rownames_to_column(site.by.species, var = "site")
 
-site.by.ph <-rename(site.by.ph, ph = ph_idw)
+rownames(site.by.species) <- paste("site", rownames(site.by.species), sep = "_")
 
-site.by.humans <- site.by.humans %>%
-  rename(human.density = gbr_pd_2017_1km)%>%
+
+site.by.temp <- site.by.temp %>%
+  rename(mean.ann.temp = mean)
+
+site.by.prec <- site.by.prec %>%
+  rename(mean.ann.rain = mean) %>%
+  select(-c(x,y))
+
+site.by.ph <- site.by.ph %>%
+  select(-c(x, y)) %>%
+  rename(ph = ph_idw)
+
+site.by.log10.humans <- site.by.log10.humans %>%
   select(-c(x, y))
 
 site.by.trees <- site.by.trees %>%
   rename(tree.density = tree.cover.density)%>%
   select(-c(x, y)) 
 
-site.by.conifer.dominance <-select(site.by.conifer.dominance, -c(x, y))
+#site.by.conifer.dominance <-select(site.by.conifer.dominance, -c(x, y))
 
 
 site.by.nitrogen <-select(site.by.nitrogen, total.n, ngr.1km)
@@ -211,19 +189,16 @@ site.by.pesticide.risk <- site.by.pesticide.risk %>%
   select(-c(x, y)) 
 
 
+site.by.log10.pesticide.risk <- site.by.log10.pesticide.risk %>%
+  select(-c(x, y)) 
+
+
+
 
 site.by.wetness <- site.by.wetness %>%
   rename(topgraphic.wetness = Band1) %>%
   select(-c(x,y))
 
-site.by.temp <- site.by.temp %>%
-  rename(mean.ann.temp = mean) %>%
-  select(-c(x,y))
-
-
-site.by.prec <- site.by.prec %>%
-  rename(mean.ann.rain = mean) %>%
-  select(-c(x,y))
 
 ```
 
@@ -240,38 +215,62 @@ site.by.prec <- site.by.prec %>%
 #sites.2018 <- sites %>%
 #     filter(sites$site %in% site.by.species$site)
 
-sites.kept <- sites %>%
-     filter(sites$site %in% site.by.species$site)
+sites$site <- paste("site", sites$site, sep = "_")
 
-sites.ngr <- select(sites.kept,site,  ngr.1km)
+nrow(sites)
 
+#the numbers below are the number of grid cells with data
 
+site.by.env <- site.by.temp %>%
+  filter(ngr.1km %in% sites$ngr.1km ) %>%
+  select(c(ngr.1km, x, y, mean.ann.temp))
 
-site.by.env <- merge(sites.ngr, site.by.ph, by = "ngr.1km")
+nrow(site.by.env)
 
+site.by.env <- merge(site.by.env, site.by.prec, by = "ngr.1km")
 
-site.by.env <- merge(site.by.env, site.by.humans, by = "ngr.1km") 
-
-site.by.env <- merge(site.by.env, site.by.trees, by = "ngr.1km")
-
-
-
-
-site.by.env <- merge(site.by.env, site.by.nitrogen, by = "ngr.1km")
-
-
-
-site.by.env <- merge(site.by.env, site.by.pesticide.risk, by = "ngr.1km")
+nrow(site.by.env)
 
 
 
 site.by.env <- merge(site.by.env, site.by.wetness, by = "ngr.1km")
 
+nrow(site.by.env)
 
-site.by.env <- merge(site.by.env, site.by.temp, by = "ngr.1km")
+site.by.env <- merge(site.by.env,site.by.ph,  by = "ngr.1km")
+
+nrow(site.by.env)
 
 
-site.by.env <- merge(site.by.env, site.by.prec, by = "ngr.1km")
+site.by.env <- merge(site.by.env, site.by.nitrogen, by = "ngr.1km")
+
+nrow(site.by.env)
+
+site.by.env <- merge(site.by.env, site.by.log10.humans, by = "ngr.1km") 
+
+
+nrow(site.by.env)
+
+site.by.env <- merge(site.by.env, site.by.pesticide.risk, by = "ngr.1km")
+
+nrow(site.by.env)
+
+site.by.env <- merge(site.by.env, site.by.log10.pesticide.risk, by = "ngr.1km")
+
+nrow(site.by.env)
+
+site.by.env <- merge(site.by.env, site.by.trees, by = "ngr.1km")
+
+nrow(site.by.env)
+
+
+site.by.site.name <- sites %>%
+  select(site, ngr.1km)
+
+site.by.env <- merge(site.by.env, site.by.site.name, by = "ngr.1km")
+
+#this final number goes up as there are often multiple sites per grid cell
+nrow(site.by.env)
 
 ```
 
@@ -304,13 +303,6 @@ print(pointsmap2)
 
 #isle of man and channell islands should probably be excluded
 ```
-#to do:separate WCS and other surveys!
-#to do:query sites with too many surveys
-
-```{r}
-
-```
-
 
 
 ```{r}
@@ -319,60 +311,40 @@ hist(site.by.env$mean.ann.rain)
 hist(site.by.env$topgraphic.wetness )#note typo to be corrected
 hist(site.by.env$ph)
 hist(site.by.env$tree.density)
-hist(site.by.env$human.density)
+hist(site.by.env$log10.humans)
 hist(site.by.env$total.n )
+
+
 hist(site.by.env$pesticide.risk)
+hist(site.by.env$pesticide.risk, breaks = 100)
+hist(site.by.env$log10.pesticide.risk, breaks = 100)
+
 
 ```
-
-#transfrom skew variables as spline will work better
-
 ```{r}
 site.by.env <- site.by.env %>%
-    mutate (log.humans = log2(human.density),
-          log.pesticide.risk = log2(pesticide.risk +1), 
-          .keep = "unused")#remove original columns
-
-#note zeros in pesticide risk!
-hist(site.by.env$log.humans)
-hist(site.by.env$log.pesticide.risk)
+  select(-pesticide.risk)
 ```
 
 
 ```{r}
-cor(site.by.env[, 3:12], method = "pearson")
+cor(site.by.env[, 4:11], method = "pearson")
 ```
 
 
 ```{r}
-cor(site.by.env[, 3:12], method = "spearman")
+cor(site.by.env[, 4:11], method = "spearman")
 
 
 ```
-#to do: exclude outliers
-
 ```{r}
 
-```
-
-
-
-```{r}
-
-
-
-sites.2018 <- sites.2018 %>%
-     filter(sites.2018$ngr.1km %in% site.by.env$ngr.1km)
-
-
-site.by.species <- site.by.species %>%
-     filter(site.by.species$site %in% site.by.env$site)
-
-site.by.species <- column_to_rownames(site.by.species, var = "site")
+site.by.xy <- select(site.by.env, x, y)
 
 site.by.env <- column_to_rownames(site.by.env, var = "site")
 
-site.by.xy <- select(site.by.env, x, y)
+
+site.by.env <- select(site.by.env, -c(ngr.1km, x, y))
 ```
 
 
@@ -391,9 +363,9 @@ check
 
 ```{r}
 
-data.2018 <- list(sites.2018, site.by.species, site.by.env, site.by.xy, site.by.obs)
+data.5.years <- list(species, sites, site.by.species, site.by.env, site.by.xy)
 
-names(data.2018) <- c("sites.2018", "site.by.species", "site.by.env", "site.by.xy", "site.by.obs")
+names(data.2018) <- c("species", "sites", "site.by.species", "site.by.env", "site.by.xy")
 
 
 write_rds(data.2018, file = here("./Data/Processed_Data/butterfly.msgdm.data.2018.rds"))
