@@ -1,0 +1,614 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+
+
+
+## setup
+```{r}
+#The here package enables easy file referencing by using the top-level directory of a file project to easily build file paths."
+#about here package: https://here.r-lib.org/articles/here.html
+#https://github.com/jennybc/here_here
+#by running this before loading the package, we can get a message to check the correct root is being used
+here::i_am("Scripts/Rmd_Scripts/butterflies_msgdm_prelim_22_Nov_2023.Rmd")
+
+library(tidyverse)
+library(zetadiv)
+library(bipartite)
+library(mgcv)
+library(here)
+
+
+
+#library(foreach)
+#library(doParallel)
+#library(doSNOW)
+
+
+#(cl = makeCluster(parallel::detectCores()-2, type = "SOCK")) # Initialize all cores except for two
+#registerDoSNOW(cl)
+
+
+
+```
+
+
+# load data
+```{r}
+data.5.year <- readRDS(here("./Data/Processed_Data/butterfly.msgdm.data.5.years.rds"))
+
+str(data.5.year, max.level = 1)
+
+sites <- data.5.year$sites
+
+species <-  data.5.year$species
+
+
+site.by.species <- data.5.year$site.by.species
+  
+site.by.env <- data.5.year$site.by.env
+
+site.by.xy <- data.5.year$site.by.xy
+  
+
+```
+
+
+
+## Examine zeta decline
+```{r}
+zeta.dec1 <- Zeta.decline.ex(site.by.species, orders = 1:100)
+zeta.dec1
+summary(zeta.dec1$zeta.pl)
+summary(zeta.dec1$zeta.exp)
+zeta.dec1$aic
+```
+## Examine zeta decline just for lower orders
+```{r}
+zeta.dec1 <- Zeta.decline.ex(site.by.species, orders = 1:10)
+zeta.dec1
+summary(zeta.dec1$zeta.pl)
+summary(zeta.dec1$zeta.exp)
+zeta.dec1$aic
+```
+
+
+
+## Examine decay in zeta diversity with distance
+```{r warning = FALSE}
+
+zeta.ddecays <- Zeta.ddecays(xy = site.by.xy, site.by.species, sam = 500 , orders = 2:100,
+plot = TRUE, confint.level = 0.95)
+
+```
+
+
+
+
+
+```{r warning = FALSE}
+set.seed(1) 
+zeta.ddecay.lm. <- Zeta.ddecay(xy = site.by.xy, data.spec = site.by.species, order = 2,  
+                                   confint.level = 0.95) # the default regression is a linear model 
+set.seed(1) 
+zeta.ddecay.gam. <- Zeta.ddecay(xy = site.by.xy, data.spec = site.by.species, order = 2, 
+                                    reg.type="gam") # a generalised additive model is used 418 insteadn of the default linear model
+
+set.seed(1) 
+zeta.ddecay.lm. <- Zeta.ddecay(xy = site.by.xy, data.spec = site.by.species, order = 3,  
+                                   confint.level = 0.95) # the default regression is a linear model 
+set.seed(1) 
+zeta.ddecay.gam. <- Zeta.ddecay(xy = site.by.xy, data.spec = site.by.species, order = 3, 
+                                    reg.type="gam") # a generalised additive model is used 418 instead of the default linear model
+
+set.seed(1) 
+zeta.ddecay.lm. <- Zeta.ddecay(xy = site.by.xy, data.spec = site.by.species, order = 4,  
+                                   confint.level = 0.95) # the default regression is a linear model 
+set.seed(1) 
+zeta.ddecay.gam. <- Zeta.ddecay(xy = site.by.xy, data.spec = site.by.species, order = 4, 
+                                    reg.type="gam") # a generalised additive model is used 418 instead of the default linear model
+
+set.seed(1) 
+zeta.ddecay.lm. <- Zeta.ddecay(xy = site.by.xy, data.spec = site.by.species, order = 5,  
+                                   confint.level = 0.95) # the default regression is a linear model 
+set.seed(1) 
+zeta.ddecay.gam. <- Zeta.ddecay(xy = site.by.xy, data.spec = site.by.species, order = 5, 
+                                    reg.type="gam") # a generalised additive model is used 418 instead of the default linear model
+
+set.seed(1) 
+zeta.ddecay.lm. <- Zeta.ddecay(xy = site.by.xy, data.spec = site.by.species, order = 8,  
+                                   confint.level = 0.95) # the default regression is a linear model 
+set.seed(1) 
+zeta.ddecay.gam. <- Zeta.ddecay(xy = site.by.xy, data.spec = site.by.species, order = 8, 
+                                    reg.type="gam") # a generalised additive model is used 418 instead of the default linear model
+```
+
+```{r warning = FALSE}
+set.seed(1) 
+zeta.ddecay.lm. <- Zeta.ddecay(xy = site.by.xy, data.spec = site.by.species, order = 15,  
+                                   confint.level = 0.95) # the default regression is a linear model 
+set.seed(1) 
+zeta.ddecay.gam. <- Zeta.ddecay(xy = site.by.xy, data.spec = site.by.species, order = 15, 
+                                    reg.type="gam") # a generalised additive model is used 418 insteadn of the default linear model
+
+set.seed(1) 
+zeta.ddecay.lm. <- Zeta.ddecay(xy = site.by.xy, data.spec = site.by.species, order = 20,  
+                                   confint.level = 0.95) # the default regression is a linear model 
+set.seed(1) 
+zeta.ddecay.gam. <- Zeta.ddecay(xy = site.by.xy, data.spec = site.by.species, order = 20, 
+                                    reg.type="gam") # a generalised additive model is used 418 instead of the default linear model
+
+set.seed(1) 
+zeta.ddecay.lm. <- Zeta.ddecay(xy = site.by.xy, data.spec = site.by.species, order = 40,  
+                                   confint.level = 0.95) # the default regression is a linear model 
+set.seed(1) 
+zeta.ddecay.gam. <- Zeta.ddecay(xy = site.by.xy, data.spec = site.by.species, order = 40, 
+                                    reg.type="gam") # a generalised additive model is used 418 instead of the default linear model
+
+set.seed(1) 
+zeta.ddecay.lm. <- Zeta.ddecay(xy = site.by.xy, data.spec = site.by.species, order = 60,  
+                                   confint.level = 0.95) # the default regression is a linear model 
+set.seed(1) 
+zeta.ddecay.gam. <- Zeta.ddecay(xy = site.by.xy, data.spec = site.by.species, order = 60, 
+                                    reg.type="gam") # a generalised additive model is used 418 instead of the default linear model
+
+set.seed(1) 
+zeta.ddecay.lm. <- Zeta.ddecay(xy = site.by.xy, data.spec = site.by.species, order = 100,  
+                                   confint.level = 0.95) # the default regression is a linear model 
+set.seed(1) 
+zeta.ddecay.gam. <- Zeta.ddecay(xy = site.by.xy, data.spec = site.by.species, order = 100, 
+                                    reg.type="gam") # a generalised additive model is used 418 instead of the default linear model
+```
+
+```{r}
+cor(site.by.env)
+
+```
+
+
+
+```{r}
+cor(site.by.env, method = "spearman")
+```
+
+
+
+
+
+
+
+## GAM 
+
+```{r warning = FALSE}
+
+
+
+site.by.env.and.richness <- cbind(site.by.env, rowSums(site.by.species))
+
+
+site.by.env.and.richness <- site.by.env.and.richness %>%
+rename(species.richness = 'rowSums(site.by.species)')
+
+gam1 <- gam(species.richness ~ s(mean.ann.temp, k = 10) + s(mean.ann.rain, k = 10) + s(topgraphic.wetness, k = 10) + s(ph, k = 10) + s(total.n, k = 10) + s(tree.density, k = 10) + s(log10.pesticide.risk, k = 10) + s(log10.humans, k = 10),  data = site.by.env.and.richness, method= "REML")
+
+summary(gam1)
+plot.gam(gam1)
+
+pdf(here("./Output/gam.pdf"))
+plot.gam(gam1)
+dev.off()
+
+#gam from zetadiv, Code from Latombe et al. 2018
+
+#including log observations 
+
+print(Sys.time())
+zeta.gam <- Zeta.msgdm(site.by.species, site.by.env,xy=NULL,order=1,sam=500,normalize = FALSE,reg.type = "gam",family=gaussian(),control=glm.control(maxit = 500),empty.row = "remove",kn=2)
+
+
+
+summary(zeta.gam$model)
+
+```
+
+
+```{r warning = FALSE}
+
+
+
+
+Sys.time()
+set.seed(1)
+msgdm.2 <-  Zeta.msgdm(xy = site.by.xy, data.spec = site.by.species, data.env = site.by.env,  order=2, sam=50000,
+  reg.type="ispline", normalize="Sorensen", family=binomial(link="log"),cons.inter = -1) 
+set.seed(1)
+Sys.time()
+
+msgdm.3 <-  Zeta.msgdm(xy = site.by.xy, data.spec = site.by.species, data.env = site.by.env,  order=3, sam=500,
+  reg.type="ispline", normalize="Sorensen", family=binomial(link="log"),cons.inter = -1) 
+set.seed(1)
+msgdm.4 <-  Zeta.msgdm(xy = site.by.xy, data.spec = site.by.species, data.env = site.by.env,  order=4, sam=500,
+  reg.type="ispline", normalize="Sorensen", family=binomial(link="log"),cons.inter = -1) 
+set.seed(1)
+msgdm.6 <-  Zeta.msgdm(xy = site.by.xy, data.spec = site.by.species, data.env = site.by.env,  order=6, sam=500,
+  reg.type="ispline", normalize="Sorensen", family=binomial(link="log"),cons.inter = -1) 
+set.seed(1)
+msgdm.8 <-  Zeta.msgdm(xy = site.by.xy, data.spec = site.by.species, data.env = site.by.env,  order=8, sam=500,
+ reg.type="ispline", normalize="Sorensen", family=binomial(link="log"),cons.inter = -1)
+set.seed(1)
+msgdm.10 <-  Zeta.msgdm(xy = site.by.xy, data.spec = site.by.species, data.env = site.by.env,  order=10, sam=500,
+ reg.type="ispline", normalize="Sorensen", family=binomial(link="log"),cons.inter = -1) 
+
+
+
+```
+
+
+
+```{r}
+
+print("ZETA 2")
+summary(msgdm.2$model)
+
+
+print("ZETA 3")
+summary(msgdm.3$model)
+
+
+
+print("ZETA 4")
+summary(msgdm.4$model)
+
+
+
+print("ZETA 6")
+summary(msgdm.6$model)
+
+
+
+print("ZETA 8")
+summary(msgdm.8$model)
+
+
+
+print("ZETA 10")
+summary(msgdm.10$model)
+
+```
+#sun,humidity, arable, coastal,   = 1 for all
+#freshwater >=0.8 for all
+
+```{r}
+
+#output0<- list(msgdm.2, msgdm.3, msgdm.4, msgdm.6, msgdm.8, msgdm.10)
+
+
+#write_rds(output0, file = here("./Output/butterfly_ispline_maximal.rds"))
+```
+
+
+
+
+```{r}
+
+
+print("variance explained zeta 2")
+with(summary(msgdm.2$model), 1 - deviance/null.deviance)
+
+
+
+print("variance explained zeta 3")
+with(summary(msgdm.3$model), 1 - deviance/null.deviance)
+
+
+
+print("variance explained zeta 4")
+with(summary(msgdm.4$model), 1 - deviance/null.deviance)
+
+
+
+print("variance explained zeta 6")
+with(summary(msgdm.6$model), 1 - deviance/null.deviance)
+
+
+print("variance explained zeta 8")
+with(summary(msgdm.8$model), 1 - deviance/null.deviance)
+
+
+print("variance explained zeta 10")
+with(summary(msgdm.10$model), 1 - deviance/null.deviance)
+
+```
+
+
+
+
+```{r  warning = FALSE}
+Plot.ispline(msgdm = msgdm.2, data.env = site.by.env, distance = TRUE,  legend = TRUE)
+Plot.ispline(msgdm = msgdm.3, data.env = site.by.env, distance = TRUE,  legend = TRUE)
+Plot.ispline(msgdm = msgdm.4, data.env = site.by.env, distance = TRUE,  legend = TRUE)
+Plot.ispline(msgdm = msgdm.6, data.env = site.by.env, distance = TRUE,  legend = TRUE)
+Plot.ispline(msgdm = msgdm.8, data.env = site.by.env, distance = TRUE,  legend = TRUE)
+Plot.ispline(msgdm = msgdm.10, data.env = site.by.env, distance = TRUE,  legend = TRUE)
+
+# pdf(here("./Output/msgdm.2.pdf")) 
+# Plot.ispline(msgdm = msgdm.2, data.env = site.by.env, distance = TRUE,  legend = TRUE)
+# dev.off() 
+# 
+# 
+# pdf(here("./Output/msgdm.3.pdf")) 
+# Plot.ispline(msgdm = msgdm.3, data.env = site.by.env, distance = TRUE,  legend = TRUE)
+# dev.off() 
+# 
+# 
+# pdf(here("./Output/msgdm.4.pdf")) 
+# Plot.ispline(msgdm = msgdm.4, data.env = site.by.env, distance = TRUE,  legend = TRUE)
+# dev.off() 
+# 
+# 
+# pdf(here("./Output/msgdm.6.pdf")) 
+# Plot.ispline(msgdm = msgdm.6, data.env = site.by.env, distance = TRUE,  legend = TRUE)
+# dev.off() 
+# 
+# 
+# pdf(here("./Output/msgdm.8.pdf")) 
+# Plot.ispline(msgdm = msgdm.8, data.env = site.by.env, distance = TRUE,  legend = TRUE)
+# dev.off() 
+# 
+# 
+# pdf(here("./Output/msgdm.10.pdf")) 
+# Plot.ispline(msgdm = msgdm.10, data.env = site.by.env, distance = TRUE,  legend = TRUE)
+# dev.off() 
+
+
+```
+```{r}
+# 
+# pdf(here("./Output/msgdm.all.pdf"))
+# 
+# par(mfrow = c(2, 3))
+# 
+# Plot.ispline(msgdm = msgdm.2, data.env = site.by.env, distance = TRUE,  legend = FALSE)
+# Plot.ispline(msgdm = msgdm.3, data.env = site.by.env, distance = TRUE,  legend = FALSE)
+# Plot.ispline(msgdm = msgdm.4, data.env = site.by.env, distance = TRUE,  legend = FALSE)
+# Plot.ispline(msgdm = msgdm.6, data.env = site.by.env, distance = TRUE,  legend = FALSE)
+# Plot.ispline(msgdm = msgdm.8, data.env = site.by.env, distance = TRUE,  legend = FALSE)
+# Plot.ispline(msgdm = msgdm.10, data.env = site.by.env, distance = TRUE,  legend = FALSE)
+# 
+# dev.off()
+```
+
+
+
+```{r  warning = FALSE}
+
+
+
+set.seed(1) 
+zeta.varpart.2 <- Zeta.varpart(msgdm.mod = msgdm.2, method.glm = "glm.fit2") 
+
+set.seed(1) 
+zeta.varpart.3 <- Zeta.varpart(msgdm.mod = msgdm.2, method.glm = "glm.fit2") 
+
+set.seed(1) 
+zeta.varpart.4 <- Zeta.varpart(msgdm.mod = msgdm.2, method.glm = "glm.fit2") 
+
+set.seed(1) 
+zeta.varpart.6 <- Zeta.varpart(msgdm.mod = msgdm.6, method.glm = "glm.fit2") 
+
+
+
+set.seed(1) 
+zeta.varpart.8 <- Zeta.varpart(msgdm.mod = msgdm.8, method.glm = "glm.fit2") 
+
+
+set.seed(1) 
+zeta.varpart.10 <- Zeta.varpart(msgdm.mod = msgdm.10, method.glm = "glm.fit2") 
+
+```
+
+
+
+
+
+```{r  warning = FALSE}
+
+
+pie.neg(zeta.varpart.2[4:7,1], density = c(4, 0, 8, -1),  angle = c(90, 0, 0, 0), labels =  c("distance","undistinguishable","environment","unexplained"), radius = 0.9)
+
+
+
+pie.neg(zeta.varpart.3[4:7,1], density = c(4, 0, 8, -1),  angle = c(90, 0, 0, 0), labels =  c("distance","undistinguishable","environment","unexplained"), radius = 0.9)
+
+
+
+pie.neg(zeta.varpart.4[4:7,1], density = c(4, 0, 8, -1),  angle = c(90, 0, 0, 0), labels =  c("distance","undistinguishable","environment","unexplained"), radius = 0.9)
+
+
+
+pie.neg(zeta.varpart.6[4:7,1], density = c(4, 0, 8, -1),  angle = c(90, 0, 0, 0), labels =  c("distance","undistinguishable","environment","unexplained"), radius = 0.9)
+
+
+
+pie.neg(zeta.varpart.8[4:7,1], density = c(4, 0, 8, -1),  angle = c(90, 0, 0, 0), labels =  c("distance","undistinguishable","environment","unexplained"), radius = 0.9)
+
+
+
+pie.neg(zeta.varpart.10[4:7,1], density = c(4, 0, 8, -1),  angle = c(90, 0, 0, 0), labels =  c("distance","undistinguishable","environment","unexplained"), radius = 0.9)
+```
+
+
+
+
+
+
+
+
+
+
+## check nestedness (Cang's code)
+
+
+```{r}
+
+jac <- vector()
+sor <- vector()
+sim <- vector()
+
+for(i in 1:1000){
+a <- sample(1:nrow(site.by.species),2)  
+unio <- sum(ifelse((site.by.species[a[1],] == 1)|(site.by.species[a[2],]==1),1,0))
+inter <- sum(site.by.species[a[1],]*site.by.species[a[2],])
+minn <- min(sum(site.by.species[a[1],]),sum(site.by.species[a[2],]))
+avg <- (sum(site.by.species[a[1],])+sum(site.by.species[a[2],]))/2
+jac[i] <- inter/unio
+sor[i] <- inter/avg
+sim[i] <- inter/minn
+}
+
+boxplot(jac,sor,sim)
+text("Jaccard","Sorensen","Simpson")
+
+group <- c(rep("Jaccard", 1000), rep("Sorensen", 1000), rep("Simpson", 1000))
+values <- as.numeric(c(jac, sor, sim))
+
+boxdata <-data.frame(cbind(group, values))
+
+boxdata$values <- as.numeric(boxdata$values)
+
+
+boxplot( values ~ group, boxdata,                                # Color of boxplots
+        col = "red")
+
+m1 <- lm(values ~ group, boxdata[1001:3000,])
+
+summary(m1)
+
+
+```
+
+```{r}
+sp.freq<- data.frame(colSums(site.by.species)/nrow(site.by.species))
+
+names(sp.freq) <- "poc1"
+
+
+# here I am trying to work out relative influence of different species on zeta diversity in relation to their occupancy
+#probability that species is shared between n sites in one sample but not shared between n sites in a second sample
+sp.freq <- sp.freq %>% 
+  mutate(rare.cat = case_when(poc1 < 0.2 ~ "1.rare",
+                              poc1 >=0.2 & poc1 < 0.4 ~ "2.med.rare",
+                              poc1 >=0.4 & poc1 < 0.6 ~ "3.med", 
+                              poc1 >= 0.6 & poc1 < 0.8 ~ "4.med.common",
+                              poc1 >= 0.8 ~ "5.common"),
+    share2 = (poc1^2)*(1-poc1^2),
+         share3 = (poc1^3)*(1-poc1^3),
+         share4 = (poc1^4)*(1-poc1^4),
+         share5 = (poc1^5)*(1-poc1^5),
+         share10 = (poc1^10)*(1-poc1^10),
+         share15 = (poc1^15)*(1-poc1^15),
+         share20 = (poc1^20)*(1-poc1^20),
+         share30 = (poc1^30)*(1-poc1^30),
+         share50 = (poc1^50)*(1-poc1^50),
+         share100 = (poc1^100)*(1-poc1^100),
+         share200 = (poc1^200)*(1-poc1^200)
+    )
+
+hist(sp.freq$poc1, breaks = 20)
+
+
+#share2 is the probability that species is shared between 2 sites in one sample but not shared between 2 sites in a second sample
+
+plot(share2 ~ poc1, data = sp.freq)
+plot(share3 ~ poc1, data = sp.freq)
+plot(share4 ~ poc1, data = sp.freq)
+plot(share5 ~ poc1, data = sp.freq)
+plot(share10 ~ poc1, data = sp.freq)
+plot(share15 ~ poc1, data = sp.freq)
+plot(share20 ~ poc1, data = sp.freq)
+plot(share30 ~ poc1, data = sp.freq)
+plot(share50 ~ poc1, data = sp.freq)
+plot(share100 ~ poc1, data = sp.freq)
+plot(share200 ~ poc1, data = sp.freq)
+
+
+
+
+
+
+
+
+
+```
+
+#what I am trying to do here is obtain a measure of the influence of species in different rareness/commonness categories
+```{r}
+sum.influence <- sp.freq %>%
+  group_by(rare.cat) %>%
+  summarise(category.influence2 = sum(share2),
+            category.influence3 = sum(share3),
+            category.influence4 = sum(share4),
+            category.influence5 = sum(share5),
+            category.influence10 = sum(share10),
+            category.influence15 = sum(share15),
+            category.influence20 = sum(share20),
+            category.influence30 = sum(share30),
+            category.influence50 = sum(share50),
+            category.influence100 = sum(share100),
+            category.influence200 = sum(share200))
+
+library(data.table)
+sum.influence2 <- data.table(sum.influence)
+
+numeric_cols <- names(sum.influence)[sapply(sum.influence, is.numeric)]
+
+sum.influence2[, lapply(.SD, function(x) x/sum(x)), .SDcols = numeric_cols]
+
+# if you want to update by reference
+sum.influence2[, (numeric_cols) := lapply(.SD, function(x) x/sum(x)), .SDcols = numeric_cols]
+
+```
+```{r}
+plot(category.influence2 ~ factor(rare.cat), data = data.frame(sum.influence2))
+plot(category.influence3 ~ factor(rare.cat), data = data.frame(sum.influence2))
+plot(category.influence4 ~ factor(rare.cat), data = data.frame(sum.influence2))
+plot(category.influence5 ~ factor(rare.cat), data = data.frame(sum.influence2))
+plot(category.influence10 ~ factor(rare.cat), data = data.frame(sum.influence2))
+plot(category.influence20 ~ factor(rare.cat), data = data.frame(sum.influence2))
+plot(category.influence30 ~ factor(rare.cat), data = data.frame(sum.influence2))
+plot(category.influence50 ~ factor(rare.cat), data = data.frame(sum.influence2))
+plot(category.influence100 ~ factor(rare.cat), data = data.frame(sum.influence2))
+plot(category.influence200 ~ factor(rare.cat), data = data.frame(sum.influence2))
+
+
+```
+
+
+```{r}
+
+library(ggplot2)
+# Set color by cond
+
+sum.influence3 <- sum.influence2 %>%
+  pivot_longer(!rare.cat, names_to = "zeta.order", values_to = "influence")
+
+
+ggplot(sum.influence3, aes(x=rare.cat, y=influence)) + 
+         geom_point(aes(color = factor(zeta.order), size = 2.5)) 
+
+```
+
+
+
+```{r}
+relig_income
+relig_income %>%
+  pivot_longer(!religion, names_to = "income", values_to = "count")
+```
+
+
+
+
+

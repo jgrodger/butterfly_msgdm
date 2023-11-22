@@ -206,24 +206,23 @@ site.by.wetness <- site.by.wetness %>%
 
 #sometimes more than one site per gridref!
 ```{r}
-
-
-#here we filter out sites with anything missing
-
-#filter sites to the desired set 
-
-#sites.2018 <- sites %>%
-#     filter(sites$site %in% site.by.species$site)
-
-sites$site <- paste("site", sites$site, sep = "_")
+#to keep this to sort by after merging
+sites<- sites %>%
+  mutate(site.no = site,
+         site = paste("site", sites$site, sep = "_"))
 
 nrow(sites)
 
-#the numbers below are the number of grid cells with data
 
-site.by.env <- site.by.temp %>%
-  filter(ngr.1km %in% sites$ngr.1km ) %>%
+site.by.env <- sites %>%
+  select(site.no, site, ngr.1km)
+
+site.by.temp <- site.by.temp %>% #rearrange columns
   select(c(ngr.1km, x, y, mean.ann.temp))
+
+
+site.by.env <- site.by.env %>%
+  merge(site.by.temp, by = "ngr.1km")
 
 nrow(site.by.env)
 
@@ -261,16 +260,17 @@ nrow(site.by.env)
 
 site.by.env <- merge(site.by.env, site.by.trees, by = "ngr.1km")
 
+
+
 nrow(site.by.env)
 
 
-site.by.site.name <- sites %>%
-  select(site, ngr.1km)
+#order by site.number
 
-site.by.env <- merge(site.by.env, site.by.site.name, by = "ngr.1km")
+site.by.env <- site.by.env[order(site.by.env$site.no), ]
 
-#this final number goes up as there are often multiple sites per grid cell
-nrow(site.by.env)
+#remove site.number
+site.by.env <- select(site.by.env, -site.no)
 
 ```
 
@@ -328,23 +328,34 @@ site.by.env <- site.by.env %>%
 
 
 ```{r}
-cor(site.by.env[, 4:11], method = "pearson")
+cor(site.by.env[, 4:12], method = "pearson")
 ```
 
 
 ```{r}
-cor(site.by.env[, 4:11], method = "spearman")
+cor(site.by.env[, 4:12], method = "spearman")
 
 
 ```
+## Obtain final site by env, site.by.xy, 
+
 ```{r}
+
+#throws error
+#site.by.env <- column_to_rownames(site.by.env, var = "site")
+
+rownames(site.by.env) <- site.by.env$site
 
 site.by.xy <- select(site.by.env, x, y)
 
-site.by.env <- column_to_rownames(site.by.env, var = "site")
+
+site.by.env <- select(site.by.env, -c(ngr.1km, site, x, y))
+
+site.by.species <- filter(site.by.species,
+                          rownames(site.by.species) %in% rownames(site.by.env))
 
 
-site.by.env <- select(site.by.env, -c(ngr.1km, x, y))
+sites<- filter(sites, site %in% rownames(site.by.env))
 ```
 
 
@@ -359,16 +370,33 @@ check <- check %>%
 
 check
 ```
+```{r}
+#just keep sites in dataset
+sites <- filter(sites,
+                site %in% rownames(site.by.species))
+
+head(site.by.species)
+
+head(site.by.env)
+
+head(site.by.xy)
+```
+
+## filter
+
+```{r}
+
+```
 
 
 ```{r}
 
 data.5.years <- list(species, sites, site.by.species, site.by.env, site.by.xy)
 
-names(data.2018) <- c("species", "sites", "site.by.species", "site.by.env", "site.by.xy")
+names(data.5.years) <- c("species", "sites", "site.by.species", "site.by.env", "site.by.xy")
 
 
-write_rds(data.2018, file = here("./Data/Processed_Data/butterfly.msgdm.data.2018.rds"))
+write_rds(data.5.years, file = here("./Data/Processed_Data/butterfly.msgdm.data.5.years.rds"))
 
 ```
 
