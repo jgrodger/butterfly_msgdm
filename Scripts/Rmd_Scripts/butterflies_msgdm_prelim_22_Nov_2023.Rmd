@@ -18,8 +18,12 @@ library(tidyverse)
 library(zetadiv)
 library(bipartite)
 library(mgcv)
+#library(caret)
+library(dismo)
+
 library(here)
 
+library(conflicted)
 
 
 #library(foreach)
@@ -54,18 +58,46 @@ site.by.xy <- data.5.year$site.by.xy
   
 
 ```
+#ite by species matrices for wider countryside and habitat specialists separately
 
-
-
-## Examine zeta decline
 ```{r}
-zeta.dec1 <- Zeta.decline.ex(site.by.species, orders = 1:100)
+
+#modify species.no to use to select sites in site by species matrix
+species$species.no <- paste("species", species$species.no, sep = "_")
+
+
+# obtain vectors of species.no for habitat specialists and wider countryside species
+habitat.specialists <- species[species$strategy == "Habitat specialist",]$species.no
+wider.countryside.spp <- species[species$strategy == "Wider countryside sp",]$species.no
+
+#subset site by species by species for habitat specialists and wider countrysides
+site.by.species.hs <- select(site.by.species, habitat.specialists)
+site.by.species.wc <- select(site.by.species, wider.countryside.spp)
+
+#check if this results in some sites with no species in each case
+
+#are there any sites with no habitat specialists or wider countryside species?
+
+print("number of sites with no habitat specialists")
+nrow(site.by.species.hs[rowSums(site.by.species.hs)==0, ])
+
+print("number of sites with no wider countryside species")
+nrow(site.by.species.wc[rowSums(site.by.species.wc)==0, ])
+
+
+```
+
+
+
+## Examine zeta decline whole datasets
+```{r}
+zeta.dec1 <- Zeta.decline.ex(site.by.species, orders = 1:200)
 zeta.dec1
 summary(zeta.dec1$zeta.pl)
 summary(zeta.dec1$zeta.exp)
 zeta.dec1$aic
 ```
-## Examine zeta decline just for lower orders
+## Examine zeta decline whole dataset just for lower orders
 ```{r}
 zeta.dec1 <- Zeta.decline.ex(site.by.species, orders = 1:10)
 zeta.dec1
@@ -73,10 +105,37 @@ summary(zeta.dec1$zeta.pl)
 summary(zeta.dec1$zeta.exp)
 zeta.dec1$aic
 ```
+## Examine zeta decline WC
+```{r}
+zeta.dec1 <- Zeta.decline.ex(site.by.species.wc, orders = 1:200)
+#zeta.dec1
+summary(zeta.dec1$zeta.pl)
+summary(zeta.dec1$zeta.exp)
+zeta.dec1$aic
+```
+
+
+## Examine zeta decline HS
+```{r}
+zeta.dec1 <- Zeta.decline.ex(site.by.species.hs, orders = 1:200)
+#zeta.dec1
+summary(zeta.dec1$zeta.pl)
+summary(zeta.dec1$zeta.exp)
+zeta.dec1$aic
+```
+## Examine zeta decline HS
+```{r}
+zeta.dec1 <- Zeta.decline.ex(site.by.species.hs, orders = 1:10)
+#zeta.dec1
+summary(zeta.dec1$zeta.pl)
+summary(zeta.dec1$zeta.exp)
+zeta.dec1$aic
+```
 
 
 
-## Examine decay in zeta diversity with distance
+
+## Examine decay in zeta diversity with distance all data
 ```{r warning = FALSE}
 
 zeta.ddecays <- Zeta.ddecays(xy = site.by.xy, site.by.species, sam = 500 , orders = 2:100,
@@ -162,6 +221,25 @@ zeta.ddecay.gam. <- Zeta.ddecay(xy = site.by.xy, data.spec = site.by.species, or
                                     reg.type="gam") # a generalised additive model is used 418 instead of the default linear model
 ```
 
+## Examine decay in zeta diversity with distance WC
+```{r warning = FALSE}
+
+zeta.ddecays <- Zeta.ddecays(xy = site.by.xy, site.by.species.wc, sam = 500 , orders = 2:100,
+plot = TRUE, confint.level = 0.95)
+
+```
+
+
+## Examine decay in zeta diversity with distance HS
+```{r warning = FALSE}
+
+zeta.ddecays <- Zeta.ddecays(xy = site.by.xy, site.by.species.hs, sam = 500 , orders = 2:10,
+plot = TRUE, confint.level = 0.95)
+
+```
+
+
+
 ```{r}
 cor(site.by.env)
 
@@ -213,6 +291,112 @@ summary(zeta.gam$model)
 
 ```
 
+## try to set up k-fold cross validation
+
+## first an msgdm for training data
+```{r}
+set.seed(1)
+sites$fold <- kfold(sites, k=5, by = sites$country)
+
+#this shows that the "by"argument works as I understand. It stratifies the sampling
+sum <- sites %>%
+  group_by(fold, country) %>%
+  summarise(n= n())
+
+#subset to first fold
+S.SP <- site.by.species[sites$fold != 1 ,]
+
+S.XY <- site.by.xy[sites$fold != 1 ,]
+
+S.E <- site.by.env[sites$fold != 1 ,]  
+
+
+
+set.seed(1)
+msgdm.train <-  Zeta.msgdm(S.XY, data.spec = S.SP, data.env = S.E,  order=2, sam=5000,
+  reg.type="ispline", normalize="Simpson", family=binomial(link="log"),cons.inter = -1, glm.init = TRUE) 
+
+
+```
+## here i do an entire msgdm for the holdout data because I can't see another way to get the transformed values for distance
+
+```{r}
+
+S.SP1 <- site.by.species[sites$fold == 1 ,]
+
+S.XY1 <- site.by.xy[sites$fold == 1 ,]
+
+S.E1 <- site.by.env[sites$fold == 1 ,]  
+
+z.test2 <- Zeta.msgdm(S.XY1, data.spec = S.SP1, data.env = S.E1,  order=2, sam=5000,
+  reg.type="ispline", normalize="Simpson", family=binomial(link="log"),cons.inter = -1, glm.init = TRUE)
+
+test.predictors<- z.test2$predictors
+
+
+
+pred.zeta <- Predict.msgdm(model.msgdm = msgdm.test$model, reg.type = "ispline", newdata =  test.predictors)
+
+m1 <- lm (z.test2$val ~ pred.zeta)
+
+summary(m1)
+anova(m1)
+```
+```{r}
+Plot.ispline(msgdm = msgdm.train, data.env = S.E, distance = TRUE,  legend = TRUE)
+
+Plot.ispline(msgdm = z.test2, data.env = S.E1, distance = TRUE,  legend = TRUE)
+
+```
+```{r}
+#Zeta.varpart
+
+print("ZETA 2")
+summary(msgdm.train$model)
+summary(z.test2$model)
+
+
+```
+
+```{r}
+
+summary(msgdm.train$model)
+summary(z.test2$model)
+print("variance explained zeta 2")
+with(summary(msgdm.train$model), 1 - deviance/null.deviance)
+with(summary(z.test2$model), 1 - deviance/null.deviance)
+```
+
+
+
+
+
+
+
+
+```{r}
+z2 <- Zeta.order.mc(data.spec = S.SP, xy = S.XY, sam = 2000, order = 2, normalize = "Simpson")
+str(z2)
+```
+
+## we need to get the Isplines, which ar
+
+
+## use ispline to transfrom data for input to predict
+
+
+
+```{r}
+
+```
+
+
+## Predict zeta values for test data
+
+```{r}
+Predict.msgdm(model.msgdm, reg.type, newdata, type = "response")
+```
+
 
 ```{r warning = FALSE}
 
@@ -226,19 +410,19 @@ msgdm.2 <-  Zeta.msgdm(xy = site.by.xy, data.spec = site.by.species, data.env = 
 set.seed(1)
 Sys.time()
 
-msgdm.3 <-  Zeta.msgdm(xy = site.by.xy, data.spec = site.by.species, data.env = site.by.env,  order=3, sam=500,
+msgdm.3 <-  Zeta.msgdm(xy = site.by.xy, data.spec = site.by.species, data.env = site.by.env,  order=3, sam=10000,
   reg.type="ispline", normalize="Sorensen", family=binomial(link="log"),cons.inter = -1) 
 set.seed(1)
-msgdm.4 <-  Zeta.msgdm(xy = site.by.xy, data.spec = site.by.species, data.env = site.by.env,  order=4, sam=500,
+msgdm.4 <-  Zeta.msgdm(xy = site.by.xy, data.spec = site.by.species, data.env = site.by.env,  order=4, sam=10000,
   reg.type="ispline", normalize="Sorensen", family=binomial(link="log"),cons.inter = -1) 
 set.seed(1)
-msgdm.6 <-  Zeta.msgdm(xy = site.by.xy, data.spec = site.by.species, data.env = site.by.env,  order=6, sam=500,
+msgdm.6 <-  Zeta.msgdm(xy = site.by.xy, data.spec = site.by.species, data.env = site.by.env,  order=6, sam=10000,
   reg.type="ispline", normalize="Sorensen", family=binomial(link="log"),cons.inter = -1) 
 set.seed(1)
-msgdm.8 <-  Zeta.msgdm(xy = site.by.xy, data.spec = site.by.species, data.env = site.by.env,  order=8, sam=500,
+msgdm.8 <-  Zeta.msgdm(xy = site.by.xy, data.spec = site.by.species, data.env = site.by.env,  order=8, sam=10000,
  reg.type="ispline", normalize="Sorensen", family=binomial(link="log"),cons.inter = -1)
 set.seed(1)
-msgdm.10 <-  Zeta.msgdm(xy = site.by.xy, data.spec = site.by.species, data.env = site.by.env,  order=10, sam=500,
+msgdm.10 <-  Zeta.msgdm(xy = site.by.xy, data.spec = site.by.species, data.env = site.by.env,  order=10, sam=10000,
  reg.type="ispline", normalize="Sorensen", family=binomial(link="log"),cons.inter = -1) 
 
 
@@ -489,49 +673,42 @@ summary(m1)
 
 ```
 
-```{r}
-sp.freq<- data.frame(colSums(site.by.species)/nrow(site.by.species))
 
-names(sp.freq) <- "poc1"
+
+
+#contribution to variance of zeta 
+```{r}
+occ.df<- data.frame( cbind(colSums(site.by.species), colSums(site.by.species)/nrow(site.by.species)))
+
+names(occ.df) <- c("occ", "p.occ")
 
 
 # here I am trying to work out relative influence of different species on zeta diversity in relation to their occupancy
+#commented out
 #probability that species is shared between n sites in one sample but not shared between n sites in a second sample
-sp.freq <- sp.freq %>% 
-  mutate(rare.cat = case_when(poc1 < 0.2 ~ "1.rare",
-                              poc1 >=0.2 & poc1 < 0.4 ~ "2.med.rare",
-                              poc1 >=0.4 & poc1 < 0.6 ~ "3.med", 
-                              poc1 >= 0.6 & poc1 < 0.8 ~ "4.med.common",
-                              poc1 >= 0.8 ~ "5.common"),
-    share2 = (poc1^2)*(1-poc1^2),
-         share3 = (poc1^3)*(1-poc1^3),
-         share4 = (poc1^4)*(1-poc1^4),
-         share5 = (poc1^5)*(1-poc1^5),
-         share10 = (poc1^10)*(1-poc1^10),
-         share15 = (poc1^15)*(1-poc1^15),
-         share20 = (poc1^20)*(1-poc1^20),
-         share30 = (poc1^30)*(1-poc1^30),
-         share50 = (poc1^50)*(1-poc1^50),
-         share100 = (poc1^100)*(1-poc1^100),
-         share200 = (poc1^200)*(1-poc1^200)
+occ.df <- occ.df %>% 
+  mutate(rare.cat = case_when(p.occ < 0.2 ~ "1.rare",
+                              p.occ >=0.2 & p.occ < 0.4 ~ "2.med.rare",
+                              p.occ >=0.4 & p.occ < 0.6 ~ "3.med", 
+                              p.occ >= 0.6 & p.occ < 0.8 ~ "4.med.common",
+                              p.occ >= 0.8 ~ "5.common")#,
+   # share2 = (p.occ1^2)*(1-p.occ1^2),
+   #      share3 = (p.occ1^3)*(1-p.occ1^3),
+    #     share4 = (p.occ1^4)*(1-p.occ1^4),
+     #    share5 = (p.occ1^5)*(1-p.occ1^5),
+  #       share10 = (p.occ1^10)*(1-p.occ1^10),
+   #      share15 = (p.occ1^15)*(1-p.occ1^15),
+  #       share20 = (p.occ1^20)*(1-p.occ1^20),
+  #       share30 = (p.occ1^30)*(1-p.occ1^30),
+  #       share50 = (p.occ1^50)*(1-p.occ1^50),
+  #       share100 = (p.occ1^100)*(1-p.occ1^100),
+  #       share200 = (p.occ1^200)*(1-p.occ1^200)
     )
 
-hist(sp.freq$poc1, breaks = 20)
+hist(occ.df$p.occ, breaks = 20)
 
 
 #share2 is the probability that species is shared between 2 sites in one sample but not shared between 2 sites in a second sample
-
-plot(share2 ~ poc1, data = sp.freq)
-plot(share3 ~ poc1, data = sp.freq)
-plot(share4 ~ poc1, data = sp.freq)
-plot(share5 ~ poc1, data = sp.freq)
-plot(share10 ~ poc1, data = sp.freq)
-plot(share15 ~ poc1, data = sp.freq)
-plot(share20 ~ poc1, data = sp.freq)
-plot(share30 ~ poc1, data = sp.freq)
-plot(share50 ~ poc1, data = sp.freq)
-plot(share100 ~ poc1, data = sp.freq)
-plot(share200 ~ poc1, data = sp.freq)
 
 
 
@@ -543,21 +720,85 @@ plot(share200 ~ poc1, data = sp.freq)
 
 ```
 
+```{r}
+
+Zeta.order.ex.2 <- function (data.spec, order = 1, sd.correct = TRUE, rescale = FALSE, 
+    empty.row = "empty") 
+{
+    if (empty.row == "remove") {
+        data.spec <- data.spec[-which(rowSums(data.spec) == 0), 
+            ]
+    }
+    if (order > dim(data.spec)[1]) {
+        stop("Error: wrong value for \"order\": it must be equal or lower than the number of sites.")
+    }
+    data.spec <- as.matrix(data.spec)
+    intercept_mat <- t(data.spec) %*% data.spec
+    occupancy <- colSums(data.spec)
+    p <- exp(lchoose(occupancy, order) - lchoose(nrow(data.spec), 
+        order))
+    zeta.val <- sum(p)
+    varmat <- exp(lchoose(intercept_mat, order) - lchoose(nrow(data.spec), 
+        order))
+    for (j in 1:length(occupancy)) {
+        for (k in 1:length(occupancy)) {
+            varmat[j, k] <- varmat[j, k] - p[j] * p[k]
+        }
+    }
+    if (sd.correct == TRUE) {
+        zeta.val.sd <- sqrt(sum(varmat) * choose(nrow(data.spec), 
+            order)/(choose(nrow(data.spec), order) - 1))
+    }
+    else {
+        zeta.val.sd <- sqrt(sum(varmat))
+    }
+    zeta.order <- list()
+    zeta.order$zeta.order <- order
+    zeta.order$combinations <- choose(x <- dim(data.spec)[1], 
+        order)
+    zeta.order$zeta.val <- zeta.val
+    zeta.order$zeta.val.sd <- zeta.val.sd
+    zeta.order$varmat <- varmat
+        return(zeta.order)
+}
+
+
+z2 <- Zeta.order.ex.2(site.by.species, order = 2)
+
+check <- data.frame(z2$varmat)
+
+check1<- data.frame(rowSums(check)/sum(check))
+
+names(check1)<- "share2"
+
+
+
+occ.df <- merge(occ.df, check1, by = "row.names")
+```
+
+```{r}
+plot(share2~p.occ, data = occ.df)
+```
+
+
+
 #what I am trying to do here is obtain a measure of the influence of species in different rareness/commonness categories
 ```{r}
-sum.influence <- sp.freq %>%
+sum.influence <- occ.df %>%
   group_by(rare.cat) %>%
-  summarise(category.influence2 = sum(share2),
-            category.influence3 = sum(share3),
-            category.influence4 = sum(share4),
-            category.influence5 = sum(share5),
-            category.influence10 = sum(share10),
-            category.influence15 = sum(share15),
-            category.influence20 = sum(share20),
-            category.influence30 = sum(share30),
-            category.influence50 = sum(share50),
-            category.influence100 = sum(share100),
-            category.influence200 = sum(share200))
+  summarise(category.influence2 = sum(share2)#,
+           # category.influence3 = sum(share3),
+           # category.influence4 = sum(share4),
+           # category.influence5 = sum(share5),
+           # category.influence10 = sum(share10),
+           # category.influence15 = sum(share15),
+           # category.influence20 = sum(share20),
+           # category.influence30 = sum(share30),
+           # category.influence50 = sum(share50),
+           # category.influence100 = sum(share100),
+            #category.influence200 = sum(share200)
+           )
+
 
 library(data.table)
 sum.influence2 <- data.table(sum.influence)
@@ -570,17 +811,21 @@ sum.influence2[, lapply(.SD, function(x) x/sum(x)), .SDcols = numeric_cols]
 sum.influence2[, (numeric_cols) := lapply(.SD, function(x) x/sum(x)), .SDcols = numeric_cols]
 
 ```
+
+
 ```{r}
-plot(category.influence2 ~ factor(rare.cat), data = data.frame(sum.influence2))
-plot(category.influence3 ~ factor(rare.cat), data = data.frame(sum.influence2))
-plot(category.influence4 ~ factor(rare.cat), data = data.frame(sum.influence2))
-plot(category.influence5 ~ factor(rare.cat), data = data.frame(sum.influence2))
-plot(category.influence10 ~ factor(rare.cat), data = data.frame(sum.influence2))
-plot(category.influence20 ~ factor(rare.cat), data = data.frame(sum.influence2))
-plot(category.influence30 ~ factor(rare.cat), data = data.frame(sum.influence2))
-plot(category.influence50 ~ factor(rare.cat), data = data.frame(sum.influence2))
-plot(category.influence100 ~ factor(rare.cat), data = data.frame(sum.influence2))
-plot(category.influence200 ~ factor(rare.cat), data = data.frame(sum.influence2))
+plot(category.influence2 ~ factor(rare.cat), data = data.frame(sum.influence2), ylim = c(0, 1))
+
+
+plot(category.influence3 ~ factor(rare.cat), data = data.frame(sum.influence2), ylim = c(0, 1))
+plot(category.influence4 ~ factor(rare.cat), data = data.frame(sum.influence2), ylim = c(0, 1))
+plot(category.influence5 ~ factor(rare.cat), data = data.frame(sum.influence2), ylim = c(0, 1))
+plot(category.influence10 ~ factor(rare.cat), data = data.frame(sum.influence2), ylim = c(0, 1))
+plot(category.influence20 ~ factor(rare.cat), data = data.frame(sum.influence2), ylim = c(0, 1))
+plot(category.influence30 ~ factor(rare.cat), data = data.frame(sum.influence2), ylim = c(0, 1))
+plot(category.influence50 ~ factor(rare.cat), data = data.frame(sum.influence2), ylim = c(0, 1))
+plot(category.influence100 ~ factor(rare.cat), data = data.frame(sum.influence2), ylim = c(0, 1))
+plot(category.influence200 ~ factor(rare.cat), data = data.frame(sum.influence2), ylim = c(0, 1))
 
 
 ```
