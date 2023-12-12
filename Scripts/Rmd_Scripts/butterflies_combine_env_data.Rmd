@@ -15,6 +15,8 @@ output: html_notebook
 here::i_am("Scripts/Rmd_Scripts/butterflies_combine_env_data.Rmd")
 
 library(tidyverse)
+library(gridExtra)
+library(ggpubr)
 library(conflicted)
 library(terra)
 library(sf)
@@ -94,36 +96,56 @@ surveys.site.year <- readRDS(here("./Data/Processed_Data/surveys_site_year.rds")
 
 #Always does first layer only if multiple layers
 
-plot.df <- function(df, ext){
+plot.df <- function(df, ext, main.title){
   rast <- rast(df, crs = "EPSG:27700")
 rast <- crop(rast[[1]], ext)
-plot(rast)
+plot(rast, xlab = "", ylab = "")
+title(main = main.title)
 }
 
 
-plot.df(df = site.by.temp, ext = gb)
+plot.df(df = site.by.temp, ext = gb, main.title ="Temperature")
 
+plot.df(df = site.by.prec, ext = gb, main.title = "Precipitation")
 
-plot.df(df = site.by.prec, ext = gb)
+plot.df(df = site.by.wetness, ext = gb, main.title = "Topographic Wetness")
 
-plot.df(df = site.by.wetness, ext = gb)
+plot.df(df = site.by.ph, ext = gb, main.title = "Ph")
 
+plot.df(df = site.by.trees, ext = gb, main.title = "Tree Density")
 
+plot.df(df = site.by.nitrogen, ext = gb, main.title = "Total Nitrogen Deposition")
 
-plot.df(df = site.by.ph, ext = gb)
+plot.df(site.by.pesticide.risk, ext = gb, main.title = "Pesticide Risk")
 
-
-plot.df(df = site.by.trees, ext = gb)
-
-plot.df(df = site.by.nitrogen, ext = gb)
-
-
-plot.df(site.by.pesticide.risk, ext = gb)
-
-plot.df(df = site.by.humans, ext = gb)
+plot.df(df = site.by.humans, ext = gb, main.title = "Human Population Density")
 
 
 
+#open PDF
+pdf(file= here("./Output/raw_maps.pdf"))
+
+#specify to save plots in 2x2 grid
+par(mfrow = c(2,4))
+
+plot.df(df = site.by.temp, ext = gb, main.title ="Temperature")
+
+plot.df(df = site.by.prec, ext = gb, main.title = "Precipitation")
+
+plot.df(df = site.by.wetness, ext = gb, main.title = "Topographic Wetness")
+
+plot.df(df = site.by.ph, ext = gb, main.title = "Ph")
+
+plot.df(df = site.by.trees, ext = gb, main.title = "Tree Density")
+
+plot.df(df = site.by.nitrogen, ext = gb, main.title = "Total Nitrogen Deposition")
+
+plot.df(site.by.pesticide.risk, ext = gb, main.title = "Pesticide Risk")
+
+plot.df(df = site.by.humans, ext = gb, main.title = "Human Population Density")
+
+#turn off PDF plotting
+dev.off() 
 
 ```
 ```{r}
@@ -144,10 +166,32 @@ site.by.log10.humans <- site.by.humans %>%
   select(x, y, log10.humans, ngr.1km) #also gets it in correct order
 
 
-plot.df(site.by.log10.pesticide.risk, ext = gb)
+plot.df(site.by.log10.pesticide.risk, ext = gb, main.title = "log Pesticide Risk")
 
 
-plot.df(site.by.log10.humans, ext = gb)
+plot.df(site.by.log10.humans, ext = gb, main.title = "log human popn")
+
+
+
+#open PDF
+pdf(file= here("./Output/transformed_maps.pdf"))
+
+#specify to save plots in grid
+par(mfrow = c(2,2))
+
+
+plot.df(site.by.pesticide.risk, ext = gb, main.title = "Pesticide Risk")
+
+plot.df(df = site.by.humans, ext = gb, main.title = "Human Population Density")
+
+
+plot.df(site.by.log10.pesticide.risk, ext = gb, main.title = "log Pesticide Risk")
+
+
+plot.df(site.by.log10.humans, ext = gb, main.title = "log human popn")
+
+#turn off PDF plotting
+dev.off() 
 ```
 
 ## get variable names as desired in dataframes
@@ -161,43 +205,57 @@ rownames(site.by.species) <- paste("site", rownames(site.by.species), sep = "_")
 
 
 site.by.temp <- site.by.temp %>%
-  rename(mean.ann.temp = mean)
+  rename(mean.ann.temp = mean)%>%
+    filter(is.na(mean.ann.temp)==F)
 
 site.by.prec <- site.by.prec %>%
   rename(mean.ann.rain = mean) %>%
-  select(-c(x,y))
+  select(-c(x,y))%>%
+    filter(is.na(mean.ann.rain)==F)
 
 site.by.ph <- site.by.ph %>%
   select(-c(x, y)) %>%
-  rename(ph = ph_idw)
+  rename(ph = ph_idw)%>%
+    filter(is.na(ph)==F)
+
+site.by.humans <- site.by.humans %>%
+  select(-c(x, y)) %>%
+  rename(humans = gbr_pd_2017_1km)%>%
+    filter(is.na(humans)==F)
 
 site.by.log10.humans <- site.by.log10.humans %>%
-  select(-c(x, y))
+  select(-c(x, y))%>%
+    filter(is.na(log10.humans)==F)
 
 site.by.trees <- site.by.trees %>%
   rename(tree.density = tree.cover.density)%>%
-  select(-c(x, y)) 
+  select(-c(x, y)) %>%
+    filter(is.na(tree.density)==F)
 
 #site.by.conifer.dominance <-select(site.by.conifer.dominance, -c(x, y))
 
 
-site.by.nitrogen <-select(site.by.nitrogen, total.n, ngr.1km)
+site.by.nitrogen <-select(site.by.nitrogen, total.n, ngr.1km)%>%
+    filter(is.na(total.n)==F)
 
 
 site.by.pesticide.risk <- site.by.pesticide.risk %>%
   rename(pesticide.risk = pest)%>%
-  select(-c(x, y)) 
+  select(-c(x, y)) %>%
+    filter(is.na(pesticide.risk)==F)
 
 
 site.by.log10.pesticide.risk <- site.by.log10.pesticide.risk %>%
-  select(-c(x, y)) 
+  select(-c(x, y)) %>%
+    filter(is.na(log10.pesticide.risk)==F)
 
 
 
 
 site.by.wetness <- site.by.wetness %>%
-  rename(topgraphic.wetness = Band1) %>%
-  select(-c(x,y))
+  rename(topographic.wetness = Band1) %>%
+  select(-c(x,y))%>%
+    filter(is.na(topographic.wetness)==F)
 
 
 ```
@@ -245,6 +303,11 @@ site.by.env <- merge(site.by.env, site.by.nitrogen, by = "ngr.1km")
 
 nrow(site.by.env)
 
+site.by.env <- merge(site.by.env, site.by.humans, by = "ngr.1km") 
+
+
+nrow(site.by.env)
+
 site.by.env <- merge(site.by.env, site.by.log10.humans, by = "ngr.1km") 
 
 
@@ -267,7 +330,7 @@ nrow(site.by.env)
 
 #order by site.number
 
-site.by.env <- site.by.env[order(site.by.env$site.no), ]
+site.by.env <- site.by.env[base::order(site.by.env$site.no), ]
 
 #remove site.number
 site.by.env <- select(site.by.env, -site.no)
@@ -303,24 +366,194 @@ print(pointsmap2)
 
 #isle of man and channell islands should probably be excluded
 ```
+```{r}
 
+#open PDF
+pdf(file= here("./Output/1406_sites_maps.pdf"))
+
+#specify to save plots in grid
+par(mfrow = c(1,2))
+
+
+print(pointsmap)
+print(pointsmap2)
+
+#turn off PDF plotting
+dev.off()
+```
+
+# histograms for all grid squares
 
 ```{r}
-hist(site.by.env$mean.ann.temp)
-hist(site.by.env$mean.ann.rain)
-hist(site.by.env$topgraphic.wetness )#note typo to be corrected
-hist(site.by.env$ph)
-hist(site.by.env$tree.density)
-hist(site.by.env$log10.humans)
-hist(site.by.env$total.n )
 
 
-hist(site.by.env$pesticide.risk)
-hist(site.by.env$pesticide.risk, breaks = 100)
-hist(site.by.env$log10.pesticide.risk, breaks = 100)
+p1<- ggplot(site.by.temp, aes(x=mean.ann.temp)) +
+  geom_histogram(aes(y=..count../sum(..count..)), bins = 20)+
+  labs(y = "Probability", title = "Temperature")
+
+
+p2 <- ggplot(site.by.prec, aes(x=mean.ann.rain)) +
+  geom_histogram(aes(y=..count../sum(..count..)), bins = 20)+
+  labs(y = "Probability", title = "Rainfall")
+
+
+p3 <- ggplot(site.by.wetness, aes(x=topographic.wetness)) +
+  geom_histogram(aes(y=..count../sum(..count..)), bins = 20)+
+  labs(y = "Probability", title = "Topographic Wetness")
+
+
+p4 <- ggplot(site.by.ph, aes(x=ph)) +
+  geom_histogram(aes(y=..count../sum(..count..)), bins = 20)+
+  labs(y = "Probability", title = "pH")
+
+
+p5 <- ggplot(site.by.trees, aes(x=tree.density)) +
+  geom_histogram(aes(y=..count../sum(..count..)), bins = 20)+
+  labs(y = "Probability", title = "Tree Density")
+
+
+p6 <- ggplot(site.by.humans, aes(x=humans)) +
+  geom_histogram(aes(y=..count../sum(..count..)), bins = 20)+
+  labs(y = "Probability", title = "Human Population Density")
+
+
+p7 <- ggplot(site.by.nitrogen, aes(x=total.n)) +
+  geom_histogram(aes(y=..count../sum(..count..)), bins = 20)+
+  labs(y = "Probability", title = "Total Nitrogen Deposition")
+
+
+p8 <- ggplot(site.by.pesticide.risk, aes(x=pesticide.risk)) +
+  geom_histogram(aes(y=..count../sum(..count..)), bins = 20)+
+  labs(y = "Probability", title = "Pesticide Risk")
+
+```
+
+
+# histograms for sites
+```{r}
+
+
+p9 <- ggplot(site.by.env, aes(x=mean.ann.temp)) +
+  geom_histogram(aes(y=..count../sum(..count..)), bins = 20)+
+  labs(y = "Probability", title = "Temperature")
+
+
+p10 <- ggplot(site.by.env, aes(x=mean.ann.rain)) +
+  geom_histogram(aes(y=..count../sum(..count..)), bins = 20)+
+  labs(y = "Probability", title = "Rainfall")
+
+
+p11 <- ggplot(site.by.env, aes(x=topographic.wetness)) +
+  geom_histogram(aes(y=..count../sum(..count..)), bins = 20)+
+  labs(y = "Probability", title = "Topographic Wetness")
+
+
+p12 <- ggplot(site.by.env, aes(x=ph)) +
+  geom_histogram(aes(y=..count../sum(..count..)), bins = 20)+
+  labs(y = "Probability", title = "pH")
+
+
+p13 <- ggplot(site.by.env, aes(x=tree.density)) +
+  geom_histogram(aes(y=..count../sum(..count..)), bins = 20)+
+  labs(y = "Probability", title = "Tree Density")
+
+
+p14 <-ggplot(site.by.env, aes(x=humans)) +
+  geom_histogram(aes(y=..count../sum(..count..)), bins = 20)+
+  labs(y = "Probability", title = "Human Population Density")
+
+
+p15 <- ggplot(site.by.env, aes(x=total.n)) +
+  geom_histogram(aes(y=..count../sum(..count..)), bins = 20)+
+  labs(y = "Probability", title = "Total Nitrogen Deposition")
+
+
+ p16 <- ggplot(site.by.env, aes(x=pesticide.risk)) +
+  geom_histogram(aes(y=..count../sum(..count..)), bins = 20)+
+  labs(y = "Probability", title = "Pesticide Risk")
+
 
 
 ```
+# save pdfs of histograms
+
+```{r}
+#open PDF
+pdf(file= here("./Output/env_var_histograms_1.pdf"))
+#specify to save plots in grid
+par(mfrow = c(2,4))
+
+figure <- grid.arrange(p1, p2, p3, p4, + rremove("x.text"), 
+             ncol = 2, nrow = 2)
+
+
+
+
+#turn off PDF plotting
+dev.off()
+
+
+#open PDF
+pdf(file= here("./Output/env_var_histograms_2.pdf"))
+
+#specify to save plots in grid
+par(mfrow = c(2,4))
+
+
+# sites
+
+ggplot(site.by.env, aes(x=tree.density)) +
+  geom_histogram(aes(y=..count../sum(..count..)), bins = 20)+
+  labs(y = "Probability", title = "Tree Density")
+
+
+ggplot(site.by.env, aes(x=humans)) +
+  geom_histogram(aes(y=..count../sum(..count..)), bins = 20)+
+  labs(y = "Probability", title = "Human Population Density")
+
+
+ggplot(site.by.env, aes(x=total.n)) +
+  geom_histogram(aes(y=..count../sum(..count..)), bins = 20)+
+  labs(y = "Probability", title = "Total Nitrogen Deposition")
+
+
+ggplot(site.by.env, aes(x=pesticide.risk)) +
+  geom_histogram(aes(y=..count../sum(..count..)), bins = 20)+
+  labs(y = "Probability", title = "Pesticide Risk")
+
+# all cells
+
+ggplot(site.by.trees, aes(x=tree.density)) +
+  geom_histogram(aes(y=..count../sum(..count..)), bins = 20)+
+  labs(y = "Probability", title = "Tree Density")
+
+
+ggplot(site.by.humans, aes(x=humans)) +
+  geom_histogram(aes(y=..count../sum(..count..)), bins = 20)+
+  labs(y = "Probability", title = "Human Population Density")
+
+
+ggplot(site.by.nitrogen, aes(x=total.n)) +
+  geom_histogram(aes(y=..count../sum(..count..)), bins = 20)+
+  labs(y = "Probability", title = "Total Nitrogen Deposition")
+
+
+ggplot(site.by.pesticide.risk, aes(x=pesticide.risk)) +
+  geom_histogram(aes(y=..count../sum(..count..)), bins = 20)+
+  labs(y = "Probability", title = "Pesticide Risk")
+
+
+
+#turn off PDF plotting
+dev.off()
+
+
+
+```
+
+
+
+
 ```{r}
 site.by.env <- site.by.env %>%
   select(-pesticide.risk)
