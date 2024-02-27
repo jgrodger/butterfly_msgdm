@@ -18,7 +18,7 @@ library(tidyverse)
 library(zetadiv)
 library(bipartite)
 library(mgcv)
-#library(caret)
+library(caret)
 library(dismo)
 
 library(here)
@@ -298,6 +298,12 @@ zeta.dec1$aic
 
 write_rds(zeta.dec1, file = here("./Output/zeta_dec_WC_ex_raw_orders_10.rds"))
 ```
+
+
+
+
+
+
 ## Examine zeta decline Simpson HS orders 1 to 10 (computational issues at higher orders)
 ```{r}
 
@@ -595,6 +601,124 @@ dev.off()
 # 
 # 
 # summary(zeta.gam$model)
+
+```
+
+
+
+
+#try k-fold cross validation
+```{r}
+
+site.by.species.a <- site.by.species[1:100,]
+site.by.env.a <- site.by.env[1:100,]
+site.by.xy.a <- site.by.xy[1:100,]
+```
+
+```{r}
+flds <- createFolds(site.by.species.test, k = 10, list = TRUE, returnTrain = FALSE)
+names(flds)[1] <- "train"
+```
+
+```{r}
+folds <- cut(seq(1,nrow(site.by.species.test)),breaks=10,labels=FALSE)
+```
+
+# work in progress: will adapt from example below
+
+```{r}
+#https://stats.stackexchange.com/questions/61090/how-to-split-a-data-set-to-do-10-fold-cross-validation
+
+
+folds2 <-folds[sample(nrow(site.by.species.test))]
+
+#Perform 10 fold cross validation
+for(i in 1:10){
+    #Segement your data by fold using the which() function 
+    testIndexes <- which(folds2==i,arr.ind=TRUE)
+    
+    test.site.by.species <- site.by.species.a[testIndexes, ]
+    train.site.by.species <- site.by.species.a[-testIndexes, ]
+    
+    test.site.by.env <- site.by.env.a[testIndexes, ]
+    train.site.by.env <- site.by.env.a[-testIndexes, ]
+    
+    test.site.by.xy <- site.by.xy.a[testIndexes, ]
+    train.site.by.xy <- site.by.xy.a[-testIndexes, ]
+    #Use the test and train data partitions however you desire...
+
+   msgdm_i <-  Zeta.msgdm(xy = train.site.by.xy, data.spec = train.site.by.species,     data.env = data.env = train.site.by.env,  order=2, sam=500,
+  reg.type="ispline", normalize="Simpson", family=binomial(link="log"),cons.inter = -1, glm.init = TRUE) 
+    
+
+}
+
+
+
+
+```
+
+# example from Predict.msgdm
+```{r}
+utils::data(bird.spec.fine)
+xy.bird <- bird.spec.fine[1:500,1:2]
+data.spec.bird <- bird.spec.fine[1:500,3:192]
+utils::data(bird.env.fine)
+data.env.bird1 <- bird.env.fine[1:500,3:9] ##training data
+data.env.bird2 <- bird.env.fine[501:604,3:9] ##data to predict on
+
+zeta.ispline <- Zeta.msgdm(data.spec.bird, data.env.bird1, sam = 100, order = 3,
+                           reg.type = "ispline", normalize = "Jaccard")
+
+# apply ispline transformation to env data
+data.env.bird.splines <- Ispline(data.env.bird2)
+newdata <- data.frame(matrix(NA,100,ncol(data.env.bird.splines$splines)))
+names(newdata) <- names(data.env.bird.splines$splines)
+
+
+
+
+for(z in 1:100){
+  # resample sets of n sites 100 times
+  samp <- sample(1:104, 4, replace = FALSE)
+  # first (inside) apply() gets  pairwise distance between all pairs of sites for each ispline
+  # second (outside) apply gets means
+  newdata[z,] <- apply(apply(data.env.bird.splines$splines[samp,], 2, stats::dist),
+                       2, mean) 
+}
+
+
+##rescale the data like during MS-GDM
+newdata <- newdata/matrix(rep(zeta.ispline$rescale.factor,100),
+                          100,length(zeta.ispline$rescale.factor),byrow=TRUE)
+new.zeta.ispline <- Predict.msgdm(model.msgdm = zeta.ispline$model, reg.type = "ispline",
+                                  newdata = newdata)
+
+check <- data.env.bird.splines$splines[samp,]
+
+```
+
+
+
+
+
+## Predict zeta values for test data
+
+```{r}
+Predict.msgdm(model.msgdm, reg.type, newdata, type = "response")
+```
+
+
+
+
+
+```{r}
+
+
+msgdm.2 <-  Zeta.msgdm(xy = site.by.xy[ flds[[2]], ], data.spec = site.by.species[ flds[[2]], ], data.env = site.by.env[ flds[[2]], ],  order=2, sam=500,
+  reg.type="ispline", normalize="Simpson", family=binomial(link="log"),cons.inter = -1, glm.init = TRUE) 
+
+
 
 ```
 
@@ -1632,14 +1756,6 @@ str(z2)
 ```{r}
 
 ```
-
-
-## Predict zeta values for test data
-
-```{r}
-Predict.msgdm(model.msgdm, reg.type, newdata, type = "response")
-```
-
 
 
 
