@@ -605,109 +605,93 @@ dev.off()
 ```
 
 
-
-
-#try k-fold cross validation
-```{r}
-
-site.by.species.a <- site.by.species[1:100,]
-site.by.env.a <- site.by.env[1:100,]
-site.by.xy.a <- site.by.xy[1:100,]
-```
-
-```{r}
-flds <- createFolds(site.by.species.test, k = 10, list = TRUE, returnTrain = FALSE)
-names(flds)[1] <- "train"
-```
-
-```{r}
-folds <- cut(seq(1,nrow(site.by.species.test)),breaks=10,labels=FALSE)
-```
-
-# work in progress: will adapt from example below
-
-```{r}
-#https://stats.stackexchange.com/questions/61090/how-to-split-a-data-set-to-do-10-fold-cross-validation
-
-
-folds2 <-folds[sample(nrow(site.by.species.test))]
-
-#Perform 10 fold cross validation
-for(i in 1:10){
-    #Segement your data by fold using the which() function 
-    testIndexes <- which(folds2==i,arr.ind=TRUE)
-    
-    test.site.by.species <- site.by.species.a[testIndexes, ]
-    train.site.by.species <- site.by.species.a[-testIndexes, ]
-    
-    test.site.by.env <- site.by.env.a[testIndexes, ]
-    train.site.by.env <- site.by.env.a[-testIndexes, ]
-    
-    test.site.by.xy <- site.by.xy.a[testIndexes, ]
-    train.site.by.xy <- site.by.xy.a[-testIndexes, ]
-    #Use the test and train data partitions however you desire...
-
-   msgdm_i <-  Zeta.msgdm(xy = train.site.by.xy, data.spec = train.site.by.species,     data.env = data.env = train.site.by.env,  order=2, sam=500,
-  reg.type="ispline", normalize="Simpson", family=binomial(link="log"),cons.inter = -1, glm.init = TRUE) 
-    
-
-}
-
-
-
-
-```
-
-# example from Predict.msgdm
 ```{r}
 utils::data(bird.spec.fine)
-xy.bird <- bird.spec.fine[1:500,1:2]
-data.spec.bird <- bird.spec.fine[1:500,3:192]
 utils::data(bird.env.fine)
-data.env.bird1 <- bird.env.fine[1:500,3:9] ##training data
-data.env.bird2 <- bird.env.fine[501:604,3:9] ##data to predict on
-
-zeta.ispline <- Zeta.msgdm(data.spec.bird, data.env.bird1, sam = 100, order = 3,
-                           reg.type = "ispline", normalize = "Jaccard")
-
-# apply ispline transformation to env data
-data.env.bird.splines <- Ispline(data.env.bird2)
-newdata <- data.frame(matrix(NA,100,ncol(data.env.bird.splines$splines)))
-names(newdata) <- names(data.env.bird.splines$splines)
-
-
-
-
-for(z in 1:100){
-  # resample sets of n sites 100 times
-  samp <- sample(1:104, 4, replace = FALSE)
-  # first (inside) apply() gets  pairwise distance between all pairs of sites for each ispline
-  # second (outside) apply gets means
-  newdata[z,] <- apply(apply(data.env.bird.splines$splines[samp,], 2, stats::dist),
-                       2, mean) 
-}
-
-
-##rescale the data like during MS-GDM
-newdata <- newdata/matrix(rep(zeta.ispline$rescale.factor,100),
-                          100,length(zeta.ispline$rescale.factor),byrow=TRUE)
-new.zeta.ispline <- Predict.msgdm(model.msgdm = zeta.ispline$model, reg.type = "ispline",
-                                  newdata = newdata)
-
-check <- data.env.bird.splines$splines[samp,]
+source(here("./Scripts/R_scripts/get_k_fold_performance.R"))
 
 ```
 
-
-
-
-
-## Predict zeta values for test data
 
 ```{r}
-Predict.msgdm(model.msgdm, reg.type, newdata, type = "response")
+perf1 <- get_k_fold_performance(
+  data.spec = bird.spec.fine[ ,3:192],
+  data.env = bird.env.fine[,3:9],
+  xy = bird.env.fine[,1:2],
+  order = 3,
+  sam = 100,
+  reg.type = "ispline",
+  normalize = "Simpson",
+  k = 5, 
+  seed_shuffle = 1,
+  seed_fac = 1)
+
+#check that different seeds give different output
+perf2 <- get_k_fold_performance(
+  data.spec = bird.spec.fine[ ,3:192],
+  data.env = bird.env.fine[,3:9],
+  xy = bird.env.fine[,1:2],
+  order = 3,
+  sam = 100,
+  reg.type = "ispline",
+  normalize = "Simpson",
+  k = 5, 
+  seed_shuffle = 6,
+  seed_fac = 2)
+
+# this is a check that it is reproducible for same seeds
+perf2_copy <- get_k_fold_performance(
+  data.spec = bird.spec.fine[ ,3:192],
+  data.env = bird.env.fine[,3:9],
+  xy = bird.env.fine[,1:2],
+  order = 3,
+  sam = 100,
+  reg.type = "ispline",
+  normalize = "Simpson",
+  k = 5, 
+  seed_shuffle = 6,
+  seed_fac = 2)
+
+perf1 
+
+perf2
+
+perf2_copy
+
 ```
 
+
+
+
+```{r}
+
+perf_bird_zeta3 <- get_k_fold_performance(
+  data.spec = bird.spec.fine[ ,3:192],
+  data.env = bird.env.fine[,3:9],
+  xy = bird.env.fine[,1:2],
+  order = 3,
+  sam = 1000,
+  reg.type = "ispline",
+  normalize = "Simpson",
+  k = 5, 
+  seed_shuffle = 1,
+  seed_fac = 1)
+
+perf_bird_zeta5 <- get_k_fold_performance(
+  data.spec = bird.spec.fine[ ,3:192],
+  data.env = bird.env.fine[,3:9],
+  xy = bird.env.fine[,1:2],
+  order = 5,
+  sam = 1000,
+  reg.type = "ispline",
+  normalize = "Simpson",
+  k = 5, 
+  seed_shuffle = 1,
+  seed_fac = 1)
+
+perf_bird_zeta3
+perf_bird_zeta5
+```
 
 
 
