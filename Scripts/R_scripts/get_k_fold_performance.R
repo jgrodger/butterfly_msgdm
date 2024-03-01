@@ -55,17 +55,17 @@ get_k_fold_performance <- function (
 # Divide the data into folds and create a dataframe to store model and null model performance values
 # of all the folds.
 
-folds <- cut(seq(1, nrow(data.spec)),breaks = k, labels=FALSE)
+folds <- cut(seq(1, nrow(data.spec)), breaks = k, labels = FALSE)
 set.seed(seed_shuffle)
 folds <-folds[sample(nrow(data.spec))]
   
-performance <- data.frame((matrix(NA, k, 5)))
-names(performance) <- c("model_RMSE", "model_R2", "model_MAE",
+performance <- data.frame((matrix(NA, k, 6)))
+names(performance) <- c("train_R2", "model_RMSE", "model_R2", "model_MAE",
                               "null_RMSE", "null_MAE")
 
 #Perform k-fold cross-validation
 for(i in 1:k){
-  testIndexes <- which(folds==i, arr.ind=TRUE)
+  testIndexes <- which(folds == i, arr.ind=TRUE)
   
   train.site.by.species <- data.spec[-testIndexes, ]
   test.site.by.species <- data.spec[testIndexes, ]
@@ -93,7 +93,7 @@ for(i in 1:k){
   data.splines <- Ispline(test.site.by.env) 
   test.data <- data.frame(matrix(NA, sam, ncol(data.splines$splines)))
   names(test.data) <- names(data.splines$splines)
-  distance <- rep(NA,)
+  distance <- rep(NA, sam)
   
   
   # For test.data, the inner apply() first gets mean distance between sites in 
@@ -119,6 +119,7 @@ for(i in 1:k){
   
   # Predict zeta diversity from test data using the model from the training data
   predict.msgdm <- Predict.msgdm(model.msgdm = train.msgdm$model, reg.type = reg.type, newdata = test.data)
+
   # (3) Run an msgdm on the test data
   
   # estimate zeta diversity for samples in the test data
@@ -133,6 +134,9 @@ for(i in 1:k){
  # plot(observed_zeta ~ predict.msgdm, main = paste("k =", i), ylab = "Observed",
  #  xlab = "Predicted")
   
+  
+  train_R2 <- with(summary(train.msgdm$model), 1 - deviance/null.deviance)
+  
   mean_obs_zeta <- mean(observed_zeta)
 
   model_RMSE <- sqrt(mean((observed_zeta - predict.msgdm)^2))
@@ -142,7 +146,7 @@ for(i in 1:k){
   null_RMSE <- sqrt(mean((observed_zeta - mean_obs_zeta)^2))
   null_MAE <- mean(abs((observed_zeta - mean_obs_zeta)))
   
-  performance[i,] <- c(model_RMSE, model_R2, model_MAE, 
+  performance[i,] <- c(train_R2, model_RMSE, model_R2, model_MAE, 
                       null_RMSE, null_MAE)
 }
 

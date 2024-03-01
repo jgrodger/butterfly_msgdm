@@ -21,6 +21,8 @@ library(mgcv)
 library(caret)
 library(dismo)
 
+library(tictoc)
+
 library(here)
 
 library(conflicted)
@@ -58,6 +60,11 @@ site.by.xy <- data.5.year$site.by.xy
   
 #just to check commit and push work
 ```
+```{r}
+source(here("./Scripts/R_scripts/get_k_fold_performance.R"))
+```
+
+
 ```{r}
 table(sites$country)
 ```
@@ -608,7 +615,7 @@ dev.off()
 ```{r}
 utils::data(bird.spec.fine)
 utils::data(bird.env.fine)
-source(here("./Scripts/R_scripts/get_k_fold_performance.R"))
+
 
 ```
 
@@ -674,8 +681,7 @@ perf_bird_zeta3 <- get_k_fold_performance(
   reg.type = "ispline",
   normalize = "Simpson",
   k = 5, 
-  seed_shuffle = 1,
-  seed_fac = 1)
+  seed_shuffle = 1)
 
 perf_bird_zeta5 <- get_k_fold_performance(
   data.spec = bird.spec.fine[ ,3:192],
@@ -686,11 +692,45 @@ perf_bird_zeta5 <- get_k_fold_performance(
   reg.type = "ispline",
   normalize = "Simpson",
   k = 5, 
-  seed_shuffle = 1,
-  seed_fac = 1)
+  seed_shuffle = 1)
 
 perf_bird_zeta3
 perf_bird_zeta5
+```
+
+```{r}
+# msgdm.3 <-  Zeta.msgdm(xy = site.by.xy, data.spec = site.by.species, data.env = site.by.env,  order=3, sam=50000,
+#   reg.type="ispline", normalize="Simpson", family=binomial(link="log"),cons.inter = -1, glm.init = TRUE)
+
+
+
+perf_butterfly_zeta3 <- get_k_fold_performance(
+  data.spec = site.by.species,
+  data.env = site.by.env,
+  xy = site.by.xy,
+  order = 3,
+  sam = 50000,
+  reg.type = "ispline",
+  normalize = "Simpson",
+  k = 5, 
+  seed_shuffle = 1)
+
+perf_butterfly_zeta3
+
+```
+
+```{r}
+
+source(here("./Scripts/R_scripts/get_k_fold_performance.R"))
+
+source(here("./Scripts/R_scripts/Zeta.order.mc.sam.R"))
+# Running get_k_fold_performance() generates warnings that are not an issue, 
+# the second warning means that truncating step size is necessary in an algorithm to get the model to converge
+#Zeta.msdgm gives two warnings: 
+#Warning: non-integer #successes in a binomial glm! Warning: step size truncated due to divergence
+#Predict.msgdm gives this warning
+#Warning: step size truncated due to #divergence
+
 ```
 
 
@@ -698,12 +738,92 @@ perf_bird_zeta5
 
 ```{r}
 
+tic("k = 5")
 
+perf_butterfly_zeta3_sam_250000 <- get_k_fold_performance(
+  data.spec = site.by.species,
+  data.env = site.by.env,
+  xy = site.by.xy,
+  order = 3,
+  sam = 250000,
+  reg.type = "ispline",
+  normalize = "Simpson",
+  k = 5, 
+  seed_shuffle = 1)
+
+perf_butterfly_zeta3_sam_250000
+
+toc()
+```
+
+
+```{r}
+z3  <- Zeta.order.mc.sam(data.spec = site.by.species, normalize = "Simpson", order=3, sam=500)
+
+check <- data.frame(z3$zeta.val.vec)
+
+
+```
+
+
+
+```{r}
+
+tic("k = 5, sam = 500")
+
+perf_butterfly_zeta3_sam_500 <- get_k_fold_performance(
+  data.spec = site.by.species,
+  data.env = site.by.env,
+  xy = site.by.xy,
+  order = 3,
+  sam = 500,
+  reg.type = "ispline",
+  normalize = "Simpson",
+  k = 5, 
+  seed_shuffle = 1)
+
+perf_butterfly_zeta3_sam_500
+
+toc()
+```
+
+```{r}
+tic("msgdm order = 3 sam = 500")
+set.seed(1)
+msgdm.3.500 <-  Zeta.msgdm(xy = site.by.xy, data.spec = site.by.species, data.env = site.by.env,  order=3, sam=500,
+  reg.type="ispline", normalize= "Simpson", family=binomial(link="log"), cons.inter = -1, glm.init = TRUE)
+toc()
+
+summary(msgdm.3.500$model)
+
+```
+
+
+
+# check timing
+```{r warning = FALSE}
+tic("msgdm sam = 50000")
+set.seed(1)
+msgdm.3 <-  Zeta.msgdm(xy = site.by.xy, data.spec = site.by.species, data.env = site.by.env,  order=3, sam=50000,
+  reg.type="ispline", normalize="Simpson", family=binomial(link="log"),cons.inter = -1, glm.init = TRUE)
+toc()
+
+tic("msgdm sam = 50000")
+set.seed(2)
+msgdm.3a <-  Zeta.msgdm(xy = site.by.xy, data.spec = site.by.species, data.env = site.by.env,  order=3, sam=50000,
+  reg.type="ispline", normalize="Simpson", family=binomial(link="log"),cons.inter = -1, glm.init = TRUE)
+toc()
+
+print("ZETA 3")
+summary(msgdm.3$model)
+
+print("ZETA 3a")
+summary(msgdm.3a$model)
+```
+
+```{r warning = FALSE}
 msgdm.2 <-  Zeta.msgdm(xy = site.by.xy[ flds[[2]], ], data.spec = site.by.species[ flds[[2]], ], data.env = site.by.env[ flds[[2]], ],  order=2, sam=500,
-  reg.type="ispline", normalize="Simpson", family=binomial(link="log"),cons.inter = -1, glm.init = TRUE) 
-
-
-
+  reg.type="ispline", normalize="Simpson", family=binomial(link="log"),cons.inter = -1, glm.init = TRUE)
 ```
 
 
@@ -718,8 +838,8 @@ Sys.time()
 
 set.seed(1)
 msgdm.3 <-  Zeta.msgdm(xy = site.by.xy, data.spec = site.by.species, data.env = site.by.env,  order=3, sam=50000,
-  reg.type="ispline", normalize="Simpson", family=binomial(link="log"),cons.inter = -1, glm.init = TRUE) 
-
+  reg.type="ispline", normalize="Simpson", family=binomial(link="log"),cons.inter = -1, glm.init = TRUE)
+ 
 set.seed(1)
 msgdm.6 <-  Zeta.msgdm(xy = site.by.xy, data.spec = site.by.species, data.env = site.by.env,  order=6, sam=50000,
   reg.type="ispline", normalize="Simpson", family=binomial(link="log"),cons.inter = -1, glm.init = TRUE) 
