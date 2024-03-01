@@ -125,26 +125,24 @@ for(i in 1:k){
   
   # estimate zeta diversity for samples in the test data
   set.seed(i*seed_fac)
-  obs.msgdm <- Zeta.msgdm(test.site.by.species, test.site.by.env, 
-    xy = test.site.by.xy, sam = sam, order = order, reg.type = reg.type, 
-    normalize = normalize, family=binomial(link="log"), cons.inter = -1, 
-    glm.init = TRUE) 
+  zeta_mc <- Zeta.order.mc.sam(data.spec = test.site.by.species, normalize = normalize, order=order, sam = sam)
+  observed_zeta <- zeta_mc$zeta.val.vec
   
   # (4) compare predicted zeta diversity values from (2) 
   # with observed values from (3) to calculate model performance metrics
   
   
-  #plot(obs.msgdm$val ~ predict.msgdm, main = paste("k =", i), ylab = "Observed",
-  #  xlab = "Predicted")
+  plot(observed_zeta ~ predict.msgdm, main = paste("k =", i), ylab = "Observed",
+   xlab = "Predicted")
   
-  mean_obs_zeta <- mean(obs.msgdm$val)
+  mean_obs_zeta <- mean(observed_zeta)
 
-  model_RMSE <- sqrt(mean((obs.msgdm$val - predict.msgdm)^2))
-  model_R2 <- (cor(predict.msgdm, obs.msgdm$val))^2
-  model_MAE <- mean(abs((obs.msgdm$val - predict.msgdm)))
+  model_RMSE <- sqrt(mean((observed_zeta - predict.msgdm)^2))
+  model_R2 <- (cor(predict.msgdm, observed_zeta))^2
+  model_MAE <- mean(abs((observed_zeta - predict.msgdm)))
   
-  null_RMSE <- sqrt(mean((obs.msgdm$val - mean_obs_zeta)^2))
-  null_MAE <- mean(abs((obs.msgdm$val - mean_obs_zeta)))
+  null_RMSE <- sqrt(mean((observed_zeta - mean_obs_zeta)^2))
+  null_MAE <- mean(abs((observed_zeta - mean_obs_zeta)))
   
   performance[i,] <- c(model_RMSE, model_R2, model_MAE, 
                       null_RMSE, null_MAE)
