@@ -37,7 +37,6 @@
 #' 
 #' @param k number of folds 
 #' @param seed_shuffle: seed to shuffle data
-#' @param seed_fac: for each fold in i:k, I set seed to i multiplied by this factor
 #' 
 #' @returns A dataframe with RMSE, R2(r-squared), and MSE as columns and k rows 
 
@@ -51,8 +50,7 @@ get_k_fold_performance <- function (
   reg.type = "ispline",
   normalize = "Simpson",
   k = 5, 
-  seed_shuffle = 1,
-  seed_fac = 1) {
+  seed_shuffle = 1) {
 
 # Divide the data into folds and create a dataframe to store model and null model performance values
 # of all the folds.
@@ -104,7 +102,7 @@ for(i in 1:k){
   # For distance, apply gets the average pairwise euclidean geographical 
   # distance between sites
   
-  set.seed(i*seed_fac)
+  set.seed(i)
   for(z in 1:sam){
     samp <- sample(1:nrow(test.site.by.species), order, replace = FALSE)
     test.data[z,] <- apply(apply(data.splines$splines[samp,], 2, stats::dist), 2, mean) 
@@ -124,7 +122,7 @@ for(i in 1:k){
   # (3) Run an msgdm on the test data
   
   # estimate zeta diversity for samples in the test data
-  set.seed(i*seed_fac)
+  set.seed(i)
   zeta_mc <- Zeta.order.mc.sam(data.spec = test.site.by.species, normalize = normalize, order=order, sam = sam)
   observed_zeta <- zeta_mc$zeta.val.vec
   
@@ -132,8 +130,8 @@ for(i in 1:k){
   # with observed values from (3) to calculate model performance metrics
   
   
-  plot(observed_zeta ~ predict.msgdm, main = paste("k =", i), ylab = "Observed",
-   xlab = "Predicted")
+ # plot(observed_zeta ~ predict.msgdm, main = paste("k =", i), ylab = "Observed",
+ #  xlab = "Predicted")
   
   mean_obs_zeta <- mean(observed_zeta)
 
