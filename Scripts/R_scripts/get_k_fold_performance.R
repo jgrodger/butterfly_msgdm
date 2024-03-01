@@ -14,7 +14,11 @@
 #' from the training data, and predict zeta diversity (Predict.msgdm())
 #' (3) Run an msgdm on the test data
 #' (4) compare predicted zeta diversity values from (2) with observed 
-#' values from (3) to calculate model performance metrics
+#' values from (3) to calculate model performance metrics, and do same for a 
+#' null model with the mean observed value of zeta as the predicted value.
+#' 
+#' POTENTIAL IMPROVEMENTS/QUERIES
+#' Could I get away with a much smaller sam for the predicted data?
 #' 
 #' RMSE (Root mean square error) is the SD of residuals
 #' MAE (Mean absolute error) is the mean of absolute value of residuals. 
@@ -50,17 +54,16 @@ get_k_fold_performance <- function (
   seed_shuffle = 1,
   seed_fac = 1) {
 
-# Divide the data into folds and create a dataframe to store performance values
+# Divide the data into folds and create a dataframe to store model and null model performance values
 # of all the folds.
 
 folds <- cut(seq(1, nrow(data.spec)),breaks = k, labels=FALSE)
 set.seed(seed_shuffle)
 folds <-folds[sample(nrow(data.spec))]
   
-performance <- data.frame((matrix(NA, k, 3)))
-names(performance) <- c("RMSE", "R2", "MAE")
-
-
+performance <- data.frame((matrix(NA, k, 5)))
+names(performance) <- c("model_RMSE", "model_R2", "model_MAE",
+                              "null_RMSE", "null_MAE")
 
 #Perform k-fold cross-validation
 for(i in 1:k){
@@ -128,13 +131,23 @@ for(i in 1:k){
     glm.init = TRUE) 
   
   # (4) compare predicted zeta diversity values from (2) 
-  # with observed values from (3) to calculate model performance metrics 
-
-  RMSE <- sqrt(mean((obs.msgdm$val - predict.msgdm)^2))
-  R2 = (cor(predict.msgdm, obs.msgdm$val))^2
-  MAE <- mean(abs((obs.msgdm$val - predict.msgdm)))
+  # with observed values from (3) to calculate model performance metrics
   
-  performance[i,] <- c(RMSE, R2, MAE)
+  
+  #plot(obs.msgdm$val ~ predict.msgdm, main = paste("k =", i), ylab = "Observed",
+  #  xlab = "Predicted")
+  
+  mean_obs_zeta <- mean(obs.msgdm$val)
+
+  model_RMSE <- sqrt(mean((obs.msgdm$val - predict.msgdm)^2))
+  model_R2 <- (cor(predict.msgdm, obs.msgdm$val))^2
+  model_MAE <- mean(abs((obs.msgdm$val - predict.msgdm)))
+  
+  null_RMSE <- sqrt(mean((obs.msgdm$val - mean_obs_zeta)^2))
+  null_MAE <- mean(abs((obs.msgdm$val - mean_obs_zeta)))
+  
+  performance[i,] <- c(model_RMSE, model_R2, model_MAE, 
+                      null_RMSE, null_MAE)
 }
 
 return(performance)
