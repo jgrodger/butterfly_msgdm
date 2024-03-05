@@ -62,6 +62,9 @@ folds <-folds[sample(nrow(data.spec))]
 performance <- data.frame((matrix(NA, k, 6)))
 names(performance) <- c("train_R2", "model_RMSE", "model_R2", "model_MAE",
                               "null_RMSE", "null_MAE")
+msgdm_compare <- list()
+msgdm_compare$models <- list()
+
 
 #Perform k-fold cross-validation
 for(i in 1:k){
@@ -82,6 +85,8 @@ for(i in 1:k){
     xy = train.site.by.xy, sam = sam, order = order, reg.type = reg.type, 
     normalize = normalize, family=binomial(link="log"), 
     cons.inter = -1, glm.init = TRUE)
+  
+  msgdm_compare$models[[i]] <- summary(train.msgdm$model)
   
   # (2) Get i-spline-transformed predictor data for the training set 
   # and predict zeta diversity (Predict.msgdm())
@@ -150,7 +155,10 @@ for(i in 1:k){
                       null_RMSE, null_MAE)
 }
 
-return(performance)
+
+msgdm_compare$performance <- performance
+
+return(msgdm_compare)
 
 }
 

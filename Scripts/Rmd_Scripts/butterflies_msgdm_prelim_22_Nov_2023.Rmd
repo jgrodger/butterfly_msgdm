@@ -62,6 +62,11 @@ site.by.xy <- data.5.year$site.by.xy
 ```
 ```{r}
 source(here("./Scripts/R_scripts/get_k_fold_performance.R"))
+
+source(here("./Scripts/R_scripts/Zeta.order.mc.sam.R"))
+
+source(here("./Scripts/R_scripts/get_validation_different_seeds_and_samps.R"))
+
 ```
 
 
@@ -721,9 +726,8 @@ perf_butterfly_zeta3
 
 ```{r}
 
-source(here("./Scripts/R_scripts/get_k_fold_performance.R"))
 
-source(here("./Scripts/R_scripts/Zeta.order.mc.sam.R"))
+
 # Running get_k_fold_performance() generates warnings that are not an issue, 
 # the second warning means that truncating step size is necessary in an algorithm to get the model to converge
 #Zeta.msdgm gives two warnings: 
@@ -753,7 +757,12 @@ perf_butterfly_zeta3_sam_250000 <- get_k_fold_performance(
 
 perf_butterfly_zeta3_sam_250000
 
+write_csv(perf_butterfly_zeta3_sam_250000, file = here("./Output/butterfly_k_fold_250000_zeta3.csv"))
+
 toc()
+```
+```{r}
+write_csv(perf_butterfly_zeta3_sam_250000, file = here("./Output/butterfly_k_fold_250000_zeta3.csv"))
 ```
 
 
@@ -762,6 +771,7 @@ z3  <- Zeta.order.mc.sam(data.spec = site.by.species, normalize = "Simpson", ord
 
 check <- data.frame(z3$zeta.val.vec)
 
+z3$combinations
 
 ```
 
@@ -769,35 +779,74 @@ check <- data.frame(z3$zeta.val.vec)
 
 ```{r}
 
-tic("k = 5, sam = 500")
+source(here("./Scripts/R_scripts/get_k_fold_performance.R"))
 
-perf_butterfly_zeta3_sam_500 <- get_k_fold_performance(
+tic("k = 5, sam = 50000")
+
+comp_k <- get_k_fold_performance(
   data.spec = site.by.species,
   data.env = site.by.env,
   xy = site.by.xy,
   order = 3,
-  sam = 500,
+  sam = 50000,
   reg.type = "ispline",
   normalize = "Simpson",
   k = 5, 
   seed_shuffle = 1)
 
-perf_butterfly_zeta3_sam_500
+
 
 toc()
+
+comp_k$performance
+comp_k$models
 ```
+
 
 ```{r}
-tic("msgdm order = 3 sam = 500")
-set.seed(1)
-msgdm.3.500 <-  Zeta.msgdm(xy = site.by.xy, data.spec = site.by.species, data.env = site.by.env,  order=3, sam=500,
-  reg.type="ispline", normalize= "Simpson", family=binomial(link="log"), cons.inter = -1, glm.init = TRUE)
+
+source(here("./Scripts/R_scripts/get_validation_different_seeds_and_samps.R"))
+
+tic(" validation script sams = 50000, zeta order = 3")
+comp1 <- get_validation_different_seeds_and_samps(  
+  data.spec = site.by.species,
+  data.env = site.by.env,
+  xy = site.by.xy,
+  order = 3,
+  sam.train = 50000,
+  sam.test = 5000,
+  reg.type = "ispline",
+  normalize = "Simpson",
+  seeds = 5)
+
 toc()
 
-summary(msgdm.3.500$model)
+comp1$performance
+comp1$models
+```
+```{r}
+
+source(here("./Scripts/R_scripts/get_validation_different_seeds_and_samps.R"))
+
+tic(" validation script sams = 50000, zeta order = 3")
+comp1 <- get_validation_different_seeds_and_samps(  
+  data.spec = site.by.species,
+  data.env = site.by.env,
+  xy = site.by.xy,
+  order = 3,
+  sam.train = 50000,
+  sam.test = 50000,
+  reg.type = "ispline",
+  normalize = "Simpson",
+  seeds = 5)
+
+toc()
+
+comp1$performance
+comp1$models
+
 
 ```
-
 
 
 # check timing
