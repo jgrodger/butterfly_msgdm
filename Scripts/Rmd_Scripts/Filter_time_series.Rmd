@@ -1,0 +1,258 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+This is an [R Markdown](http://rmarkdown.rstudio.com) Notebook. When you execute code within the notebook, the results appear beneath the code. 
+
+Try executing this chunk by clicking the *Run* button within the chunk or by placing your cursor inside it and pressing *Ctrl+Shift+Enter*. 
+
+
+
+# Filtering for time series
+
+```{r}
+Save data from appropriate step from process_CSV data and then carry on here
+```
+
+
+#filter records to site.years with sampling in all 4 periods
+```{r}
+records.multiyear <- records %>%
+  filter(all.4 == TRUE)
+print("all 4 sampling periods")
+print("records")
+nrow(records.multiyear)
+print("sites")
+length(unique(records.multiyear$site))
+
+
+```
+```{r}
+
+records.multiyear$species.no <- paste("species", records.multiyear$species.no, sep = "_")
+
+aggregated.records.multiyear <- records.multiyear %>%
+  group_by(site, year, species.no)%>%
+    summarise(annual.records = sum(count))
+  
+
+#get a site.year by species dataframe with counts of observations
+multiyear.site.year.counts <- aggregated.records.multiyear %>%
+  pivot_wider(names_from = species.no,
+              values_from = annual.records,
+              values_fill = 0) %>% # for cases when there wasn't a zero count record for a species that wasn't recorded in a survey, should still be zero
+  mutate (site.year = paste(site, year, sep = "_")) %>% 
+    column_to_rownames(var = "site.year")%>%
+      dplyr::select(-c(site, year))
+
+
+```
+
+
+#coverage of site years
+```{r}
+#DataInfo() performs the first part of what iNEXT() does in seconds. the whole iNEXT() function would have to be left overnight for the whole dataset
+#https://cran.r-project.org/web/packages/iNEXT/vignettes/Introduction.pdf
+
+coverage.multi <- DataInfo(t(multiyear.site.year.counts),  datatype="abundance")
+
+hist(coverage.multi$SC)
+
+hist(coverage.multi$SC, ylim = c(0, 200))
+
+
+hist(coverage.multi$SC, xlim = c(0.95, 1), breaks = 1000)
+
+quantile(coverage.multi$SC, seq(from = 0, to = 1, by = 0.01), na.rm = TRUE)
+
+
+#it seems reasonable to include sites with greater than 0.9 coverage.multi and surveyed over at least 5 months in at least three years
+
+cov.merge.multi <- coverage.multi %>%
+  dplyr::select(Assemblage, n, S.obs, SC) 
+names(cov.merge.multi) <- c("site.year", "total.butterflies", "richness", "coverage.multi")
+
+
+records.multiyear <- merge(records.multiyear, cov.merge.multi, by = "site.year")
+
+head(records.multiyear)
+
+```
+
+
+
+#filter records to sites.years with over.99% coverage
+```{r}
+records.multiyear <- records.multiyear %>%
+  filter(coverage.multi >= 0.99)
+print("99% coverage")
+print("records")
+nrow(records.multiyear)
+print("sites")
+length(unique(records.multiyear$site))
+
+
+```
+
+
+## For eligible site years, as filtered above
+## check distribution of number of surveys per site per year, plot number of sites surveyed per year in dataset, add years of surveys per site to site info
+```{r}
+
+
+#surveys per site per year
+surveys.site.year <-   records.multiyear %>% 
+  distinct(survey.info, .keep_all = TRUE) %>%
+  group_by (site, year)  %>% 
+summarise(n = n())
+
+#inspect frequency distribution of surveys per site per year
+print("surveys per site per year")
+summary(surveys.site.year$n)
+hist(surveys.site.year$n, main = "Surveys per site per year")
+
+sum2 <- surveys.site.year %>%
+  mutate(n = as.character(n)) %>%
+  group_by(n) %>%
+      summarise(freq.survey = n())
+sum2
+
+#get plot of sites surveyed per year by year
+sites.per.year <- surveys.site.year %>% 
+  group_by(year)%>% 
+summarise(sites = n())
+print("sites per year")
+summary(sites.per.year$sites)
+plot(sites~year, data = sites.per.year)
+
+#years per site summary and histogram
+years.per.site <- surveys.site.year %>% 
+  group_by(site)%>% 
+summarise(years.surveyed = n(),
+          first.year = min(year),
+          last.year = max(year))
+
+
+print("years per site")
+summary(years.per.site$years.surveyed)
+hist(years.per.site$years.surveyed, xlim  = c(0, 50))
+
+
+print("number of sites before merging operation")
+nrow(sites)
+sites <- merge(sites, years.per.site)  
+print("number of sites after merging operation")
+nrow(sites)
+```
+
+#filter records to site.years sampled at least more than 10 years apart
+```{r}
+years.per.site <-years.per.site %>%
+  mutate(timespan = last.year-first.year) 
+
+plot(timespan~years.surveyed, data = years.per.site)
+
+years.per.site <-years.per.site %>%
+   filter(years.surveyed>=10)
+
+
+records.multiyear <- records.multiyear %>%
+ merge(years.per.site, by = "site", all.y = TRUE)
+
+
+print("ten or more years of surveys")
+print("records")
+nrow(records.multiyear)
+print("sites")
+length(unique(records.multiyear$site))
+```
+
+
+
+#over-write previous vesins
+```{r}
+
+aggregated.records.multiyear <- records.multiyear %>%
+  group_by(site, year, species.no)%>%
+    summarise(annual.records = sum(count))
+  
+
+#get a site.year by species dataframe with counts of observations
+multiyear.site.year.counts <- aggregated.records.multiyear %>%
+  pivot_wider(names_from = species.no,
+              values_from = annual.records,
+              values_fill = 0) %>% # for cases when there wasn't a zero count record for a species that wasn't recorded in a survey, should still be zero
+  mutate (site.year = paste(site, year, sep = "_")) %>% 
+    column_to_rownames(var = "site.year")%>%
+      dplyr::select(-c(site, year))
+
+
+
+multiyear.site.year.pres.abs <- multiyear.site.year.counts
+
+
+multiyear.site.year.pres.abs[multiyear.site.year.pres.abs[, ] > 0] <- 1 
+
+
+```
+
+
+
+
+## surveys
+```{r}
+
+# #years per site summary and histogram
+# years.per.site <- surveys.site.year %>% 
+#   mutate(site.year = paste(site, year, sep = "_")) %>%
+#   filter(site.year %in% site.years.keep$site.year)%>%
+#   group_by(site)%>% 
+# summarise(years.surveyed.well = n(),
+#           first.year.well = min(year),
+#           last.year.well = max(year)) %>%
+#   ungroup() 
+# 
+# print("number of rows before merging")
+# nrow(sites)
+# sites.multiyear <- sites %>%
+#   merge(years.per.site, by = "site")
+# print("number of rows after merging")
+# nrow(sites)
+# 
+# str(years.per.site)
+# 
+# str(sites.multiyear)
+
+```
+
+
+
+
+## Plot Sites
+```{r}
+
+sites.multiyear <- sites %>%
+filter(sites$site %in% unique(records.multiyear$site))
+
+plot.points <- st_as_sf(sites.multiyear, coords=c("x","y"), remove = FALSE, crs = 27700)#I want to keep coords in the dataframe
+
+#get a set of points for each unique grid cell
+
+print("sites")
+nrow(plot.points)
+
+ basemap <-tm_shape(bounds.2) +
+   tm_borders()
+# pointsmap <- basemap +
+# tm_shape(plot.points) +
+#   tm_symbols(size = 0.05, col = "blue")
+
+pointsmap2 <- basemap +
+tm_shape(plot.points) +
+  tm_symbols(size = 0.5, col = "blue")
+
+
+# print(pointsmap)
+print(pointsmap2)
+```
