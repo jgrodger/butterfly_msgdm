@@ -718,6 +718,44 @@ dev.off()
 
 ```
 
+## Obtain site by species matrices for wider countryside and habitat specialists separately
+```{r}
+
+species$species.no <- paste("species", species$species.no, sep = "_")
+
+# Obtain vectors of species.no for habitat specialists and wider countryside species
+habitat.specialists <- species[species$strategy == "Habitat specialist",]$species.no
+wider.countryside.spp <- species[species$strategy == "Wider countryside sp",]$species.no
+
+# Subset site by species by species for habitat specialists and wider countrysides
+site.by.species.hs <- site.by.species %>%
+  select(all_of(habitat.specialists))
+
+site.by.species.wc <- site.by.species %>%
+  select(all_of(wider.countryside.spp))
+
+# Check if this results in some sites with no species in each case, requiring deletion of rows?
+
+print("number of sites with no habitat specialists")
+nrow(site.by.species.hs[rowSums(site.by.species.hs)==0, ])
+
+print("number of sites with no wider countryside species")
+nrow(site.by.species.wc[rowSums(site.by.species.wc)==0, ])
+
+# Remove zero sum rows from site by species matrices, and obtain corresponding site by xy 
+# and site by env matrices
+
+site.by.species.wc<- dplyr::filter(site.by.species.wc, rowSums(site.by.species.wc) > 0)
+site.by.xy.wc <- dplyr::filter(site.by.xy, rownames(site.by.xy) %in% rownames(site.by.species.wc))
+site.by.env.wc <- dplyr::filter(site.by.env, rownames(site.by.env) %in% rownames(site.by.species.wc))
+
+site.by.species.hs<- dplyr::filter(site.by.species.hs, rowSums(site.by.species.hs) > 0)
+site.by.xy.hs <- dplyr::filter(site.by.xy, rownames(site.by.xy) %in% rownames(site.by.species.hs))
+site.by.env.hs <- dplyr::filter(site.by.env, rownames(site.by.env) %in% rownames(site.by.species.hs))
+
+```
+
+
 # save processed data
 ```{r}
 write_rds(site.by.obs.5.year.presabs1, file = here("./Data/Processed_Data/site_by_obs_5_year_pres_abs.rds"))

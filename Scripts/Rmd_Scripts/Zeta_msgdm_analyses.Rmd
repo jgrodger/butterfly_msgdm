@@ -1,0 +1,104 @@
+---
+title: "Zeta Msgdm Analyses"
+output: html_document
+
+params:
+  dataset: "all_species"
+  sam_ddecay: 100
+  sam_msgdm: 100
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+here::i_am("Scripts/Rmd_Scripts/run_zeta_msgdm.Rmd")
+
+library(tidyverse)
+library(zetadiv)
+
+library(mgcv)
+library(here)
+library(conflicted)
+library(tictoc)
+
+conflicts_prefer(dplyr::select)
+```
+```{r}
+# if several of these small functions are needed, put them in an R script
+get.zeta.declines <- function(my.site.by.species, my.orders){
+  
+print(paste0("Zeta decline: orders = 1 to ", max(my.orders)) ) 
+zeta.dec <- Zeta.decline.ex(data.spec = my.site.by.species, orders = my.orders)
+#zeta.dec1
+summary(zeta.dec$zeta.pl)
+summary(zeta.dec$zeta.exp)
+zeta.dec$aic  
+}
+
+```
+
+
+```{r}
+print(params$dataset)
+str(params$dataset)
+
+data_path <- paste0("./Data/Processed_Data/Spatial/", params$dataset, ".rds")
+
+out_path <-  paste0(here("Output/Spatial/"), "/", params$dataset, "/")
+
+if(!dir.exists(out_path)) dir.create(out_path)
+
+data <- readRDS(here(data_path))
+
+```
+
+
+```{r}
+site.by.species <- data$site.by.species
+  
+site.by.env <- data$site.by.env
+
+site.by.xy <- data$site.by.xy
+```
+
+
+# Save decline and decay output for publication figures
+
+## Zeta declines 
+```{r}
+get.zeta.declines(site.by.species, 1:10)
+```
+
+```{r}
+get.zeta.declines(site.by.species, 1:60)
+```
+
+```{r}
+get.zeta.declines(site.by.species, 1:200)
+```
+
+
+## Zeta decay 
+```{r warning = FALSE}
+set.seed(1) 
+
+zeta.ddecays <- Zeta.ddecays(xy = site.by.xy, site.by.species, sam = params$sam_ddecay, orders = 2:100,
+plot = TRUE, confint.level = 0.95)
+
+write_rds(zeta.ddecays, file = paste0(here(out_path), "/", "zeta_distance_decay",  ".rds"))
+```
+
+
+## GAM analysis, save output for publication
+```{r}
+
+```
+
+## MSGDM analysis, save output for publication
+
+```{r}
+
+```
+

@@ -1,0 +1,83 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+ 
+
+# this will call the markdown(s) and generate report(s) with desired parameters
+
+## setup
+```{r}
+
+here::i_am("Scripts/Rmd_Scripts/run_zeta_msgdm.Rmd")
+
+library(tidyverse)
+library(zetadiv)
+# library(mgcv)
+# library(caret)
+# library(dismo)
+
+library(tictoc)
+
+library(here)
+
+library(conflicted)
+
+conflicts_prefer(dplyr::select)
+```
+
+
+##  Load functions
+```{r}
+source(here("./Scripts/R_scripts/get_k_fold_performance.R"))
+
+source(here("./Scripts/R_scripts/Zeta.order.mc.sam.R"))
+
+source(here("./Scripts/R_scripts/get_validation_different_seeds_and_samps.R"))
+
+# if several of these small functions are needed, put them in an R script
+get.zeta.declines <- function(my.site.by.species, my.orders){
+  
+print(paste0("Zeta decline: orders = 1 to ", max(my.orders)) ) 
+zeta.dec <- Zeta.decline.ex(data.spec = my.site.by.species, orders = my.orders)
+#zeta.dec1
+summary(zeta.dec$zeta.pl)
+summary(zeta.dec$zeta.exp)
+zeta.dec$aic  
+}
+
+
+```
+
+
+
+## Examine zeta decline whole dataset
+
+
+# need to work out how to run the following, see https://bookdown.org/yihui/rmarkdown/params-knit.html#knit-with-custom-parameters
+
+```{r}
+
+
+
+render_report = function(dataset, sam_ddecay, sam_msgdm) {
+  rmarkdown::render(
+    "Zeta_msgdm_analyses.Rmd", params = list(
+      dataset = all_species,
+      sam_ddecay = 100,
+      sam_msgdm = 100
+    ),
+    output_file = paste0("Report-", dataset, ".html")
+  )
+}
+
+render_report("all_species", 100, 100)
+
+```
+
+
+# Do this for WC and HS, note these need to now be saved from Process_CSV_data
+```{r}
+
+```
+
