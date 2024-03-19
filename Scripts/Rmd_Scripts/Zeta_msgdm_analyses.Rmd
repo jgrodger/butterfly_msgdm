@@ -4,9 +4,18 @@ output: html_document
 
 params:
   dataset: "all_species"
-  sam_ddecay: 100
   sam_msgdm: 100
+  orders_msgdm: !r c(2,3)
+  normalize_msgdm: "Simpson"
 ---
+"You can also run arbitrary R expressions by prefacing the parameter value with !r"
+https://r4ds.had.co.nz/r-markdown.html
+
+```{r}
+# You can also run arbitrary R expressions by prefacing the parameter value with !r
+# https://r4ds.had.co.nz/r-markdown.html
+```
+
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
@@ -21,32 +30,38 @@ library(zetadiv)
 library(mgcv)
 library(here)
 library(conflicted)
+library(knitrProgressBar)
 library(tictoc)
 
 conflicts_prefer(dplyr::select)
+conflicts_prefer(knitrProgressBar::progress_estimated)
+
+# there is a same-named function in dplyr, check it out
 ```
+
+
 ```{r}
-# if several of these small functions are needed, put them in an R script
-get.zeta.declines <- function(my.site.by.species, my.orders){
-  
-print(paste0("Zeta decline: orders = 1 to ", max(my.orders)) ) 
-zeta.dec <- Zeta.decline.ex(data.spec = my.site.by.species, orders = my.orders)
-#zeta.dec1
-summary(zeta.dec$zeta.pl)
-summary(zeta.dec$zeta.exp)
-zeta.dec$aic  
+
+# From https://stackoverflow.com/questions/71252509/is-there-a-way-to-get-progress-information-whan-a-chunk-is-running-in-rmarkdown
+
+slow_function <- function(i, .pb=NULL) {  
+  update_progress(.pb)  
+  Sys.sleep(0.5)  
+  i  
 }
 
+# create an R6 progress object for
+# the number of loops/iterations in the target chunk
+
+
+
 ```
 
 
 ```{r}
-print(params$dataset)
-str(params$dataset)
-
 data_path <- paste0("./Data/Processed_Data/Spatial/", params$dataset, ".rds")
 
-out_path <-  paste0(here("Output/Spatial/"), "/", params$dataset, "/")
+out_path <-  paste0(here("Output/Spatial/"), "/", params$dataset, "_" , params$normalize_msgdm, "/")
 
 if(!dir.exists(out_path)) dir.create(out_path)
 
@@ -64,39 +79,179 @@ site.by.xy <- data$site.by.xy
 ```
 
 
-# Save decline and decay output for publication figures
-
-## Zeta declines 
-```{r}
-get.zeta.declines(site.by.species, 1:10)
-```
-
-```{r}
-get.zeta.declines(site.by.species, 1:60)
-```
-
-```{r}
-get.zeta.declines(site.by.species, 1:200)
-```
 
 
-## Zeta decay 
-```{r warning = FALSE}
+
+```{r, warning = FALSE, label='Zeta Distance Decay GAMs'}
 set.seed(1) 
+zeta.ddecay.gam. <- Zeta.ddecay(xy = site.by.xy, data.spec = site.by.species, order = 2, 
+                                    reg.type="gam")
+set.seed(1) 
+zeta.ddecay.gam. <- Zeta.ddecay(xy = site.by.xy, data.spec = site.by.species, order = 6, 
+                                    reg.type="gam")
 
-zeta.ddecays <- Zeta.ddecays(xy = site.by.xy, site.by.species, sam = params$sam_ddecay, orders = 2:100,
-plot = TRUE, confint.level = 0.95)
+set.seed(1) 
+zeta.ddecay.gam. <- Zeta.ddecay(xy = site.by.xy, data.spec = site.by.species, order = 10, 
+                                    reg.type="gam")
 
-write_rds(zeta.ddecays, file = paste0(here(out_path), "/", "zeta_distance_decay",  ".rds"))
+set.seed(1) 
+zeta.ddecay.gam. <- Zeta.ddecay(xy = site.by.xy, data.spec = site.by.species, order = 20, 
+                                    reg.type="gam")
+
+set.seed(1) 
+zeta.ddecay.gam. <- Zeta.ddecay(xy = site.by.xy, data.spec = site.by.species, order = 50, 
+                                    reg.type="gam")
+
+set.seed(1) 
+zeta.ddecay.gam. <- Zeta.ddecay(xy = site.by.xy, data.spec = site.by.species, order = 100, 
+                                    reg.type="gam")
+
 ```
+```{r}
+t1 <- cor(site.by.env)
+t2 <- cor(site.by.env, method = "spearman")
 
+print("Pearson correlation")
+t1
+print("Spearman correlation")
+t2
+
+
+write.csv(t1, file = paste0(here(out_path), "/",  "env_var_pearson_cor.csv"))
+write.csv(t2, file = paste0(here(out_path), "/",  "env_var_spearman_cor.csv"))
+
+```
 
 ## GAM analysis, save output for publication
-```{r}
+```{r warning = FALSE}
+# see answer here for k https://stats.stackexchange.com/questions/359568/choosing-k-in-mgcvs-gam
+
+site.by.env.and.richness <- cbind(site.by.env, rowSums(site.by.species)) %>%
+rename(species.richness = 'rowSums(site.by.species)')
+
+# poisson
+gam1 <- gam(species.richness ~ s(mean.ann.temp, k = 10) + s(mean.ann.rain, k = 10) + s(topgraphic.wetness, k = 10) + s(ph, k = 10) + s(total.n, k = 10) + s(tree.density, k = 10) + s(log10.pesticide.risk, k = 10) + s(log10.humans, k = 10),  data = site.by.env.and.richness, method= "REML", family = "poisson", link = "log")
+
+# quasipoisson
+gam2 <- gam(species.richness ~ s(mean.ann.temp, k = 10) + s(mean.ann.rain, k = 10) + s(topgraphic.wetness, k = 10) + s(ph, k = 10) + s(total.n, k = 10) + s(tree.density, k = 10) + s(log10.pesticide.risk, k = 10) + s(log10.humans, k = 10),  data = site.by.env.and.richness, method= "REML", family = "quasipoisson", link = "log")
+
+# gaussian
+gam3 <- gam(species.richness ~ s(mean.ann.temp, k = 10) + s(mean.ann.rain, k = 10) + s(topgraphic.wetness, k = 10) + s(ph, k = 10) + s(total.n, k = 10) + s(tree.density, k = 10) + s(log10.pesticide.risk, k = 10) + s(log10.humans, k = 10),  data = site.by.env.and.richness, method= "REML")
+
+summary(gam1)
+
+par(mfrow = c(2,4))
+plot.gam(gam1)
+dev.off()  
+
+
+pdf(here("./Output/gam.pdf"))
+par(mfrow = c(2,4))
+plot.gam(gam1)
+dev.off()
+
+#gam from zetadiv, Code from Latombe et al. 2018
+
+#including log observations 
+
+
+
+#zeta.gam <- Zeta.msgdm(site.by.species, site.by.env,xy=NULL,order=1,sam=50000,normalize = FALSE,reg.type = "gam",family=gaussian(),control=glm.control(maxit = 500),empty.row = "remove",kn=10)
+
+
+
+summary(gam1)
+plot(gam1)
+qq.gam(gam1)
 
 ```
 
+
+```{r}
+summary(gam2)
+plot(gam2)
+qq.gam(gam2)
+```
+```{r}
+summary(gam3)
+plot(gam3)
+qq.gam(gam3)
+```
+
+
+```{r}
+AIC(gam1, gam2, gam3)
+
+anova(gam1, gam2, test = "Chisq")
+
+anova(gam1, gam3, test = "Chisq")
+```
+
+
 ## MSGDM analysis, save output for publication
+
+```{r}
+
+n_iterations <- length(params$orders_msgdm)
+pb <- progress_estimated(n_iterations)
+
+output0 <- list()
+
+for (i in 1:length(params$orders_msgdm)) {
+slow_function(i, .pb=pb)
+set.seed(1)
+my.msgdm <-  Zeta.msgdm(xy = site.by.xy, data.spec = site.by.species, data.env = site.by.env,  order = params$orders_msgdm[[i]], sam = params$sam_msgdm,
+  reg.type="ispline", normalize=params$normalize_msgdm, family=binomial(link="log"),cons.inter = -1, glm.init = TRUE) 
+output0[[i]] <- my.msgdm
+print(paste0("Zeta = ", params$orders_msgdm[i]))
+print(Sys.time())
+
+}
+
+names(output0) <- paste0("msgdm.", params$orders_msgdm)
+
+
+
+#write_rds(output0, file = here("./Output/butterfly_ispline_simpson_50000.rds"))
+
+```
+
+## MSGDM summaries
+```{r}
+for (i in 1:length(params$orders_msgdm)) {
+print(names(output0[i]))
+print(summary(output0[[i]]$model))
+}
+```
+# msgdm deviance explained
+```{r}
+for (i in 1:length(params$orders_msgdm)) {
+print(names(output0[i]))
+print(with(summary(output0[[i]]$model), 1 - deviance/null.deviance))
+}
+```
+```{r}
+
+
+
+for (i in 1:length(params$orders_msgdm)) {
+Plot.ispline(msgdm = output0[[i]], data.env = site.by.env, distance = TRUE,  legend = TRUE)
+}
+
+```
+```{r}
+varparts <- list()
+
+for (i in 1:length(params$orders_msgdm)) {
+  set.seed(1)
+  varparts[[i]] <- Zeta.varpart(msgdm.mod = output0[[i]], method.glm = "glm.fit2", cons.inter = -1) 
+}
+names(varparts) <- paste0("zeta.vapart.", params$orders_msgdm)
+
+for (i in 1:length(params$orders_msgdm)) {
+pie.neg(varparts[[i]][4:7,1], density = c(4, 0, 8, -1),  angle = c(90, 0, 0, 0), labels =  c("distance","undistinguishable","environment","unexplained"), radius = 0.9, main = paste0("Zeta = ", params$orders_msgdm))
+}
+```
 
 ```{r}
 

@@ -17,6 +17,8 @@ library(zetadiv)
 # library(caret)
 # library(dismo)
 
+library(rmarkdown)
+
 library(tictoc)
 
 library(here)
@@ -34,19 +36,6 @@ source(here("./Scripts/R_scripts/get_k_fold_performance.R"))
 source(here("./Scripts/R_scripts/Zeta.order.mc.sam.R"))
 
 source(here("./Scripts/R_scripts/get_validation_different_seeds_and_samps.R"))
-
-# if several of these small functions are needed, put them in an R script
-get.zeta.declines <- function(my.site.by.species, my.orders){
-  
-print(paste0("Zeta decline: orders = 1 to ", max(my.orders)) ) 
-zeta.dec <- Zeta.decline.ex(data.spec = my.site.by.species, orders = my.orders)
-#zeta.dec1
-summary(zeta.dec$zeta.pl)
-summary(zeta.dec$zeta.exp)
-zeta.dec$aic  
-}
-
-
 ```
 
 
@@ -58,26 +47,44 @@ zeta.dec$aic
 
 ```{r}
 
+# 
+# render_report = function(dataset, analysis_script, sam_ddecay, sam_msgdm,  normalize_msgdm) {
+#   out_path <-  paste0(here("Output/Spatial/"), "/", dataset, "_" , normalize_msgdm)
+#   if(!dir.exists(out_path)) dir.create(out_path)
+#   rmarkdown::render(
+#     analysis_script, params = list(
+#       dataset = "all_species",
+#       sam_ddecay = 100,
+#       sam_msgdm = 100
+#     ),
+#     output_dir = out_path)
+# }
 
-
-render_report = function(dataset, sam_ddecay, sam_msgdm) {
-  rmarkdown::render(
-    "Zeta_msgdm_analyses.Rmd", params = list(
-      dataset = all_species,
-      sam_ddecay = 100,
-      sam_msgdm = 100
-    ),
-    output_file = paste0("Report-", dataset, ".html")
-  )
+render_report = function(dataset, analysis_script, sam_ddecay, sam_msgdm, orders_msgdm, normalize_msgdm) {
+  out_path <- if (analysis_script == "Zeta_declines_decays_analyses.Rmd"){
+                  paste0(here("Output/Spatial/"), "/", params$dataset, "_" , "declines_and_decays", "/")
+              } else{
+              paste0(here("Output/Spatial/"), "/", dataset, "_" , normalize_msgdm)
+              }
+  if(!dir.exists(out_path)) dir.create(out_path)
+  rmarkdown::render(analysis_script,
+                    output_dir = out_path)
 }
 
-render_report("all_species", 100, 100)
+render_report(dataset = "all_species", analysis_script = "Zeta_declines_decays_analyses.Rmd", sam_ddecay = 10000, normalize_msgdm = FALSE)
+
+render_report(dataset = "all_species", analysis_script = "Zeta_msgdm_analyses.Rmd",  
+              orders_msgdm =  c(2,3), sam_msgdm = 50000, normalize_msgdm = "Sorensen")
+
+render_report(dataset = "all_species", analysis_script = "Zeta_msgdm_analyses.Rmd",  
+              orders_msgdm =  c(2,3), sam_msgdm = 50000, normalize_msgdm = "Simpson")
 
 ```
 
 
 # Do this for WC and HS, note these need to now be saved from Process_CSV_data
 ```{r}
+getwd()
 
 ```
 

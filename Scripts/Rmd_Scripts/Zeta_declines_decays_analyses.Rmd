@@ -1,0 +1,158 @@
+---
+title: "Zeta Declines and Decays"
+output: html_document
+
+params:
+  dataset: "all_species"
+  sam_ddecay: 100
+---
+
+"You can also run arbitrary R expressions by prefacing the parameter value with !r"
+https://r4ds.had.co.nz/r-markdown.html
+
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+#### Packages
+```{r}
+here::i_am("Scripts/Rmd_Scripts/run_zeta_msgdm.Rmd")
+
+library(tidyverse)
+library(zetadiv)
+library(mgcv)
+library(here)
+library(conflicted)
+library(knitr)
+library(knitrProgressBar)
+library(tictoc)
+
+conflicts_prefer(dplyr::select)
+conflicts_prefer(knitrProgressBar::progress_estimated)
+
+# there is a same-named function in dplyr, check it out
+```
+
+#### Functions
+```{r}
+# # if several of these small functions are needed, put them in an R script
+
+
+# From https://stackoverflow.com/questions/71252509/is-there-a-way-to-get-progress-information-whan-a-chunk-is-running-in-rmarkdown
+
+slow_function <- function(i, .pb=NULL) {  
+  update_progress(.pb)  
+  Sys.sleep(0.5)  
+  i  
+}
+
+# create an R6 progress object for
+# the number of loops/iterations in the target chunk
+
+
+
+```
+
+#### File Paths
+```{r}
+data_path <- paste0("./Data/Processed_Data/Spatial/", params$dataset, ".rds")
+
+out_path <-  paste0(here("Output/Spatial/"), "/", params$dataset, "_" , params$normalize_msgdm, "/")
+
+if(!dir.exists(out_path)) dir.create(out_path)
+
+
+```
+
+#### Data
+```{r}
+data <- readRDS(here(data_path))
+
+site.by.species <- data$site.by.species
+  
+site.by.env <- data$site.by.env
+
+site.by.xy <- data$site.by.xy
+```
+
+## Zeta Declines
+
+### Orders 1:10
+```{r}
+zd <- Zeta.decline.ex(data.spec = site.by.species, orders = 1:10)
+# "Power Law"
+summary(zd$zeta.pl)
+# Exponential")
+summary(zd$zeta.exp)
+# "AIC"
+print(zd$aic)
+
+```
+
+### Orders 1:60
+```{r}
+zd <- Zeta.decline.ex(data.spec = site.by.species, orders = 1:60)
+# "Power Law"
+summary(zd$zeta.pl)
+# Exponential")
+summary(zd$zeta.exp)
+# "AIC"
+print(zd$aic)
+
+```
+
+### Orders 1:200
+```{r}
+zd <- Zeta.decline.ex(data.spec = site.by.species, orders = 1:200)
+# "Power Law"
+summary(zd$zeta.pl)
+# Exponential")
+summary(zd$zeta.exp)
+# "AIC"
+print(zd$aic)
+
+```
+
+
+## Zeta decay 
+```{r, warning = FALSE, label='Zeta Distance Decay Mean Slopes'}
+set.seed(1) 
+
+zeta.ddecays <- Zeta.ddecays(xy = site.by.xy, site.by.species, sam = params$sam_ddecay, orders = 2:100,
+plot = TRUE, confint.level = 0.95)
+
+write_rds(zeta.ddecays, file = paste0(here(out_path), "/", "zeta_distance_decay",  ".rds"))
+```
+
+```{r, warning = FALSE, label='Zeta Distance Decay GAMs'}
+set.seed(1) 
+zeta.ddecay.gam. <- Zeta.ddecay(xy = site.by.xy, data.spec = site.by.species, order = 2, 
+                                    reg.type="gam")
+
+set.seed(1) 
+zeta.ddecay.gam. <- Zeta.ddecay(xy = site.by.xy, data.spec = site.by.species, order = 3, 
+                                    reg.type="gam")
+
+set.seed(1) 
+zeta.ddecay.gam. <- Zeta.ddecay(xy = site.by.xy, data.spec = site.by.species, order = 6, 
+                                    reg.type="gam")
+
+set.seed(1) 
+zeta.ddecay.gam. <- Zeta.ddecay(xy = site.by.xy, data.spec = site.by.species, order = 10, 
+                                    reg.type="gam")
+
+set.seed(1) 
+zeta.ddecay.gam. <- Zeta.ddecay(xy = site.by.xy, data.spec = site.by.species, order = 20, 
+                                    reg.type="gam")
+
+set.seed(1) 
+zeta.ddecay.gam. <- Zeta.ddecay(xy = site.by.xy, data.spec = site.by.species, order = 50, 
+                                    reg.type="gam")
+
+set.seed(1) 
+zeta.ddecay.gam. <- Zeta.ddecay(xy = site.by.xy, data.spec = site.by.species, order = 100, 
+                                    reg.type="gam")
+
+```
