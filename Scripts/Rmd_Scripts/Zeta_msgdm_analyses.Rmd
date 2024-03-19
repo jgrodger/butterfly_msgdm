@@ -21,15 +21,17 @@ https://r4ds.had.co.nz/r-markdown.html
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
+
+#### Packages
 ```{r}
 here::i_am("Scripts/Rmd_Scripts/run_zeta_msgdm.Rmd")
 
 library(tidyverse)
 library(zetadiv)
-
 library(mgcv)
 library(here)
 library(conflicted)
+library(knitr)
 library(knitrProgressBar)
 library(tictoc)
 
@@ -39,8 +41,10 @@ conflicts_prefer(knitrProgressBar::progress_estimated)
 # there is a same-named function in dplyr, check it out
 ```
 
-
+#### Functions
 ```{r}
+# # if several of these small functions are needed, put them in an R script
+
 
 # From https://stackoverflow.com/questions/71252509/is-there-a-way-to-get-progress-information-whan-a-chunk-is-running-in-rmarkdown
 
@@ -57,20 +61,19 @@ slow_function <- function(i, .pb=NULL) {
 
 ```
 
-
+#### File Paths
 ```{r}
 data_path <- paste0("./Data/Processed_Data/Spatial/", params$dataset, ".rds")
 
 out_path <-  paste0(here("Output/Spatial/"), "/", params$dataset, "_" , params$normalize_msgdm, "/")
 
 if(!dir.exists(out_path)) dir.create(out_path)
-
-data <- readRDS(here(data_path))
-
 ```
 
-
+#### Data
 ```{r}
+data <- readRDS(here(data_path))
+
 site.by.species <- data$site.by.species
   
 site.by.env <- data$site.by.env
@@ -79,34 +82,6 @@ site.by.xy <- data$site.by.xy
 ```
 
 
-
-
-
-```{r, warning = FALSE, label='Zeta Distance Decay GAMs'}
-set.seed(1) 
-zeta.ddecay.gam. <- Zeta.ddecay(xy = site.by.xy, data.spec = site.by.species, order = 2, 
-                                    reg.type="gam")
-set.seed(1) 
-zeta.ddecay.gam. <- Zeta.ddecay(xy = site.by.xy, data.spec = site.by.species, order = 6, 
-                                    reg.type="gam")
-
-set.seed(1) 
-zeta.ddecay.gam. <- Zeta.ddecay(xy = site.by.xy, data.spec = site.by.species, order = 10, 
-                                    reg.type="gam")
-
-set.seed(1) 
-zeta.ddecay.gam. <- Zeta.ddecay(xy = site.by.xy, data.spec = site.by.species, order = 20, 
-                                    reg.type="gam")
-
-set.seed(1) 
-zeta.ddecay.gam. <- Zeta.ddecay(xy = site.by.xy, data.spec = site.by.species, order = 50, 
-                                    reg.type="gam")
-
-set.seed(1) 
-zeta.ddecay.gam. <- Zeta.ddecay(xy = site.by.xy, data.spec = site.by.species, order = 100, 
-                                    reg.type="gam")
-
-```
 ```{r}
 t1 <- cor(site.by.env)
 t2 <- cor(site.by.env, method = "spearman")
@@ -211,8 +186,7 @@ print(Sys.time())
 names(output0) <- paste0("msgdm.", params$orders_msgdm)
 
 
-
-#write_rds(output0, file = here("./Output/butterfly_ispline_simpson_50000.rds"))
+write_rds(output0, file = paste0(here(out_path), "/", "zeta_msgdms",  ".rds"))
 
 ```
 

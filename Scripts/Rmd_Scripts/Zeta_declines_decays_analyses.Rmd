@@ -59,7 +59,7 @@ slow_function <- function(i, .pb=NULL) {
 ```{r}
 data_path <- paste0("./Data/Processed_Data/Spatial/", params$dataset, ".rds")
 
-out_path <-  paste0(here("Output/Spatial/"), "/", params$dataset, "_" , params$normalize_msgdm, "/")
+out_path <-  paste0(here("Output/Spatial/"), "/", params$dataset, "_" , "declines_and_decays", "/")
 
 if(!dir.exists(out_path)) dir.create(out_path)
 
@@ -114,7 +114,6 @@ summary(zd$zeta.exp)
 print(zd$aic)
 
 ```
-
 
 ## Zeta decay 
 ```{r, warning = FALSE, label='Zeta Distance Decay Mean Slopes'}
