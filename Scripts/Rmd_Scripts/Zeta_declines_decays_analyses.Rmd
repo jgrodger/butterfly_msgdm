@@ -77,6 +77,11 @@ site.by.env <- data$site.by.env
 site.by.xy <- data$site.by.xy
 ```
 
+#### Parameters for this report
+```{r}
+print(params)
+```
+
 ## Zeta Declines
 
 ### Orders 1:10

@@ -1,34 +1,20 @@
 ---
-title: "Zeta Msgdm Analyses"
+title: "GAM species richness"
 output: html_document
 
 params:
   dataset: "all_species"
-  sam_msgdm: 100
-  orders_msgdm: !r c(2,3)
-  normalize_msgdm: "Simpson"
 ---
-
-"You can also run arbitrary R expressions by prefacing the parameter value with !r"
-https://r4ds.had.co.nz/r-markdown.html
-
-```{r}
-# You can also run arbitrary R expressions by prefacing the parameter value with !r
-# https://r4ds.had.co.nz/r-markdown.html
-```
-
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 ```
-
 
 #### Packages
 ```{r}
 here::i_am("Scripts/Rmd_Scripts/run_zeta_msgdm.Rmd")
 
 library(tidyverse)
-library(zetadiv)
 library(mgcv)
 library(here)
 library(conflicted)
@@ -44,9 +30,6 @@ conflicts_prefer(knitrProgressBar::progress_estimated)
 
 #### Functions
 ```{r}
-# # if several of these small functions are needed, put them in an R script
-
-
 # From https://stackoverflow.com/questions/71252509/is-there-a-way-to-get-progress-information-whan-a-chunk-is-running-in-rmarkdown
 
 slow_function <- function(i, .pb=NULL) {  
@@ -57,9 +40,6 @@ slow_function <- function(i, .pb=NULL) {
 
 # create an R6 progress object for
 # the number of loops/iterations in the target chunk
-
-
-
 ```
 
 #### File Paths
@@ -87,9 +67,7 @@ site.by.xy <- data$site.by.xy
 print(params)
 ```
 
-
-
-
+#### Environmental variable Pearson and Spearman correlations
 ```{r}
 t1 <- cor(site.by.env)
 t2 <- cor(site.by.env, method = "spearman")
@@ -105,7 +83,7 @@ write.csv(t2, file = paste0(here(out_path), "/",  "env_var_spearman_cor.csv"))
 
 ```
 
-## GAM analysis, save output for publication
+## GAM analyses
 ```{r warning = FALSE}
 # see answer here for k https://stats.stackexchange.com/questions/359568/choosing-k-in-mgcvs-gam
 
@@ -127,11 +105,11 @@ par(mfrow = c(2,4))
 plot.gam(gam1)
 dev.off()  
 
-
-pdf(here("./Output/gam.pdf"))
-par(mfrow = c(2,4))
-plot.gam(gam1)
-dev.off()
+# 
+# pdf(here("./Output/gam.pdf"))
+# par(mfrow = c(2,4))
+# plot.gam(gam1)
+# dev.off()
 
 #gam from zetadiv, Code from Latombe et al. 2018
 
@@ -155,6 +133,7 @@ summary(gam2)
 plot(gam2)
 qq.gam(gam2)
 ```
+
 ```{r}
 summary(gam3)
 plot(gam3)
@@ -169,78 +148,3 @@ anova(gam1, gam2, test = "Chisq")
 
 anova(gam1, gam3, test = "Chisq")
 ```
-
-
-## MSGDM analysis, save output for publication
-
-```{r}
-
-n_iterations <- length(params$orders_msgdm)
-pb <- progress_estimated(n_iterations)
-
-output0 <- list()
-
-for (i in 1:length(params$orders_msgdm)) {
-slow_function(i, .pb=pb)
-set.seed(1)
-my.msgdm <-  Zeta.msgdm(xy = site.by.xy, data.spec = site.by.species, data.env = site.by.env,  order = params$orders_msgdm[[i]], sam = params$sam_msgdm,
-  reg.type="ispline", normalize=params$normalize_msgdm, family=binomial(link="log"),cons.inter = -1, glm.init = TRUE) 
-output0[[i]] <- my.msgdm
-print(paste0("Zeta = ", params$orders_msgdm[i]))
-print(Sys.time())
-
-}
-
-names(output0) <- paste0("msgdm.", params$orders_msgdm)
-
-
-write_rds(output0, file = paste0(here(out_path), "/", "zeta_msgdms",  ".rds"))
-
-```
-
-## MSGDM summaries
-```{r}
-for (i in 1:length(params$orders_msgdm)) {
-print(names(output0[i]))
-print(summary(output0[[i]]$model))
-}
-```
-
-# MSGDM deviance explained
-```{r}
-for (i in 1:length(params$orders_msgdm)) {
-print(names(output0[i]))
-print(with(summary(output0[[i]]$model), 1 - deviance/null.deviance))
-}
-```
-
-### MSGDM i-spline plots
-```{r}
-
-
-
-for (i in 1:length(params$orders_msgdm)) {
-Plot.ispline(msgdm = output0[[i]], data.env = site.by.env, distance = TRUE,  legend = TRUE)
-}
-
-```
-
-#MSGDM deviance partitioning
-```{r}
-varparts <- list()
-
-for (i in 1:length(params$orders_msgdm)) {
-  set.seed(1)
-  varparts[[i]] <- Zeta.varpart(msgdm.mod = output0[[i]], method.glm = "glm.fit2", cons.inter = -1) 
-}
-names(varparts) <- paste0("zeta.vapart.", params$orders_msgdm)
-
-for (i in 1:length(params$orders_msgdm)) {
-pie.neg(varparts[[i]][4:7,1], density = c(4, 0, 8, -1),  angle = c(90, 0, 0, 0), labels =  c("distance","undistinguishable","environment","unexplained"), radius = 0.9, main = paste0("Zeta = ", params$orders_msgdm[i]))
-}
-```
-
-```{r}
-
-```
-

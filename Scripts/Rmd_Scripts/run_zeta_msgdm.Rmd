@@ -47,19 +47,6 @@ source(here("./Scripts/R_scripts/get_validation_different_seeds_and_samps.R"))
 
 ```{r}
 
-# 
-# render_report = function(dataset, analysis_script, sam_ddecay, sam_msgdm,  normalize_msgdm) {
-#   out_path <-  paste0(here("Output/Spatial/"), "/", dataset, "_" , normalize_msgdm)
-#   if(!dir.exists(out_path)) dir.create(out_path)
-#   rmarkdown::render(
-#     analysis_script, params = list(
-#       dataset = "all_species",
-#       sam_ddecay = 100,
-#       sam_msgdm = 100
-#     ),
-#     output_dir = out_path)
-# }
-
 render_report = function(dataset, analysis_script, sam_ddecay, sam_msgdm, orders_msgdm, normalize_msgdm) {
   out_path <- if (analysis_script == "Zeta_declines_decays_analyses.Rmd"){
                   paste0(here("Output/Spatial/"), "/", params$dataset, "_" , "declines_and_decays", "/")
@@ -71,7 +58,7 @@ render_report = function(dataset, analysis_script, sam_ddecay, sam_msgdm, orders
                     output_dir = out_path)
 }
 
-render_report(dataset = "all_species", analysis_script = "Zeta_declines_decays_analyses.Rmd", sam_ddecay = 10000, normalize_msgdm = FALSE)
+render_report(dataset = "all_species", analysis_script = "Zeta_declines_decays_analyses.Rmd", sam_ddecay = 200, normalize_msgdm = FALSE)
 
 render_report(dataset = "all_species", analysis_script = "Zeta_msgdm_analyses.Rmd",  
               orders_msgdm =  c(2,3), sam_msgdm = 50000, normalize_msgdm = "Sorensen")
