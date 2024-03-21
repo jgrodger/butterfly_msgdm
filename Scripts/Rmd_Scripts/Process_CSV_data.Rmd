@@ -349,7 +349,7 @@ nrow(sites)
 ```
 
 ## Plot Sites
-```{r}
+```{r r eval = FALSE}
 plot.points <- st_as_sf(sites, coords=c("x","y"), remove = FALSE, crs = 27700) 
 
 #get a set of points for each unique grid cell
@@ -657,7 +657,8 @@ dim(site.by.obs.5.year.presabs1)
 
 ```
 
-# Check how many of these were sampled in April. April surveys may be omitted quite frequently due to poor weather. setdiff() shows that 65 of the sites not sampled in April met the coverage criterion. Quite a few of these are in Scotland, and would be expected to have delayed sampling starts relative to England. I would rather keep these sites in. I think the other criteria are sufficient.
+##### Check how many of these were sampled in April. April surveys may be omitted quite frequently due to poor weather. setdiff() shows that 65 of the sites not sampled in April met the coverage criterion. Quite a few of these are in Scotland, and would be expected to have delayed sampling starts relative to England. I would rather keep these sites in. I think the other criteria are sufficient.
+
 ```{r}
 #get 
 check <- records %>%
@@ -667,6 +668,11 @@ check <- records %>%
 # get sites in our filtered dataset that are not in the set of sites sampled in April
 not_april <- setdiff(rownames(site.by.obs.5.year.presabs1), check$site )
 not_april_sites <- filter(sites, site %in% not_april)
+```
+
+
+```{r r eval = FALSE}
+
 
 plot.points <- st_as_sf(not_april_sites, coords=c("x","y"), remove = FALSE, crs = 27700)#I want to keep coords in the dataframe
 #
@@ -685,8 +691,10 @@ tm_shape(plot.points) +
 
 print(pointsmap2)
 ```
+
+
 ## Plot Sites
-```{r}
+```{r eval = FALSE}
 
 plot.points <- st_as_sf(sites.spatial, coords=c("x","y"), remove = FALSE, crs = 27700)
 
@@ -718,51 +726,17 @@ dev.off()
 
 ```
 
-## Obtain site by species matrices for wider countryside and habitat specialists separately
-```{r}
-
-species$species.no <- paste("species", species$species.no, sep = "_")
-
-# Obtain vectors of species.no for habitat specialists and wider countryside species
-habitat.specialists <- species[species$strategy == "Habitat specialist",]$species.no
-wider.countryside.spp <- species[species$strategy == "Wider countryside sp",]$species.no
-
-# Subset site by species by species for habitat specialists and wider countrysides
-site.by.species.hs <- site.by.species %>%
-  select(all_of(habitat.specialists))
-
-site.by.species.wc <- site.by.species %>%
-  select(all_of(wider.countryside.spp))
-
-# Check if this results in some sites with no species in each case, requiring deletion of rows?
-
-print("number of sites with no habitat specialists")
-nrow(site.by.species.hs[rowSums(site.by.species.hs)==0, ])
-
-print("number of sites with no wider countryside species")
-nrow(site.by.species.wc[rowSums(site.by.species.wc)==0, ])
-
-# Remove zero sum rows from site by species matrices, and obtain corresponding site by xy 
-# and site by env matrices
-
-site.by.species.wc<- dplyr::filter(site.by.species.wc, rowSums(site.by.species.wc) > 0)
-site.by.xy.wc <- dplyr::filter(site.by.xy, rownames(site.by.xy) %in% rownames(site.by.species.wc))
-site.by.env.wc <- dplyr::filter(site.by.env, rownames(site.by.env) %in% rownames(site.by.species.wc))
-
-site.by.species.hs<- dplyr::filter(site.by.species.hs, rowSums(site.by.species.hs) > 0)
-site.by.xy.hs <- dplyr::filter(site.by.xy, rownames(site.by.xy) %in% rownames(site.by.species.hs))
-site.by.env.hs <- dplyr::filter(site.by.env, rownames(site.by.env) %in% rownames(site.by.species.hs))
-
-```
 
 
 # save processed data
 ```{r}
-write_rds(site.by.obs.5.year.presabs1, file = here("./Data/Processed_Data/site_by_obs_5_year_pres_abs.rds"))
+spatial_ukbms_obs_sites_spp <- list(site.by.obs.5.year.presabs1, species, sites.spatial)
 
-write_rds(species, file = here("./Data/Processed_Data/species_5_year.rds"))
+write_rds(spatial_ukbms_obs_sites_spp, file = here("./Data/Processed_Data/Spatial/spatial_ukbms_obs_sites_spp.rds"))
 
-write_rds(sites.spatial, file = here("./Data/Processed_Data/processed_5_year_sites.rds"))
+write_rds(species, file = here("./Data/Processed_Data/Spatial/species_5_year.rds"))
+
+write_rds(sites.spatial, file = here("./Data/Processed_Data/Spatial/processed_5_year_sites.rds"))
 ```
 
 

@@ -3,8 +3,6 @@ title: "R Notebook"
 output: html_notebook
 ---
 
-
-
 ## setup
 ```{r}
 
@@ -33,9 +31,11 @@ conflicts_prefer(dplyr::filter)
 
 
 ```
+To do: check we arereading correct processed input here
+       get rid of northern Ireland and Ireland (mask)
+       #mask isle of man and channell islands
 
-
-## Load data
+#### Load data
 ```{r}
 
 #load polygon to use to crop as map extents a bit different
@@ -48,10 +48,8 @@ crs(gb)
 
 #r markdowns and notebooks default to using the directory where they are stored as the working directory
 
-
 #site by species matrix
 
-# Still need to replace this with occurrence over multiple years
 site.by.species <- readRDS(here("./Data/Processed_Data/site_by_obs_5_year_pres_abs.rds"))
 
 #get site by xy
@@ -60,7 +58,6 @@ sites <- readRDS(here("./Data/Processed_Data/processed_5_year_sites.rds"))
 species <-  readRDS(here("./Data/Processed_Data/species_5_year.rds"))
 
 site.by.humans <- readRDS(here("./Data/Input_Environmental_Data/human_popn.rds"))
-
 
 site.by.ph <- readRDS(here("./Data/Input_Environmental_Data/ph_1km_df.rds"))
 
@@ -78,23 +75,17 @@ site.by.temp <- readRDS(here("./Data/Input_Environmental_Data/mean_temp_df.rds")
 
 site.by.prec <- readRDS(here("./Data/Input_Environmental_Data/mean_prec_df.rds"))
 
-
-
 surveys.site.year <- readRDS(here("./Data/Processed_Data/surveys_site_year.rds"))
-
-#sites.with.40 <- readRDS(here("./Data/Processed_Data/sites_with_at_least_40_years.rds"))
-
-
 ```
 
-#as a check, turn all input into spatrast and plot
+#### Functions
 ```{r}
-
+log10_plusone <- function(x)
+{log10(x + 1)}
 
 
 # a function to make raster, crop and plot it
-
-#Always does first layer only if multiple layers
+# Always does first layer only if multiple layers
 
 plot.df <- function(df, ext, main.title){
   rast <- rast(df, crs = "EPSG:27700")
@@ -103,233 +94,195 @@ plot(rast, xlab = "", ylab = "")
 title(main = main.title)
 }
 
-
-plot.df(df = site.by.temp, ext = gb, main.title ="Temperature")
-
-plot.df(df = site.by.prec, ext = gb, main.title = "Precipitation")
-
-plot.df(df = site.by.wetness, ext = gb, main.title = "Topographic Wetness")
-
-plot.df(df = site.by.ph, ext = gb, main.title = "Ph")
-
-plot.df(df = site.by.trees, ext = gb, main.title = "Tree Density")
-
-plot.df(df = site.by.nitrogen, ext = gb, main.title = "Total Nitrogen Deposition")
-
-plot.df(site.by.pesticide.risk, ext = gb, main.title = "Pesticide Risk")
-
-plot.df(df = site.by.humans, ext = gb, main.title = "Human Population Density")
-
-
-
-#open PDF
-pdf(file= here("./Output/raw_maps.pdf"))
-
-#specify to save plots in 2x2 grid
-par(mfrow = c(2,4))
-
-plot.df(df = site.by.temp, ext = gb, main.title ="Temperature")
-
-plot.df(df = site.by.prec, ext = gb, main.title = "Precipitation")
-
-plot.df(df = site.by.wetness, ext = gb, main.title = "Topographic Wetness")
-
-plot.df(df = site.by.ph, ext = gb, main.title = "Ph")
-
-plot.df(df = site.by.trees, ext = gb, main.title = "Tree Density")
-
-plot.df(df = site.by.nitrogen, ext = gb, main.title = "Total Nitrogen Deposition")
-
-plot.df(site.by.pesticide.risk, ext = gb, main.title = "Pesticide Risk")
-
-plot.df(df = site.by.humans, ext = gb, main.title = "Human Population Density")
-
-#turn off PDF plotting
-dev.off() 
-
-```
-```{r}
-
-#now we need the transformed land cover composition of the grid cells
-log10_plusone <- function(x)
-{log10(x + 1)}
-
-
-site.by.log10.pesticide.risk <- site.by.pesticide.risk %>%
-  mutate(log10.pesticide.risk = log10_plusone(pest)) %>%
-  select(x, y, log10.pesticide.risk, ngr.1km) #also gets it in correct order
-
-
-
-site.by.log10.humans <- site.by.humans %>%
-  mutate(log10.humans = log10_plusone(gbr_pd_2017_1km)) %>%
-  select(x, y, log10.humans, ngr.1km) #also gets it in correct order
-
-
-plot.df(site.by.log10.pesticide.risk, ext = gb, main.title = "log Pesticide Risk")
-
-
-plot.df(site.by.log10.humans, ext = gb, main.title = "log human popn")
-
-
-
-#open PDF
-pdf(file= here("./Output/transformed_maps.pdf"))
-
-#specify to save plots in grid
-par(mfrow = c(2,2))
-
-
-plot.df(site.by.pesticide.risk, ext = gb, main.title = "Pesticide Risk")
-
-plot.df(df = site.by.humans, ext = gb, main.title = "Human Population Density")
-
-
-plot.df(site.by.log10.pesticide.risk, ext = gb, main.title = "log Pesticide Risk")
-
-
-plot.df(site.by.log10.humans, ext = gb, main.title = "log human popn")
-
-#turn off PDF plotting
-dev.off() 
 ```
 
-## get variable names as desired in dataframes
+## Process Data
 
+#### Rename Environmental variables (below maps delete)
 ```{r}
-#get site as a variable in the sites and site by species data frames
-
-
-
-rownames(site.by.species) <- paste("site", rownames(site.by.species), sep = "_")
-
-
 site.by.temp <- site.by.temp %>%
   rename(mean.ann.temp = mean)%>%
     filter(is.na(mean.ann.temp)==F)
 
 site.by.prec <- site.by.prec %>%
   rename(mean.ann.rain = mean) %>%
-  select(-c(x,y))%>%
     filter(is.na(mean.ann.rain)==F)
 
 site.by.ph <- site.by.ph %>%
-  select(-c(x, y)) %>%
   rename(ph = ph_idw)%>%
     filter(is.na(ph)==F)
 
 site.by.humans <- site.by.humans %>%
-  select(-c(x, y)) %>%
   rename(humans = gbr_pd_2017_1km)%>%
     filter(is.na(humans)==F)
 
-site.by.log10.humans <- site.by.log10.humans %>%
-  select(-c(x, y))%>%
-    filter(is.na(log10.humans)==F)
-
 site.by.trees <- site.by.trees %>%
   rename(tree.density = tree.cover.density)%>%
-  select(-c(x, y)) %>%
     filter(is.na(tree.density)==F)
 
-#site.by.conifer.dominance <-select(site.by.conifer.dominance, -c(x, y))
-
-
-site.by.nitrogen <-select(site.by.nitrogen, total.n, ngr.1km)%>%
+site.by.nitrogen <-select(site.by.nitrogen, x, y, total.n, ngr.1km)%>%
     filter(is.na(total.n)==F)
-
 
 site.by.pesticide.risk <- site.by.pesticide.risk %>%
   rename(pesticide.risk = pest)%>%
-  select(-c(x, y)) %>%
     filter(is.na(pesticide.risk)==F)
-
-
-site.by.log10.pesticide.risk <- site.by.log10.pesticide.risk %>%
-  select(-c(x, y)) %>%
-    filter(is.na(log10.pesticide.risk)==F)
-
-
-
 
 site.by.wetness <- site.by.wetness %>%
   rename(topographic.wetness = Band1) %>%
-  select(-c(x,y))%>%
     filter(is.na(topographic.wetness)==F)
 
+# log 10 transformations
+
+site.by.log10.pesticide.risk <- site.by.pesticide.risk %>%
+  mutate(log10.pesticide.risk = log10_plusone(pesticide.risk)) %>%
+  select(x, y, log10.pesticide.risk, ngr.1km) #also gets it in correct order
+
+site.by.log10.humans <- site.by.humans %>%
+  mutate(log10.humans = log10_plusone(humans)) %>%
+  select(x, y, log10.humans, ngr.1km) #also gets it in correct order
+
+site.by.log10.mean.ann.rain <- site.by.prec %>%
+  mutate(log10.mean.ann.rain = log10_plusone(mean.ann.rain)) %>%
+  select(x, y, log10.mean.ann.rain, ngr.1km) #also gets it in correct order
 
 ```
 
-#filter site data to selected sites
 
-#sometimes more than one site per gridref!
+#### Plot environmental variables
+```{r eval = FALSE}
+plot.df(df = site.by.temp, ext = gb, main.title ="Temperature")
+plot.df(df = site.by.prec, ext = gb, main.title = "Rainfall")
+plot.df(site.by.log10.mean.ann.rain, ext = gb, main.title = "Log Rainfall")
+plot.df(df = site.by.wetness, ext = gb, main.title = "Topographic Wetness")
+plot.df(df = site.by.ph, ext = gb, main.title = "Ph")
+plot.df(df = site.by.trees, ext = gb, main.title = "Tree Density")
+plot.df(df = site.by.nitrogen, ext = gb, main.title = "Total Nitrogen Deposition")
+plot.df(site.by.pesticide.risk, ext = gb, main.title = "Pesticide Risk")
+plot.df(site.by.log10.pesticide.risk, ext = gb, main.title = "Log Pesticide Risk")
+plot.df(df = site.by.humans, ext = gb, main.title = "Human Population Density")
+plot.df(site.by.log10.humans, ext = gb, main.title = "Log Human Population")
+```
+
+#### Save pdf
+```{r eval = FALSE}
+pdf(file= here("./Output/raw_maps.pdf"))
+par(mfrow = c(2,4))
+  plot.df(df = site.by.temp, ext = gb, main.title ="Temperature")
+  plot.df(df = site.by.prec, ext = gb, main.title = "Rainfall")
+  plot.df(df = site.by.wetness, ext = gb, main.title = "Topographic Wetness")
+  plot.df(df = site.by.ph, ext = gb, main.title = "Ph")
+  plot.df(df = site.by.trees, ext = gb, main.title = "Tree Density")
+  plot.df(df = site.by.nitrogen, ext = gb, main.title = "Total Nitrogen Deposition")
+  plot.df(site.by.pesticide.risk, ext = gb, main.title = "Pesticide Risk")
+dev.off() 
+
+
+# raw and transformed data
+pdf(file= here("./Output/transformed_maps.pdf"))
+par(mfrow = c(3,2))
+  plot.df(site.by.pesticide.risk, ext = gb, main.title = "Pesticide Risk")
+  plot.df(site.by.log10.pesticide.risk, ext = gb, main.title = "log Pesticide Risk")  
+  plot.df(df = site.by.humans, ext = gb, main.title = "Human Population Density")  
+  plot.df(site.by.log10.humans, ext = gb, main.title = "Log Human Population")
+  plot.df(df = site.by.prec, ext = gb, main.title = "Rainfall")
+  plot.df(site.by.log10.mean.ann.rain, ext = gb, main.title = "Log Rainfall")
+dev.off() 
+```
+
+
+## get variable names as desired in dataframes
+
 ```{r}
-#to keep this to sort by after merging
-sites<- sites %>%
-  mutate(site.no = site,
-         site = paste("site", sites$site, sep = "_"))
+#get site as a variable in the sites and site by species data frames
 
-nrow(sites)
+site.by.temp <- site.by.temp %>%
+    filter(is.na(mean.ann.temp)==F)
 
+site.by.prec <- site.by.prec %>%
+  select(-c(x,y))
 
+site.by.ph <- site.by.ph %>%
+  select(-c(x, y))
+
+site.by.humans <- site.by.humans %>%
+  select(-c(x, y))
+
+site.by.log10.humans <- site.by.log10.humans %>%
+  select(-c(x, y))
+
+site.by.trees <- site.by.trees %>%
+  select(-c(x, y))
+
+site.by.nitrogen <- site.by.nitrogen %>%
+  select(-c(x, y))
+
+site.by.pesticide.risk <- site.by.pesticide.risk  %>%
+  select(-c(x, y))
+
+site.by.log10.pesticide.risk <- site.by.log10.pesticide.risk %>%
+  select(-c(x, y)) 
+
+site.by.log10.mean.ann.rain <- site.by.log10.mean.ann.rain %>%
+  select(-c(x, y))
+
+site.by.wetness <- site.by.wetness %>%
+  select(-c(x,y))
+```
+
+# Filter site and environmental variable data to sites with species data and data for all environmental variables
+
+```{r}
+# Note, there is sometimes more than one site per gridref
+# Merge is used to keep sites that have data for all variables
 site.by.env <- sites %>%
+  mutate(site.no = site,
+         site = paste("site", site.no, sep = "_"))%>%
   select(site.no, site, ngr.1km)
+print("Sites with species data")
+nrow(sites)
 
 site.by.temp <- site.by.temp %>% #rearrange columns
   select(c(ngr.1km, x, y, mean.ann.temp))
 
-
 site.by.env <- site.by.env %>%
   merge(site.by.temp, by = "ngr.1km")
-
+print("Sites also with temperature")
 nrow(site.by.env)
 
 site.by.env <- merge(site.by.env, site.by.prec, by = "ngr.1km")
-
+site.by.env <- merge(site.by.env, site.by.log10.mean.ann.rain, by = "ngr.1km")
+print("Sites also with rainfall")
 nrow(site.by.env)
 
-
-
 site.by.env <- merge(site.by.env, site.by.wetness, by = "ngr.1km")
-
+print("Sites also with topographic wetness")
 nrow(site.by.env)
 
 site.by.env <- merge(site.by.env,site.by.ph,  by = "ngr.1km")
-
+print("Sites also with pH")
 nrow(site.by.env)
 
-
 site.by.env <- merge(site.by.env, site.by.nitrogen, by = "ngr.1km")
-
+print("Sites also with nitrogen")
 nrow(site.by.env)
 
 site.by.env <- merge(site.by.env, site.by.humans, by = "ngr.1km") 
-
-
-nrow(site.by.env)
+print("Sites also with human population density")
 
 site.by.env <- merge(site.by.env, site.by.log10.humans, by = "ngr.1km") 
-
-
 nrow(site.by.env)
 
 site.by.env <- merge(site.by.env, site.by.pesticide.risk, by = "ngr.1km")
-
-nrow(site.by.env)
-
 site.by.env <- merge(site.by.env, site.by.log10.pesticide.risk, by = "ngr.1km")
-
+print("Sites also with pesticide risk")
 nrow(site.by.env)
 
 site.by.env <- merge(site.by.env, site.by.trees, by = "ngr.1km")
-
-
-
+print("Sites also with tree density")
 nrow(site.by.env)
 
 
 #order by site.number
-
 site.by.env <- site.by.env[base::order(site.by.env$site.no), ]
 
 #remove site.number
@@ -337,12 +290,9 @@ site.by.env <- select(site.by.env, -site.no)
 
 ```
 
-
-
 ## Plot  Sites
-```{r}
-
-plot.points <- st_as_sf(site.by.env, coords=c("x","y"), remove = FALSE, crs = 27700)#I want to keep coords in the dataframe
+```{r  eval = FALSE}
+plot.points <- st_as_sf(site.by.env, coords=c("x","y"), remove = FALSE, crs = 27700) #I want to keep coords in the dataframe
 
 #get a set of points for each unique grid cell
 
@@ -359,195 +309,146 @@ pointsmap2 <- basemap +
 tm_shape(plot.points) +
   tm_symbols(size = 0.5, col = "blue")
 
-
 print(pointsmap)
 print(pointsmap2)
 
-
-#isle of man and channell islands should probably be excluded
 ```
-```{r}
 
-#open PDF
+#### Save as pdf
+```{r  eval = FALSE}
+
 pdf(file= here("./Output/1406_sites_maps.pdf"))
-
-#specify to save plots in grid
 par(mfrow = c(1,2))
-
-
 print(pointsmap)
 print(pointsmap2)
-
 #turn off PDF plotting
 dev.off()
 ```
 
 # histograms for all grid squares
 
-```{r}
+```{r  eval = FALSE}
 
-
-p1<- ggplot(site.by.temp, aes(x=mean.ann.temp)) +
+(p1<- ggplot(site.by.temp, aes(x=mean.ann.temp)) +
   geom_histogram(aes(y=..count../sum(..count..)), bins = 20)+
-  labs(y = "Probability", title = "Temperature")
+  labs(y = "Probability", title = "Temperature"))
 
-
-p2 <- ggplot(site.by.prec, aes(x=mean.ann.rain)) +
+(p2 <- ggplot(site.by.prec, aes(x=mean.ann.rain)) +
   geom_histogram(aes(y=..count../sum(..count..)), bins = 20)+
-  labs(y = "Probability", title = "Rainfall")
+  labs(y = "Probability", title = "Rainfall"))
 
-
-p3 <- ggplot(site.by.wetness, aes(x=topographic.wetness)) +
+(p3 <- ggplot(site.by.log10.mean.ann.rain, aes(x=log10.mean.ann.rain)) +
   geom_histogram(aes(y=..count../sum(..count..)), bins = 20)+
-  labs(y = "Probability", title = "Topographic Wetness")
+  labs(y = "Probability", title = "Log Rainfall"))
 
-
-p4 <- ggplot(site.by.ph, aes(x=ph)) +
+(p4 <- ggplot(site.by.wetness, aes(x=topographic.wetness)) +
   geom_histogram(aes(y=..count../sum(..count..)), bins = 20)+
-  labs(y = "Probability", title = "pH")
+  labs(y = "Probability", title = "Topographic Wetness"))
 
-
-p5 <- ggplot(site.by.trees, aes(x=tree.density)) +
+(p5 <- ggplot(site.by.ph, aes(x=ph)) +
   geom_histogram(aes(y=..count../sum(..count..)), bins = 20)+
-  labs(y = "Probability", title = "Tree Density")
+  labs(y = "Probability", title = "pH"))
 
 
-p6 <- ggplot(site.by.humans, aes(x=humans)) +
+(p6 <- ggplot(site.by.trees, aes(x=tree.density)) +
   geom_histogram(aes(y=..count../sum(..count..)), bins = 20)+
-  labs(y = "Probability", title = "Human Population Density")
+  labs(y = "Probability", title = "Tree Density"))
 
 
-p7 <- ggplot(site.by.nitrogen, aes(x=total.n)) +
+(p7 <- ggplot(site.by.nitrogen, aes(x=total.n)) +
   geom_histogram(aes(y=..count../sum(..count..)), bins = 20)+
-  labs(y = "Probability", title = "Total Nitrogen Deposition")
+  labs(y = "Probability", title = "Total Nitrogen Deposition"))
 
 
-p8 <- ggplot(site.by.pesticide.risk, aes(x=pesticide.risk)) +
+(p8 <- ggplot(site.by.pesticide.risk, aes(x=pesticide.risk)) +
   geom_histogram(aes(y=..count../sum(..count..)), bins = 20)+
-  labs(y = "Probability", title = "Pesticide Risk")
+  labs(y = "Probability", title = "Pesticide Risk"))
+
+(p9 <- ggplot(site.by.log10.pesticide.risk, aes(x=log10.pesticide.risk)) +
+  geom_histogram(aes(y=..count../sum(..count..)), bins = 20)+
+  labs(y = "Probability", title = "Log Pesticide Risk"))
+
+
+(p10 <- ggplot(site.by.humans, aes(x=humans)) +
+  geom_histogram(aes(y=..count../sum(..count..)), bins = 20)+
+  labs(y = "Probability", title = "Human Population Density"))
+
+
+(p11 <- ggplot(site.by.log10.humans, aes(x=log10.humans)) +
+  geom_histogram(aes(y=..count../sum(..count..)), bins = 20)+
+  labs(y = "Probability", title = "Log Human Population Density"))
 
 ```
 
 
 # histograms for sites
-```{r}
-
-
-p9 <- ggplot(site.by.env, aes(x=mean.ann.temp)) +
+```{r  eval = FALSE}
+(p12 <- ggplot(site.by.env, aes(x=mean.ann.temp)) +
   geom_histogram(aes(y=..count../sum(..count..)), bins = 20)+
-  labs(y = "Probability", title = "Temperature")
+  labs(y = "Probability", title = "Temperature"))
 
-
-p10 <- ggplot(site.by.env, aes(x=mean.ann.rain)) +
+(p13 <- ggplot(site.by.env, aes(x=mean.ann.rain)) +
   geom_histogram(aes(y=..count../sum(..count..)), bins = 20)+
-  labs(y = "Probability", title = "Rainfall")
+  labs(y = "Probability", title = "Rainfall"))
 
-
-p11 <- ggplot(site.by.env, aes(x=topographic.wetness)) +
+(p14 <- ggplot(site.by.env, aes(x=log10.mean.ann.rain)) +
   geom_histogram(aes(y=..count../sum(..count..)), bins = 20)+
-  labs(y = "Probability", title = "Topographic Wetness")
+  labs(y = "Probability", title = "Log Rainfall"))
 
-
-p12 <- ggplot(site.by.env, aes(x=ph)) +
+(p15 <- ggplot(site.by.env, aes(x=topographic.wetness)) +
   geom_histogram(aes(y=..count../sum(..count..)), bins = 20)+
-  labs(y = "Probability", title = "pH")
+  labs(y = "Probability", title = "Topographic Wetness"))
 
-
-p13 <- ggplot(site.by.env, aes(x=tree.density)) +
+(p16 <- ggplot(site.by.env, aes(x=ph)) +
   geom_histogram(aes(y=..count../sum(..count..)), bins = 20)+
-  labs(y = "Probability", title = "Tree Density")
+  labs(y = "Probability", title = "pH"))
 
-
-p14 <-ggplot(site.by.env, aes(x=humans)) +
+(p17 <- ggplot(site.by.env, aes(x=tree.density)) +
   geom_histogram(aes(y=..count../sum(..count..)), bins = 20)+
-  labs(y = "Probability", title = "Human Population Density")
+  labs(y = "Probability", title = "Tree Density"))
 
-
-p15 <- ggplot(site.by.env, aes(x=total.n)) +
+(p18 <- ggplot(site.by.env, aes(x=total.n)) +
   geom_histogram(aes(y=..count../sum(..count..)), bins = 20)+
-  labs(y = "Probability", title = "Total Nitrogen Deposition")
+  labs(y = "Probability", title = "Total Nitrogen Deposition"))
 
 
- p16 <- ggplot(site.by.env, aes(x=pesticide.risk)) +
+(p19 <- ggplot(site.by.env, aes(x=pesticide.risk)) +
   geom_histogram(aes(y=..count../sum(..count..)), bins = 20)+
-  labs(y = "Probability", title = "Pesticide Risk")
+  labs(y = "Probability", title = "Pesticide Risk"))
+ 
+(p20 <- ggplot(site.by.env, aes(x=log10.pesticide.risk)) +
+  geom_histogram(aes(y=..count../sum(..count..)), bins = 20)+
+  labs(y = "Probability", title = "Log Pesticide Risk"))
+
+(p21 <-ggplot(site.by.env, aes(x=humans)) +
+  geom_histogram(aes(y=..count../sum(..count..)), bins = 20)+
+  labs(y = "Probability", title = "Human Population Density"))
+
+(p22 <- ggplot(site.by.env, aes(x=log10.humans)) +
+  geom_histogram(aes(y=..count../sum(..count..)), bins = 20)+
+  labs(y = "Probability", title = "Log Human Population Density"))
 
 
 
 ```
-# save pdfs of histograms
+#### save pdfs of histograms
 
-```{r}
-#open PDF
+```{r  eval = FALSE}
 pdf(file= here("./Output/env_var_histograms_1.pdf"))
-#specify to save plots in grid
-par(mfrow = c(2,4))
-
-figure <- grid.arrange(p1, p2, p3, p4, + rremove("x.text"), 
-             ncol = 2, nrow = 2)
-
-
-
-
-#turn off PDF plotting
+figure <- grid.arrange(p1, p2, p3, p4, p12, p13, p14, p15 + rremove("x.text"), 
+             ncol = 4, nrow = 2)
 dev.off()
 
-
-#open PDF
 pdf(file= here("./Output/env_var_histograms_2.pdf"))
-
-#specify to save plots in grid
-par(mfrow = c(2,4))
-
-
-# sites
-
-ggplot(site.by.env, aes(x=tree.density)) +
-  geom_histogram(aes(y=..count../sum(..count..)), bins = 20)+
-  labs(y = "Probability", title = "Tree Density")
-
-
-ggplot(site.by.env, aes(x=humans)) +
-  geom_histogram(aes(y=..count../sum(..count..)), bins = 20)+
-  labs(y = "Probability", title = "Human Population Density")
-
-
-ggplot(site.by.env, aes(x=total.n)) +
-  geom_histogram(aes(y=..count../sum(..count..)), bins = 20)+
-  labs(y = "Probability", title = "Total Nitrogen Deposition")
-
-
-ggplot(site.by.env, aes(x=pesticide.risk)) +
-  geom_histogram(aes(y=..count../sum(..count..)), bins = 20)+
-  labs(y = "Probability", title = "Pesticide Risk")
-
-# all cells
-
-ggplot(site.by.trees, aes(x=tree.density)) +
-  geom_histogram(aes(y=..count../sum(..count..)), bins = 20)+
-  labs(y = "Probability", title = "Tree Density")
-
-
-ggplot(site.by.humans, aes(x=humans)) +
-  geom_histogram(aes(y=..count../sum(..count..)), bins = 20)+
-  labs(y = "Probability", title = "Human Population Density")
-
-
-ggplot(site.by.nitrogen, aes(x=total.n)) +
-  geom_histogram(aes(y=..count../sum(..count..)), bins = 20)+
-  labs(y = "Probability", title = "Total Nitrogen Deposition")
-
-
-ggplot(site.by.pesticide.risk, aes(x=pesticide.risk)) +
-  geom_histogram(aes(y=..count../sum(..count..)), bins = 20)+
-  labs(y = "Probability", title = "Pesticide Risk")
-
-
-
-#turn off PDF plotting
+figure <- grid.arrange(p5, p6, p7, p16, p17, p18 + rremove("x.text"), 
+             ncol = 3, nrow = 2)
 dev.off()
 
 
+pdf(file= here("./Output/env_var_histograms_3.pdf"))
+figure <- grid.arrange(p8, p9, p10, p11, p19, p20, p21, p22 + rremove("x.text"), 
+             ncol = 4, nrow = 2)
+dev.off()
 
 ```
 
@@ -556,57 +457,36 @@ dev.off()
 
 ```{r}
 site.by.env <- site.by.env %>%
-  select(-pesticide.risk)
+  select(-c(mean.ann.rain, pesticide.risk, humans))
 ```
 
 
 ```{r}
-cor(site.by.env[, 4:12], method = "pearson")
+cor(site.by.env[, 5:12], method = "pearson")
 ```
 
 
 ```{r}
-cor(site.by.env[, 4:12], method = "spearman")
-
-
+cor(site.by.env[, 5:12], method = "spearman")
 ```
 ## Obtain final site by env, site.by.xy, 
 
 ```{r}
 
-#throws error
-#site.by.env <- column_to_rownames(site.by.env, var = "site")
-
 rownames(site.by.env) <- site.by.env$site
 
 site.by.xy <- select(site.by.env, x, y)
 
-
 site.by.env <- select(site.by.env, -c(ngr.1km, site, x, y))
 
+rownames(site.by.species) <- paste("site", rownames(site.by.species), sep = "_")
 site.by.species <- filter(site.by.species,
                           rownames(site.by.species) %in% rownames(site.by.env))
 
+rownames(sites) <- paste("site", sites$site, sep = "_")
 
-sites<- filter(sites, site %in% rownames(site.by.env))
-```
-
-
-
-## to do:  change this to the 2015-2019 selection of sites
-## look at the percentage of cells that each species occurs in
-```{r}
-check <- data.frame(colMeans(site.by.species))
-  names(check) <- "occurrence"
-check <- check %>%
-  mutate(var.occurence = occurrence*(1-occurrence))
-
-check
-```
-```{r}
-#just keep sites in dataset
-sites <- filter(sites,
-                site %in% rownames(site.by.species))
+sites<- sites %>%
+  filter(rownames(sites) %in% rownames(site.by.env))
 
 head(site.by.species)
 
@@ -614,22 +494,48 @@ head(site.by.env)
 
 head(site.by.xy)
 ```
-
-## filter
-
+## Obtain site by species matrices for wider countryside and habitat specialists separately
 ```{r}
+
+species$species.no <- paste("species", species$species.no, sep = "_")
+
+# Obtain vectors of species.no for habitat specialists and wider countryside species
+habitat.specialists <- species[species$strategy == "Habitat specialist",]$species.no
+wider.countryside.spp <- species[species$strategy == "Wider countryside sp",]$species.no
+
+# Subset site by species by species for habitat specialists and wider countrysides
+site.by.species.hs <- site.by.species %>%
+  select(all_of(habitat.specialists))
+
+site.by.species.wc <- site.by.species %>%
+  select(all_of(wider.countryside.spp))
+
+# Check if this results in some sites with no species in each case, requiring deletion of rows?
+
+print("number of sites with no habitat specialists")
+nrow(site.by.species.hs[rowSums(site.by.species.hs)==0, ])
+
+print("number of sites with no wider countryside species")
+nrow(site.by.species.wc[rowSums(site.by.species.wc)==0, ])
+
+# Remove zero sum rows from site by species matrices, and obtain corresponding site by xy 
+# and site by env matrices
+
+site.by.xy.wc <- dplyr::filter(site.by.xy, rownames(site.by.xy) %in% rownames(site.by.species.wc))
+site.by.env.wc <- dplyr::filter(site.by.env, rownames(site.by.env) %in% rownames(site.by.species.wc))
+
+site.by.xy.hs <- dplyr::filter(site.by.xy, rownames(site.by.xy) %in% rownames(site.by.species.hs))
+site.by.env.hs <- dplyr::filter(site.by.env, rownames(site.by.env) %in% rownames(site.by.species.hs))
 
 ```
 
 
+## Save data
 ```{r}
-
 data.5.years <- list(species, sites, site.by.species, site.by.env, site.by.xy)
 
 names(data.5.years) <- c("species", "sites", "site.by.species", "site.by.env", "site.by.xy")
 
-
-write_rds(data.5.years, file = here("./Data/Processed_Data/butterfly.msgdm.data.5.years.rds"))
-
+write_rds(data.5.years, file = here("./Data/Processed_Data/Spatial/butterfly.msgdm.data.5.years.rds"))
 ```
 

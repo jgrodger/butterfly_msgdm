@@ -29,7 +29,6 @@ here::i_am("Scripts/Rmd_Scripts/run_zeta_msgdm.Rmd")
 
 library(tidyverse)
 library(zetadiv)
-library(mgcv)
 library(here)
 library(conflicted)
 library(knitr)
@@ -44,9 +43,6 @@ conflicts_prefer(knitrProgressBar::progress_estimated)
 
 #### Functions
 ```{r}
-# # if several of these small functions are needed, put them in an R script
-
-
 # From https://stackoverflow.com/questions/71252509/is-there-a-way-to-get-progress-information-whan-a-chunk-is-running-in-rmarkdown
 
 slow_function <- function(i, .pb=NULL) {  
@@ -57,9 +53,6 @@ slow_function <- function(i, .pb=NULL) {
 
 # create an R6 progress object for
 # the number of loops/iterations in the target chunk
-
-
-
 ```
 
 #### File Paths
@@ -89,7 +82,7 @@ print(params)
 
 
 
-
+#### Environmental variable Pearson and Spearman correlations
 ```{r}
 t1 <- cor(site.by.env)
 t2 <- cor(site.by.env, method = "spearman")
@@ -98,80 +91,13 @@ print("Pearson correlation")
 t1
 print("Spearman correlation")
 t2
-
-
-write.csv(t1, file = paste0(here(out_path), "/",  "env_var_pearson_cor.csv"))
-write.csv(t2, file = paste0(here(out_path), "/",  "env_var_spearman_cor.csv"))
-
-```
-
-## GAM analysis, save output for publication
-```{r warning = FALSE}
-# see answer here for k https://stats.stackexchange.com/questions/359568/choosing-k-in-mgcvs-gam
-
-site.by.env.and.richness <- cbind(site.by.env, rowSums(site.by.species)) %>%
-rename(species.richness = 'rowSums(site.by.species)')
-
-# poisson
-gam1 <- gam(species.richness ~ s(mean.ann.temp, k = 10) + s(mean.ann.rain, k = 10) + s(topgraphic.wetness, k = 10) + s(ph, k = 10) + s(total.n, k = 10) + s(tree.density, k = 10) + s(log10.pesticide.risk, k = 10) + s(log10.humans, k = 10),  data = site.by.env.and.richness, method= "REML", family = "poisson", link = "log")
-
-# quasipoisson
-gam2 <- gam(species.richness ~ s(mean.ann.temp, k = 10) + s(mean.ann.rain, k = 10) + s(topgraphic.wetness, k = 10) + s(ph, k = 10) + s(total.n, k = 10) + s(tree.density, k = 10) + s(log10.pesticide.risk, k = 10) + s(log10.humans, k = 10),  data = site.by.env.and.richness, method= "REML", family = "quasipoisson", link = "log")
-
-# gaussian
-gam3 <- gam(species.richness ~ s(mean.ann.temp, k = 10) + s(mean.ann.rain, k = 10) + s(topgraphic.wetness, k = 10) + s(ph, k = 10) + s(total.n, k = 10) + s(tree.density, k = 10) + s(log10.pesticide.risk, k = 10) + s(log10.humans, k = 10),  data = site.by.env.and.richness, method= "REML")
-
-summary(gam1)
-
-par(mfrow = c(2,4))
-plot.gam(gam1)
-dev.off()  
-
-
-pdf(here("./Output/gam.pdf"))
-par(mfrow = c(2,4))
-plot.gam(gam1)
-dev.off()
-
-#gam from zetadiv, Code from Latombe et al. 2018
-
-#including log observations 
-
-
-
-#zeta.gam <- Zeta.msgdm(site.by.species, site.by.env,xy=NULL,order=1,sam=50000,normalize = FALSE,reg.type = "gam",family=gaussian(),control=glm.control(maxit = 500),empty.row = "remove",kn=10)
-
-
-
-summary(gam1)
-plot(gam1)
-qq.gam(gam1)
-
 ```
 
 
-```{r}
-summary(gam2)
-plot(gam2)
-qq.gam(gam2)
-```
-```{r}
-summary(gam3)
-plot(gam3)
-qq.gam(gam3)
-```
 
 
-```{r}
-AIC(gam1, gam2, gam3)
-
-anova(gam1, gam2, test = "Chisq")
-
-anova(gam1, gam3, test = "Chisq")
-```
 
 
-## MSGDM analysis, save output for publication
 
 ```{r}
 

@@ -1,10 +1,10 @@
 ---
-title: "R Notebook"
+title: "Render Analysis Reports"
 output: html_notebook
 ---
  
 
-# this will call the markdown(s) and generate report(s) with desired parameters
+# this calls the markdowns and generate reports with specified parameters
 
 ## setup
 ```{r}
@@ -31,47 +31,63 @@ conflicts_prefer(dplyr::select)
 
 ##  Load functions
 ```{r}
+
+# performance: possibly do this in a different script
 source(here("./Scripts/R_scripts/get_k_fold_performance.R"))
 
 source(here("./Scripts/R_scripts/Zeta.order.mc.sam.R"))
 
 source(here("./Scripts/R_scripts/get_validation_different_seeds_and_samps.R"))
-```
 
 
+# need to work out how to run the following, see # https://bookdown.org/yihui/rmarkdown/params-knit.html#knit-with-custom-parameters
 
-## Examine zeta decline whole dataset
-
-
-# need to work out how to run the following, see https://bookdown.org/yihui/rmarkdown/params-knit.html#knit-with-custom-parameters
-
-```{r}
-
-render_report = function(dataset, analysis_script, sam_ddecay, sam_msgdm, orders_msgdm, normalize_msgdm) {
+render_report = function(analysis_script, params_list) {
   out_path <- if (analysis_script == "Zeta_declines_decays_analyses.Rmd"){
-                  paste0(here("Output/Spatial/"), "/", params$dataset, "_" , "declines_and_decays", "/")
+                  paste0(here("Output/Spatial/"), "/", params_list$dataset, "_" , "declines_and_decays", "/")
               } else{
-              paste0(here("Output/Spatial/"), "/", dataset, "_" , normalize_msgdm)
+              paste0(here("Output/Spatial/"), "/", params_list$dataset, "_" , params_list$normalize_msgdm)
               }
   if(!dir.exists(out_path)) dir.create(out_path)
-  rmarkdown::render(analysis_script,
-                    output_dir = out_path)
+  rmarkdown::render(input = analysis_script,
+                    output_dir = out_path,
+                    params = params_list)
 }
-
-render_report(dataset = "all_species", analysis_script = "Zeta_declines_decays_analyses.Rmd", sam_ddecay = 200, normalize_msgdm = FALSE)
-
-render_report(dataset = "all_species", analysis_script = "Zeta_msgdm_analyses.Rmd",  
-              orders_msgdm =  c(2,3), sam_msgdm = 50000, normalize_msgdm = "Sorensen")
-
-render_report(dataset = "all_species", analysis_script = "Zeta_msgdm_analyses.Rmd",  
-              orders_msgdm =  c(2,3), sam_msgdm = 50000, normalize_msgdm = "Simpson")
-
 ```
 
 
-# Do this for WC and HS, note these need to now be saved from Process_CSV_data
+#### rows with zeros should be in GAMS, I think
 ```{r}
-getwd()
 
+print("number of sites with no habitat specialists")
+nrow(site.by.species.hs[rowSums(site.by.species.hs)==0, ])
+
+print("number of sites with no wider countryside species")
+nrow(site.by.species.wc[rowSums(site.by.species.wc)==0, ])
+
+# Remove zero sum rows from site by species matrices, and obtain corresponding site by xy 
+# and site by env matrices
+
+site.by.species.wc<- dplyr::filter(site.by.species.wc, rowSums(site.by.species.wc) > 0)
+site.by.xy.wc <- dplyr::filter(site.by.xy, rownames(site.by.xy) %in% rownames(site.by.species.wc))
+site.by.env.wc <- dplyr::filter(site.by.env, rownames(site.by.env) %in% rownames(site.by.species.wc))
+
+site.by.species.hs<- dplyr::filter(site.by.species.hs, rowSums(site.by.species.hs) > 0)
+site.by.xy.hs <- dplyr::filter(site.by.xy, rownames(site.by.xy) %in% rownames(site.by.species.hs))
+site.by.env.hs <- dplyr::filter(site.by.env, rownames(site.by.env) %in% rownames(site.by.species.hs))
+```
+
+
+```{r}
+render_report(analysis_script = "Zeta_declines_decays_analyses.Rmd", list(dataset = "all_species", sam_ddecay = 200))
+
+#need now to read chapter on GAMS to validated models
+render_report(analysis_script = "GAM_analyses.Rmd", list(dataset = "all_species"))
+
+render_report(analysis_script = "Zeta_msgdm_analyses.Rmd", list(dataset = "all_species",  
+              orders_msgdm =  c(2,3), sam_msgdm = 500, normalize_msgdm = "Sorensen"))
+
+render_report(analysis_script = "Zeta_msgdm_analyses.Rmd", list(dataset = "all_species",  
+              orders_msgdm =  c(2,3), sam_msgdm = 500, normalize_msgdm = "Simpson"))
 ```
 
