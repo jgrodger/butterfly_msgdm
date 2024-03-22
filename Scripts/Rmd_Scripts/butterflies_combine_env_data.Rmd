@@ -3,13 +3,10 @@ title: "R Notebook"
 output: html_notebook
 ---
 
-## setup
+#### Setup and Packages
 ```{r}
-
-#The here package enables easy file referencing by using the top-level directory of a file project to easily build file paths."
-#about here package: https://here.r-lib.org/articles/here.html
 #https://github.com/jennybc/here_here
-#by running this before loading the package, we can get a message to check the correct root is being used
+
 here::i_am("Scripts/Rmd_Scripts/butterflies_combine_env_data.Rmd")
 
 library(tidyverse)
@@ -22,14 +19,6 @@ library(tmap)
 library(here)
 
 conflicts_prefer(dplyr::filter)
-
-# library(readr)
-# 
-# library(segmented)
-# 
-# library(sgo)
-
-
 ```
 To do: check we arereading correct processed input here
        get rid of northern Ireland and Ireland (mask)
@@ -37,8 +26,7 @@ To do: check we arereading correct processed input here
 
 #### Load data
 ```{r}
-
-#load polygon to use to crop as map extents a bit different
+# load polygon to use to crop and mask as map extents a bit different
 
 gb <- readRDS(here("./Data/Input_Environmental_Data/gb_multipolygon.rds"))
 
@@ -50,20 +38,19 @@ crs(gb)
 
 #site by species matrix
 
-site.by.species <- readRDS(here("./Data/Processed_Data/site_by_obs_5_year_pres_abs.rds"))
+butterfly_data <- readRDS(here("./Data/Processed_Data/Spatial/spatial_ukbms_obs_sites_spp.rds"))
 
-#get site by xy
-sites <- readRDS(here("./Data/Processed_Data/processed_5_year_sites.rds"))
+site.by.species <- butterfly_data$site.by.species
 
-species <-  readRDS(here("./Data/Processed_Data/species_5_year.rds"))
+sites <- butterfly_data$sites
+
+species <-  butterfly_data$species
 
 site.by.humans <- readRDS(here("./Data/Input_Environmental_Data/human_popn.rds"))
 
 site.by.ph <- readRDS(here("./Data/Input_Environmental_Data/ph_1km_df.rds"))
 
 site.by.trees <-  readRDS(here("./Data/Input_Environmental_Data/trees_1km_df.rds"))
-
-#site.by.conifer.dominance <-  readRDS(here("./Data/Input_Environmental_Data/conifer_dominance_1km_df.rds"))
 
 site.by.nitrogen <- readRDS(here("./Data/Input_Environmental_Data/nitro.rds"))
 
@@ -83,22 +70,37 @@ surveys.site.year <- readRDS(here("./Data/Processed_Data/surveys_site_year.rds")
 log10_plusone <- function(x)
 {log10(x + 1)}
 
-
-# a function to make raster, crop and plot it
-# Always does first layer only if multiple layers
+# A function to make raster, crop and plot it
+# Always does the first layer only if there are multiple layers
 
 plot.df <- function(df, ext, main.title){
-  rast <- rast(df, crs = "EPSG:27700")
-rast <- crop(rast[[1]], ext)
-plot(rast, xlab = "", ylab = "")
+rast1 <- rast(df, crs = "EPSG:27700") 
+rast1 <- crop(rast1[[1]], ext)
+plot(rast1, xlab = "", ylab = "")
 title(main = main.title)
+}
+
+
+
+# A function to filter the rest of the output dataset after the site by species data is filtered/subsetted
+
+filter_dataset <- function(site.by.species, site.by.xy, site.by.env, species, sites){
+  site.by.xy <- filter(site.by.xy, rownames(site.by.xy) %in% rownames(site.by.species))
+  site.by.env <- filter(site.by.env, rownames(site.by.env) %in% rownames(site.by.species))
+  species <- filter(species, species.no %in% names(site.by.species))
+  sites <- filter(sites, rownames(sites)  %in% rownames(site.by.species))  
+  
+  dataset <- list(site.by.species, site.by.xy, site.by.env, species, sites)
+  names(dataset) <- c("site.by.species", "site.by.xy", "site.by.env", "species", "sites")
+  
+  return(dataset)
 }
 
 ```
 
 ## Process Data
 
-#### Rename Environmental variables (below maps delete)
+#### Rename Environmental variables and log transform where necessary
 ```{r}
 site.by.temp <- site.by.temp %>%
   rename(mean.ann.temp = mean)%>%
@@ -150,7 +152,17 @@ site.by.log10.mean.ann.rain <- site.by.prec %>%
 
 #### Plot environmental variables
 ```{r eval = FALSE}
-plot.df(df = site.by.temp, ext = gb, main.title ="Temperature")
+
+plot.df2(df = site.by.temp, basemap = gb, main.title ="Temperature")
+
+check <- rast(site.by.temp, crs = "EPSG:27700")
+
+check <- crop(rast[[1]], ext = gb)
+check <- mask(check, gb)
+
+plot(check)
+
+plot.df(df = site.by.temp, ext = gb,  main.title ="Temperature")
 plot.df(df = site.by.prec, ext = gb, main.title = "Rainfall")
 plot.df(site.by.log10.mean.ann.rain, ext = gb, main.title = "Log Rainfall")
 plot.df(df = site.by.wetness, ext = gb, main.title = "Topographic Wetness")
@@ -190,13 +202,10 @@ dev.off()
 ```
 
 
-## get variable names as desired in dataframes
+#### Select the required rows for merging for environmental data dataframes
 
 ```{r}
 #get site as a variable in the sites and site by species data frames
-
-site.by.temp <- site.by.temp %>%
-    filter(is.na(mean.ann.temp)==F)
 
 site.by.prec <- site.by.prec %>%
   select(-c(x,y))
@@ -229,7 +238,7 @@ site.by.wetness <- site.by.wetness %>%
   select(-c(x,y))
 ```
 
-# Filter site and environmental variable data to sites with species data and data for all environmental variables
+#### Merge environmental data to obtain dataframe of sites with data for all environmental variables
 
 ```{r}
 # Note, there is sometimes more than one site per gridref
@@ -290,8 +299,8 @@ site.by.env <- select(site.by.env, -site.no)
 
 ```
 
-## Plot  Sites
-```{r  eval = FALSE}
+#### Plot  Sites
+```{r}
 plot.points <- st_as_sf(site.by.env, coords=c("x","y"), remove = FALSE, crs = 27700) #I want to keep coords in the dataframe
 
 #get a set of points for each unique grid cell
@@ -315,7 +324,7 @@ print(pointsmap2)
 ```
 
 #### Save as pdf
-```{r  eval = FALSE}
+```{r}
 
 pdf(file= here("./Output/1406_sites_maps.pdf"))
 par(mfrow = c(1,2))
@@ -325,9 +334,10 @@ print(pointsmap2)
 dev.off()
 ```
 
-# histograms for all grid squares
+## Eyeball environmental data for sampling bias
 
-```{r  eval = FALSE}
+#### Histograms for environmental data for all grid squares
+```{r}
 
 (p1<- ggplot(site.by.temp, aes(x=mean.ann.temp)) +
   geom_histogram(aes(y=..count../sum(..count..)), bins = 20)+
@@ -380,9 +390,8 @@ dev.off()
 
 ```
 
-
-# histograms for sites
-```{r  eval = FALSE}
+#### Histograms for environmental data for sites in dataset
+```{r}
 (p12 <- ggplot(site.by.env, aes(x=mean.ann.temp)) +
   geom_histogram(aes(y=..count../sum(..count..)), bins = 20)+
   labs(y = "Probability", title = "Temperature"))
@@ -427,13 +436,10 @@ dev.off()
 (p22 <- ggplot(site.by.env, aes(x=log10.humans)) +
   geom_histogram(aes(y=..count../sum(..count..)), bins = 20)+
   labs(y = "Probability", title = "Log Human Population Density"))
-
-
-
 ```
-#### save pdfs of histograms
 
-```{r  eval = FALSE}
+#### Save pdfs of histograms
+```{r}
 pdf(file= here("./Output/env_var_histograms_1.pdf"))
 figure <- grid.arrange(p1, p2, p3, p4, p12, p13, p14, p15 + rremove("x.text"), 
              ncol = 4, nrow = 2)
@@ -452,14 +458,13 @@ dev.off()
 
 ```
 
-
-
-
+#### Remove untransformed versions of log-transformed variables from environmetal data
 ```{r}
 site.by.env <- site.by.env %>%
   select(-c(mean.ann.rain, pesticide.risk, humans))
 ```
 
+#### Check correlation between environmental variables
 
 ```{r}
 cor(site.by.env[, 5:12], method = "pearson")
@@ -469,8 +474,8 @@ cor(site.by.env[, 5:12], method = "pearson")
 ```{r}
 cor(site.by.env[, 5:12], method = "spearman")
 ```
-## Obtain final site by env, site.by.xy, 
-
+## Obtain versions of dataset for analysis (e.g. all species, 
+## wider countryside species, habitat specialists)
 ```{r}
 
 rownames(site.by.env) <- site.by.env$site
@@ -485,8 +490,12 @@ site.by.species <- filter(site.by.species,
 
 rownames(sites) <- paste("site", sites$site, sep = "_")
 
-sites<- sites %>%
+print("Number of sites matching butterfly sampling criteria")
+nrow(sites)
+sites <- sites %>%
   filter(rownames(sites) %in% rownames(site.by.env))
+print("Number of sites also with all environmental variables")
+nrow(sites)
 
 head(site.by.species)
 
@@ -494,9 +503,9 @@ head(site.by.env)
 
 head(site.by.xy)
 ```
-## Obtain site by species matrices for wider countryside and habitat specialists separately
+#### Obtain datasets for wider countryside and habitat specialists
+#### With and without rows that have no species
 ```{r}
-
 species$species.no <- paste("species", species$species.no, sep = "_")
 
 # Obtain vectors of species.no for habitat specialists and wider countryside species
@@ -510,32 +519,37 @@ site.by.species.hs <- site.by.species %>%
 site.by.species.wc <- site.by.species %>%
   select(all_of(wider.countryside.spp))
 
-# Check if this results in some sites with no species in each case, requiring deletion of rows?
-
 print("number of sites with no habitat specialists")
 nrow(site.by.species.hs[rowSums(site.by.species.hs)==0, ])
 
 print("number of sites with no wider countryside species")
 nrow(site.by.species.wc[rowSums(site.by.species.wc)==0, ])
 
-# Remove zero sum rows from site by species matrices, and obtain corresponding site by xy 
-# and site by env matrices
+# filter site by species for wc and hs to remove rows with no species
+site.by.species.hs.no.zeros <- site.by.species.hs[rowSums(site.by.species.hs) > 0, ]
+print("number of sites with habitat specialists")
+nrow(site.by.species.hs.no.zeros)
 
-site.by.xy.wc <- dplyr::filter(site.by.xy, rownames(site.by.xy) %in% rownames(site.by.species.wc))
-site.by.env.wc <- dplyr::filter(site.by.env, rownames(site.by.env) %in% rownames(site.by.species.wc))
+site.by.species.wc.no.zeros <- site.by.species.wc[rowSums(site.by.species.wc) > 0, ]
+print("number of sites with  wider countryside species")
+nrow(site.by.species.wc.no.zeros)
 
-site.by.xy.hs <- dplyr::filter(site.by.xy, rownames(site.by.xy) %in% rownames(site.by.species.hs))
-site.by.env.hs <- dplyr::filter(site.by.env, rownames(site.by.env) %in% rownames(site.by.species.hs))
+wc <- filter_dataset(site.by.species.wc, site.by.xy, site.by.env, species, sites)
+hs <- filter_dataset(site.by.species.hs, site.by.xy, site.by.env, species, sites)
 
+wc.no.zeros <- filter_dataset(site.by.species.wc.no.zeros, site.by.xy, site.by.env, species, sites)
+hs.no.zeros <- filter_dataset(site.by.species.hs.no.zeros, site.by.xy, site.by.env, species, sites)
 ```
 
-
-## Save data
+#### Save data
 ```{r}
-data.5.years <- list(species, sites, site.by.species, site.by.env, site.by.xy)
+all_species <- list(site.by.species, site.by.xy, site.by.env, species, sites)
+names(all_species) <- c("site.by.species", "site.by.xy", "site.by.env", "species", "sites") 
+write_rds(all_species, file = here("./Data/Processed_Data/Spatial/all_species.rds"))
 
-names(data.5.years) <- c("species", "sites", "site.by.species", "site.by.env", "site.by.xy")
+write_rds(wc, file = here("./Data/Processed_Data/Spatial/wc.rds"))
+write_rds(wc.no.zeros, file = here("./Data/Processed_Data/Spatial/wc_no_zerosds"))
 
-write_rds(data.5.years, file = here("./Data/Processed_Data/Spatial/butterfly.msgdm.data.5.years.rds"))
+write_rds(hs, file = here("./Data/Processed_Data/Spatial/hs.rds"))
+write_rds(hs.no.zeros, file = here("./Data/Processed_Data/Spatial/hs_no_zeros.rds"))
 ```
-

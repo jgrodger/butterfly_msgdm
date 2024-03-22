@@ -38,6 +38,7 @@ library(conflicted)
 
 
 conflicts_prefer(dplyr::select)
+conflicts_prefer(dplyr::filter)
 ```
 
 
@@ -944,30 +945,20 @@ msgdm.20 <- main.msgdms[[6]]
 print("ZETA 2")
 summary(msgdm.2$model)
 
-
 print("ZETA 3")
 summary(msgdm.3$model)
-
-
-
 
 print("ZETA 6")
 summary(msgdm.6$model)
 
-
-
 print("ZETA 10")
 summary(msgdm.10$model)
-
 
 print("ZETA 15")
 summary(msgdm.10$model)
 
-
-
 print("ZETA 20")
 summary(msgdm.20$model)
-
 
 ```
 
@@ -1446,8 +1437,6 @@ Plot.ispline(msgdm = msgdm.wc.20, data.env = site.by.env, distance = TRUE,  lege
 
 ```{r  warning = FALSE}
 
-
-
 set.seed(1) 
 zeta.varpart.2 <- Zeta.varpart(msgdm.mod = msgdm.wc.2, method.glm = "glm.fit2", cons.inter = -1) 
 
@@ -1468,9 +1457,6 @@ zeta.varpart.15 <- Zeta.varpart(msgdm.mod = msgdm.wc.15, method.glm = "glm.fit2"
 
 set.seed(1) 
 zeta.varpart.20 <- Zeta.varpart(msgdm.mod = msgdm.wc.20, method.glm = "glm.fit2", cons.inter = -1) 
-
-
-
 
 ```
 

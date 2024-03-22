@@ -1,0 +1,98 @@
+---
+title: "Crop and Mask Environmental Variables"
+output: html_notebook
+---
+
+
+
+```{r}
+here::i_am("Scripts/Rmd_Scripts/crop_mask_env_data.Rmd")
+
+library(tidyverse)
+library(gridExtra)
+library(ggpubr)
+library(conflicted)
+library(terra)
+library(sf)
+library(tmap)
+library(here)
+
+conflicts_prefer(dplyr::filter)
+```
+
+
+#### Load data
+```{r}
+# load polygon to use to crop and mask as map extents a bit different
+
+gb <- readRDS(here("./Data/Input_Environmental_Data/gb_multipolygon.rds"))
+
+str(gb, max.level = 1)
+
+crs(gb)
+
+#r markdowns and notebooks default to using the directory where they are stored as the working directory
+
+#site by species matrix
+
+site.by.humans <- readRDS(here("./Data/Input_Environmental_Data/human_popn.rds"))
+
+site.by.ph <- readRDS(here("./Data/Input_Environmental_Data/ph_1km_df.rds"))
+
+site.by.trees <-  readRDS(here("./Data/Input_Environmental_Data/trees_1km_df.rds"))
+
+site.by.nitrogen <- readRDS(here("./Data/Input_Environmental_Data/nitro.rds"))
+
+site.by.pesticide.risk <- readRDS(here("./Data/Input_Environmental_Data/pesticide_df.rds"))
+
+site.by.wetness <- readRDS(here("./Data/Input_Environmental_Data/topographic_wetness_df.rds"))
+
+site.by.temp <- readRDS(here("./Data/Input_Environmental_Data/mean_temp_df.rds"))
+
+site.by.prec <- readRDS(here("./Data/Input_Environmental_Data/mean_prec_df.rds"))
+
+surveys.site.year <- readRDS(here("./Data/Processed_Data/surveys_site_year.rds"))
+```
+
+```{r}
+
+crop.and.mask <- function(df, mask.map){
+rast1 <- rast(df, crs = "EPSG:27700", type = "xyz") 
+rast1 <- crop(rast1,mask.map)
+rast1 <- mask(rast1, mask.map)
+plot(rast1)
+df1 <- as.data.frame(rast1, xy = TRUE)
+df1 <- select(df1, c(x, y))
+df2 <- merge(df1, df, all = FALSE, by = c("x", "y"))
+return(df2)
+}
+```
+
+```{r}
+site.by.humans <- crop.and.mask(site.by.humans, gb)
+site.by.ph <- crop.and.mask(site.by.ph, gb)
+site.by.trees <- crop.and.mask(site.by.trees, gb)
+site.by.nitrogen <- crop.and.mask(site.by.nitrogen, gb)
+site.by.pesticide.risk <- crop.and.mask(site.by.pesticide.risk, gb)
+site.by.wetness <- crop.and.mask(site.by.wetness, gb)
+site.by.temp <- crop.and.mask(site.by.temp, gb)
+site.by.prec <- crop.and.mask(site.by.prec, gb)
+
+```
+
+
+
+```{r}
+write_rds(site.by.humans, file = here("./Data/Masked_Cropped_Environmental_Data/site_by_humans.rds"))
+write_rds(site.by.ph, file = here("./Data/Masked_Cropped_Environmental_Data/site_by_ph.rds"))
+write_rds(site.by.trees, file = here("./Data/Masked_Cropped_Environmental_Data/site_by_trees.rds"))
+write_rds(site.by.nitrogen, file = here("./Data/Masked_Cropped_Environmental_Data/site_by_nitrogen.rds"))
+write_rds(site.by.pesticide.risk, file = here("./Data/Masked_Cropped_Environmental_Data/site_by_pesticide_risk.rds"))
+write_rds(site.by.wetness, file = here("./Data/Masked_Cropped_Environmental_Data/site_by_wetness.rds"))
+write_rds(site.by.temp, file = here("./Data/Masked_Cropped_Environmental_Data/site_by_temp.rds"))
+write_rds(site.by.prec, file = here("./Data/Masked_Cropped_Environmental_Data/site_by_prec.rds"))
+
+
+
+```
+

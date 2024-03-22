@@ -672,8 +672,6 @@ not_april_sites <- filter(sites, site %in% not_april)
 
 
 ```{r r eval = FALSE}
-
-
 plot.points <- st_as_sf(not_april_sites, coords=c("x","y"), remove = FALSE, crs = 27700)#I want to keep coords in the dataframe
 #
 # #get a set of points for each unique grid cell
@@ -726,17 +724,13 @@ dev.off()
 
 ```
 
-
-
 # save processed data
 ```{r}
 spatial_ukbms_obs_sites_spp <- list(site.by.obs.5.year.presabs1, species, sites.spatial)
+names(spatial_ukbms_obs_sites_spp) <- c("site.by.species", "species", "sites")
 
 write_rds(spatial_ukbms_obs_sites_spp, file = here("./Data/Processed_Data/Spatial/spatial_ukbms_obs_sites_spp.rds"))
 
-write_rds(species, file = here("./Data/Processed_Data/Spatial/species_5_year.rds"))
-
-write_rds(sites.spatial, file = here("./Data/Processed_Data/Spatial/processed_5_year_sites.rds"))
 ```
 
 

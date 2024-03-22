@@ -12,10 +12,8 @@ output: html_notebook
 here::i_am("Scripts/Rmd_Scripts/run_zeta_msgdm.Rmd")
 
 library(tidyverse)
+
 library(zetadiv)
-# library(mgcv)
-# library(caret)
-# library(dismo)
 
 library(rmarkdown)
 
