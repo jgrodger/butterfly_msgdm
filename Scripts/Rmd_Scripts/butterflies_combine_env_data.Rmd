@@ -34,10 +34,6 @@ str(gb, max.level = 1)
 
 crs(gb)
 
-#r markdowns and notebooks default to using the directory where they are stored as the working directory
-
-#site by species matrix
-
 butterfly_data <- readRDS(here("./Data/Processed_Data/Spatial/spatial_ukbms_obs_sites_spp.rds"))
 
 site.by.species <- butterfly_data$site.by.species
@@ -46,21 +42,21 @@ sites <- butterfly_data$sites
 
 species <-  butterfly_data$species
 
-site.by.humans <- readRDS(here("./Data/Input_Environmental_Data/human_popn.rds"))
+site.by.humans <- readRDS(here("./Data/Masked_Cropped_Environmental_Data/site_by_humans.rds"))
 
-site.by.ph <- readRDS(here("./Data/Input_Environmental_Data/ph_1km_df.rds"))
+site.by.ph <- readRDS(here("./Data/Masked_Cropped_Environmental_Data/site_by_ph.rds"))
 
 site.by.trees <-  readRDS(here("./Data/Input_Environmental_Data/trees_1km_df.rds"))
 
-site.by.nitrogen <- readRDS(here("./Data/Input_Environmental_Data/nitro.rds"))
+site.by.nitrogen <- readRDS(here("./Data/Masked_Cropped_Environmental_Data/site_by_nitrogen.rds"))
 
-site.by.pesticide.risk <- readRDS(here("./Data/Input_Environmental_Data/pesticide_df.rds"))
+site.by.pesticide.risk <- readRDS(here("./Data/Masked_Cropped_Environmental_Data/site_by_pesticide_risk.rds"))
 
-site.by.wetness <- readRDS(here("./Data/Input_Environmental_Data/topographic_wetness_df.rds"))
+site.by.wetness <- readRDS(here("./Data/Masked_Cropped_Environmental_Data/site_by_wetness.rds"))
 
-site.by.temp <- readRDS(here("./Data/Input_Environmental_Data/mean_temp_df.rds"))
+site.by.temp <- readRDS(here("./Data/Masked_Cropped_Environmental_Data/site_by_temp.rds"))
 
-site.by.prec <- readRDS(here("./Data/Input_Environmental_Data/mean_prec_df.rds"))
+site.by.prec <- readRDS(here("./Data/Masked_Cropped_Environmental_Data/site_by_prec.rds"))
 
 surveys.site.year <- readRDS(here("./Data/Processed_Data/surveys_site_year.rds"))
 ```
@@ -70,12 +66,11 @@ surveys.site.year <- readRDS(here("./Data/Processed_Data/surveys_site_year.rds")
 log10_plusone <- function(x)
 {log10(x + 1)}
 
-# A function to make raster, crop and plot it
+# A function to make raster and plot it
 # Always does the first layer only if there are multiple layers
 
-plot.df <- function(df, ext, main.title){
+plot.df <- function(df, main.title){
 rast1 <- rast(df, crs = "EPSG:27700") 
-rast1 <- crop(rast1[[1]], ext)
 plot(rast1, xlab = "", ylab = "")
 title(main = main.title)
 }
@@ -152,52 +147,42 @@ site.by.log10.mean.ann.rain <- site.by.prec %>%
 
 #### Plot environmental variables
 ```{r eval = FALSE}
-
-plot.df2(df = site.by.temp, basemap = gb, main.title ="Temperature")
-
-check <- rast(site.by.temp, crs = "EPSG:27700")
-
-check <- crop(rast[[1]], ext = gb)
-check <- mask(check, gb)
-
-plot(check)
-
-plot.df(df = site.by.temp, ext = gb,  main.title ="Temperature")
-plot.df(df = site.by.prec, ext = gb, main.title = "Rainfall")
-plot.df(site.by.log10.mean.ann.rain, ext = gb, main.title = "Log Rainfall")
-plot.df(df = site.by.wetness, ext = gb, main.title = "Topographic Wetness")
-plot.df(df = site.by.ph, ext = gb, main.title = "Ph")
-plot.df(df = site.by.trees, ext = gb, main.title = "Tree Density")
-plot.df(df = site.by.nitrogen, ext = gb, main.title = "Total Nitrogen Deposition")
-plot.df(site.by.pesticide.risk, ext = gb, main.title = "Pesticide Risk")
-plot.df(site.by.log10.pesticide.risk, ext = gb, main.title = "Log Pesticide Risk")
-plot.df(df = site.by.humans, ext = gb, main.title = "Human Population Density")
-plot.df(site.by.log10.humans, ext = gb, main.title = "Log Human Population")
+plot.df(df = site.by.temp, main.title ="Temperature")
+plot.df(df = site.by.prec,  main.title = "Rainfall")
+plot.df(site.by.log10.mean.ann.rain,  main.title = "Log Rainfall")
+plot.df(df = site.by.wetness,  main.title = "Topographic Wetness")
+plot.df(df = site.by.ph,  main.title = "Ph")
+plot.df(df = site.by.trees,  main.title = "Tree Density")
+plot.df(df = site.by.nitrogen,  main.title = "Total Nitrogen Deposition")
+plot.df(site.by.pesticide.risk,  main.title = "Pesticide Risk")
+plot.df(site.by.log10.pesticide.risk,  main.title = "Log Pesticide Risk")
+plot.df(df = site.by.humans,  main.title = "Human Population Density")
+plot.df(site.by.log10.humans,  main.title = "Log Human Population")
 ```
 
 #### Save pdf
 ```{r eval = FALSE}
 pdf(file= here("./Output/raw_maps.pdf"))
 par(mfrow = c(2,4))
-  plot.df(df = site.by.temp, ext = gb, main.title ="Temperature")
-  plot.df(df = site.by.prec, ext = gb, main.title = "Rainfall")
-  plot.df(df = site.by.wetness, ext = gb, main.title = "Topographic Wetness")
-  plot.df(df = site.by.ph, ext = gb, main.title = "Ph")
-  plot.df(df = site.by.trees, ext = gb, main.title = "Tree Density")
-  plot.df(df = site.by.nitrogen, ext = gb, main.title = "Total Nitrogen Deposition")
-  plot.df(site.by.pesticide.risk, ext = gb, main.title = "Pesticide Risk")
+  plot.df(df = site.by.temp,  main.title ="Temperature")
+  plot.df(df = site.by.prec,  main.title = "Rainfall")
+  plot.df(df = site.by.wetness,  main.title = "Topographic Wetness")
+  plot.df(df = site.by.ph,  main.title = "Ph")
+  plot.df(df = site.by.trees,  main.title = "Tree Density")
+  plot.df(df = site.by.nitrogen,  main.title = "Total Nitrogen Deposition")
+  plot.df(site.by.pesticide.risk,  main.title = "Pesticide Risk")
 dev.off() 
 
 
 # raw and transformed data
 pdf(file= here("./Output/transformed_maps.pdf"))
 par(mfrow = c(3,2))
-  plot.df(site.by.pesticide.risk, ext = gb, main.title = "Pesticide Risk")
-  plot.df(site.by.log10.pesticide.risk, ext = gb, main.title = "log Pesticide Risk")  
-  plot.df(df = site.by.humans, ext = gb, main.title = "Human Population Density")  
-  plot.df(site.by.log10.humans, ext = gb, main.title = "Log Human Population")
-  plot.df(df = site.by.prec, ext = gb, main.title = "Rainfall")
-  plot.df(site.by.log10.mean.ann.rain, ext = gb, main.title = "Log Rainfall")
+  plot.df(site.by.pesticide.risk,  main.title = "Pesticide Risk")
+  plot.df(site.by.log10.pesticide.risk,  main.title = "log Pesticide Risk")  
+  plot.df(df = site.by.humans,  main.title = "Human Population Density")  
+  plot.df(site.by.log10.humans,  main.title = "Log Human Population")
+  plot.df(df = site.by.prec,  main.title = "Rainfall")
+  plot.df(site.by.log10.mean.ann.rain,  main.title = "Log Rainfall")
 dev.off() 
 ```
 
@@ -325,7 +310,6 @@ print(pointsmap2)
 
 #### Save as pdf
 ```{r}
-
 pdf(file= here("./Output/1406_sites_maps.pdf"))
 par(mfrow = c(1,2))
 print(pointsmap)
@@ -548,7 +532,7 @@ names(all_species) <- c("site.by.species", "site.by.xy", "site.by.env", "species
 write_rds(all_species, file = here("./Data/Processed_Data/Spatial/all_species.rds"))
 
 write_rds(wc, file = here("./Data/Processed_Data/Spatial/wc.rds"))
-write_rds(wc.no.zeros, file = here("./Data/Processed_Data/Spatial/wc_no_zerosds"))
+write_rds(wc.no.zeros, file = here("./Data/Processed_Data/Spatial/wc_no_zeros.rds"))
 
 write_rds(hs, file = here("./Data/Processed_Data/Spatial/hs.rds"))
 write_rds(hs.no.zeros, file = here("./Data/Processed_Data/Spatial/hs_no_zeros.rds"))

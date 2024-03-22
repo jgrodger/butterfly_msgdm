@@ -3,8 +3,7 @@ title: "Crop and Mask Environmental Variables"
 output: html_notebook
 ---
 
-
-
+#### Packages and setup
 ```{r}
 here::i_am("Scripts/Rmd_Scripts/crop_mask_env_data.Rmd")
 
@@ -19,7 +18,6 @@ library(here)
 
 conflicts_prefer(dplyr::filter)
 ```
-
 
 #### Load data
 ```{r}
@@ -53,20 +51,31 @@ site.by.prec <- readRDS(here("./Data/Input_Environmental_Data/mean_prec_df.rds")
 
 surveys.site.year <- readRDS(here("./Data/Processed_Data/surveys_site_year.rds"))
 ```
-
+#### A function to crop and mask each dataset to study area, plot and output as dataframe
 ```{r}
+# This excludes Ireland, including Northern Ireland
+# The masking step takes a long time. 
+# It would probably be faster to crop, then stack, then mask, or to reduce the 
+# resolution of the mask, but my computer has plenty of time on its hands so 
+# this is not a priority right now. Ideally Lundy and Scilly Isles should be 
+# removed as I exluded site data from these Irelands but this is not a priority now
 
 crop.and.mask <- function(df, mask.map){
+df$index <- 1:nrow(df)
 rast1 <- rast(df, crs = "EPSG:27700", type = "xyz") 
 rast1 <- crop(rast1,mask.map)
 rast1 <- mask(rast1, mask.map)
 plot(rast1)
 df1 <- as.data.frame(rast1, xy = TRUE)
-df1 <- select(df1, c(x, y))
-df2 <- merge(df1, df, all = FALSE, by = c("x", "y"))
+df1 <- select(df1, index)
+df2 <- merge(df1, df, all = FALSE, by = "index")
+df2 <- select(df2, -index)
 return(df2)
 }
+
 ```
+
+
 
 ```{r}
 site.by.humans <- crop.and.mask(site.by.humans, gb)
@@ -80,8 +89,7 @@ site.by.prec <- crop.and.mask(site.by.prec, gb)
 
 ```
 
-
-
+#### Write the files
 ```{r}
 write_rds(site.by.humans, file = here("./Data/Masked_Cropped_Environmental_Data/site_by_humans.rds"))
 write_rds(site.by.ph, file = here("./Data/Masked_Cropped_Environmental_Data/site_by_ph.rds"))

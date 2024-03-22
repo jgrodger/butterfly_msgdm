@@ -53,39 +53,46 @@ render_report = function(analysis_script, params_list) {
 }
 ```
 
-
-#### rows with zeros should be in GAMS, I think
+## Zeta declines and decays
 ```{r}
-
-print("number of sites with no habitat specialists")
-nrow(site.by.species.hs[rowSums(site.by.species.hs)==0, ])
-
-print("number of sites with no wider countryside species")
-nrow(site.by.species.wc[rowSums(site.by.species.wc)==0, ])
-
-# Remove zero sum rows from site by species matrices, and obtain corresponding site by xy 
-# and site by env matrices
-
-site.by.species.wc<- dplyr::filter(site.by.species.wc, rowSums(site.by.species.wc) > 0)
-site.by.xy.wc <- dplyr::filter(site.by.xy, rownames(site.by.xy) %in% rownames(site.by.species.wc))
-site.by.env.wc <- dplyr::filter(site.by.env, rownames(site.by.env) %in% rownames(site.by.species.wc))
-
-site.by.species.hs<- dplyr::filter(site.by.species.hs, rowSums(site.by.species.hs) > 0)
-site.by.xy.hs <- dplyr::filter(site.by.xy, rownames(site.by.xy) %in% rownames(site.by.species.hs))
-site.by.env.hs <- dplyr::filter(site.by.env, rownames(site.by.env) %in% rownames(site.by.species.hs))
+render_report(analysis_script = "Zeta_declines_decays_analyses.Rmd", list(dataset = "all_species", sam_ddecay = 10000))
+render_report(analysis_script = "Zeta_declines_decays_analyses.Rmd", list(dataset = "wc", sam_ddecay = 10000))
+render_report(analysis_script = "Zeta_declines_decays_analyses.Rmd", list(dataset = "wc_no_zeros", sam_ddecay = 10000))
+render_report(analysis_script = "Zeta_declines_decays_analyses.Rmd", list(dataset = "hs", sam_ddecay = 10000))
+render_report(analysis_script = "Zeta_declines_decays_analyses.Rmd", list(dataset = "hs_no_zeros", sam_ddecay = 10000))
 ```
-
+## GAMs
 
 ```{r}
-render_report(analysis_script = "Zeta_declines_decays_analyses.Rmd", list(dataset = "all_species", sam_ddecay = 200))
+
+#needs work
 
 #need now to read chapter on GAMS to validated models
 render_report(analysis_script = "GAM_analyses.Rmd", list(dataset = "all_species"))
+```
 
+
+## MSGDMs
+```{r}
 render_report(analysis_script = "Zeta_msgdm_analyses.Rmd", list(dataset = "all_species",  
               orders_msgdm =  c(2,3), sam_msgdm = 500, normalize_msgdm = "Sorensen"))
 
 render_report(analysis_script = "Zeta_msgdm_analyses.Rmd", list(dataset = "all_species",  
               orders_msgdm =  c(2,3), sam_msgdm = 500, normalize_msgdm = "Simpson"))
+
+
+render_report(analysis_script = "Zeta_msgdm_analyses.Rmd", list(dataset = "wc_no_zeros",  
+              orders_msgdm =  c(2,3), sam_msgdm = 500, normalize_msgdm = "Sorensen"))
+
+render_report(analysis_script = "Zeta_msgdm_analyses.Rmd", list(dataset = "wc_no_zeros",  
+              orders_msgdm =  c(2,3), sam_msgdm = 500, normalize_msgdm = "Simpson"))
+
+
+render_report(analysis_script = "Zeta_msgdm_analyses.Rmd", list(dataset = "hs_no_zeros",  
+              orders_msgdm =  c(2,3), sam_msgdm = 500, normalize_msgdm = "Sorensen"))
+
+render_report(analysis_script = "Zeta_msgdm_analyses.Rmd", list(dataset = "hs_no_zeros",  
+              orders_msgdm =  c(2,3), sam_msgdm = 500, normalize_msgdm = "Simpson"))
+
 ```
 
