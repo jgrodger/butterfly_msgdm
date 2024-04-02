@@ -6,6 +6,20 @@ params:
   dataset: "all_species"
 ---
 
+
+The plan is:
+1. Check all GAM control paremters are reasonable
+2. Check sampling effort for outliers? revisit filtering for sampling effort
+3. Check transects centred on same grid cell
+4. Get best GAM model
+5. Note which effects are robust to outliers
+6. Check pattern of spatial autocorrelation from a variogram #https://github.com/seananderson/glmm-course/blob/master/09-spatial-autocorrelation.Rmd
+7. run GAMM
+
+see
+https://slowkow.com/notes/ggplot2-color-by-density/
+
+
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 ```
@@ -14,14 +28,19 @@ knitr::opts_chunk$set(echo = TRUE)
 ```{r}
 here::i_am("Scripts/Rmd_Scripts/run_zeta_msgdm.Rmd")
 
+library(tmap)
 library(tidyverse)
 library(mgcv)
 library(here)
 library(conflicted)
+library(magrittr)
+library(sf)
+library(terra)
 library(knitr)
 library(knitrProgressBar)
 library(tictoc)
 
+conflicts_prefer(dplyr::filter)
 conflicts_prefer(dplyr::select)
 conflicts_prefer(knitrProgressBar::progress_estimated)
 
@@ -60,12 +79,72 @@ site.by.species <- data$site.by.species
 site.by.env <- data$site.by.env
 
 site.by.xy <- data$site.by.xy
+
+# gb polygon
+
+gb <- readRDS(here("./Data/Input_Environmental_Data/gb_multipolygon.rds"))
+
+str(gb, max.level = 1)
+
+crs(gb)
 ```
 
 #### Parameters for this report
 ```{r}
 print(params)
 ```
+
+
+#### Simplify the basemap (transfer later to another script)
+```{r}
+plot(gb1)
+
+gb1 <- st_simplify(gb, preserveTopology = FALSE, dTolerance = 100)
+
+ggplot(gb1) + geom_sf()
+plot(gb1, 
+     zoom_to = c(13.359, 54.413), 
+      zoom_level = 8)
+
+
+lundy_box <- c(xmin = 80000, xmax = 240000,
+              ymin = 130000, ymax = 180000)
+
+lundy_cropped <- st_crop(gb1, lundy_box )
+
+scilly_box <- c(xmin = 80000, xmax = 110000,
+                ymin = 6000, ymax = 101000)
+
+
+#ac_box <- c(xmin = 180000, xmax = 210000,
+ #               ymin = 600000, ymax = 615000)
+
+ac_box <- c(xmin = 180000, xmax = 210000,
+                ymin = 590000, ymax = 610000)
+ac_cropped <- st_crop(gb1, ac_box )
+
+ggplot(gb1) + geom_sf()
+ggplot(ac_cropped) + geom_sf()
+
+  
+scilly_cropped <- st_crop(gb1, scilly_box )
+
+ggplot(gb1) + geom_sf()
+ggplot(lundy_cropped) + geom_sf()
+ggplot(scilly_cropped) + geom_sf()
+
+gb1 <- st_difference(gb1, st_set_crs(st_as_sf(as(raster::extent(80000, 240000, 130000, 180000), "SpatialPolygons")), st_crs(gb1)))
+gb1 <- st_difference(gb1, st_set_crs(st_as_sf(as(raster::extent(80000, 111000, 6000, 101000), "SpatialPolygons")), st_crs(gb1)))
+gb1 <- st_difference(gb1, st_set_crs(st_as_sf(as(raster::extent(180000, 210000, 590000, 610000), "SpatialPolygons")), st_crs(gb1)))
+
+ggplot(gb1) + geom_sf()
+
+
+
+```
+
+
+
 
 #### Environmental variable Pearson and Spearman correlations
 ```{r}
@@ -83,21 +162,46 @@ write.csv(t2, file = paste0(here(out_path), "/",  "env_var_spearman_cor.csv"))
 
 ```
 
-## GAM analyses
-```{r warning = FALSE}
-# see answer here for k https://stats.stackexchange.com/questions/359568/choosing-k-in-mgcvs-gam
+```{r}
+
 
 site.by.env.and.richness <- cbind(site.by.env, rowSums(site.by.species)) %>%
 rename(species.richness = 'rowSums(site.by.species)')
 
+
+hist(site.by.env.and.richness$species.richness)
+```
+
+```{r}
+pairs(site.by.env.and.richness[,c(1, 2, 3, 9)])
+pairs(site.by.env.and.richness[, c(4, 5, 6, 9)])
+pairs(site.by.env.and.richness[,6:9])
+```
+
+```{r}
+
+#https://fukamilab.github.io/BIO202/08-B-spatial-regression.html
+library(sp)
+library(gstat)
+library(magrittr)
+
+```
+
+
+
+## GAM analyses
+```{r warning = FALSE}
+# see answer here for k https://stats.stackexchange.com/questions/359568/choosing-k-in-mgcvs-gam
+
+
 # poisson
-gam1 <- gam(species.richness ~ s(mean.ann.temp, k = 10) + s(mean.ann.rain, k = 10) + s(topgraphic.wetness, k = 10) + s(ph, k = 10) + s(total.n, k = 10) + s(tree.density, k = 10) + s(log10.pesticide.risk, k = 10) + s(log10.humans, k = 10),  data = site.by.env.and.richness, method= "REML", family = "poisson", link = "log")
+gam1 <- gam(species.richness ~ s(mean.ann.temp, k = 10, bs="cr") + s(log10.mean.ann.rain, k = 10, bs="cr") + s(topographic.wetness, k = 10, bs="cr") + s(ph, k = 10, bs="cr") + s(total.n, k = 10, bs="cr") + s(tree.density, k = 10, bs="cr") + s(log10.pesticide.risk, k = 10, bs="cr") + s(log10.humans, k = 10, bs="cr"),  data = site.by.env.and.richness, method= "REML", family = "poisson", link = "log")
 
 # quasipoisson
-gam2 <- gam(species.richness ~ s(mean.ann.temp, k = 10) + s(mean.ann.rain, k = 10) + s(topgraphic.wetness, k = 10) + s(ph, k = 10) + s(total.n, k = 10) + s(tree.density, k = 10) + s(log10.pesticide.risk, k = 10) + s(log10.humans, k = 10),  data = site.by.env.and.richness, method= "REML", family = "quasipoisson", link = "log")
+gam2 <- gam(species.richness ~ s(mean.ann.temp, k = 10, bs="cr") + s(log10.mean.ann.rain, k = 10, bs="cr") + s(topographic.wetness, k = 10, bs="cr") + s(ph, k = 10, bs="cr") + s(total.n, k = 10, bs="cr") + s(tree.density, k = 10, bs="cr") + s(log10.pesticide.risk, k = 10, bs="cr") + s(log10.humans, k = 10, bs="cr"), data = site.by.env.and.richness, method= "REML", family = "quasipoisson", link = "log")
 
 # gaussian
-gam3 <- gam(species.richness ~ s(mean.ann.temp, k = 10) + s(mean.ann.rain, k = 10) + s(topgraphic.wetness, k = 10) + s(ph, k = 10) + s(total.n, k = 10) + s(tree.density, k = 10) + s(log10.pesticide.risk, k = 10) + s(log10.humans, k = 10),  data = site.by.env.and.richness, method= "REML")
+gam3 <- gam(species.richness ~ s(mean.ann.temp, k = 10, bs="cr") + s(log10.mean.ann.rain, k = 10, bs="cr") + s(topographic.wetness, k = 10, bs="cr") + s(ph, k = 10, bs="cr") + s(total.n, k = 10, bs="cr") + s(tree.density, k = 10, bs="cr") + s(log10.pesticide.risk, k = 10, bs="cr") + s(log10.humans, k = 10, bs="cr"),  data = site.by.env.and.richness, method= "REML")
 
 summary(gam1)
 
@@ -123,7 +227,7 @@ dev.off()
 
 summary(gam1)
 plot(gam1)
-qq.gam(gam1)
+gam.check(gam1)
 
 ```
 
@@ -131,13 +235,86 @@ qq.gam(gam1)
 ```{r}
 summary(gam2)
 plot(gam2)
-qq.gam(gam2)
+gam.check(gam2)
 ```
 
 ```{r}
 summary(gam3)
 plot(gam3)
-qq.gam(gam3)
+gam.check(gam3)
+
+```
+
+```{r}
+
+xy.res <- cbind(site.by.xy, resid(gam3))
+names(xy.res) <- c("x", "y", "residuals")
+env.and.res <- cbind(xy.res, site.by.env.and.richness)
+
+
+
+```
+
+
+```{r}
+
+
+pairs(env.and.res)
+
+pairs(env.and.res[,c(1, 2, 3)])
+pairs(env.and.res[, c(4, 5, 6, 3)])
+pairs(env.and.res[, c(7, 8, 9, 3)])
+pairs(env.and.res[, c(10, 11, 3)])
+```
+```{r}
+plot(residuals ~ mean.ann.temp, data = env.and.res)
+plot(residuals ~ mean.ann.temp, data = env.and.res, xlim = c(14, 16.1), ylim = c(-22, -14))
+
+check.res <-filter(env.and.res, residuals < -14, mean.ann.temp > 14)
+
+plot(residuals ~ species.richness, data = env.and.res, xlim = c(1, 35), ylim = c(-23, 14))
+plot(residuals ~ species.richness, data = check.res, xlim = c(1, 35), ylim = c(-23, 14))
+
+
+```
+
+```{r}
+
+#env.and.res <- st_as_sf(env.and.res, coords=c("x","y"), remove = FALSE, crs = 27700)
+
+coordinates(env.and.res) <- c("x","y") 
+
+crs.geo <- CRS("+init=epsg:27700")  # looks up UTM 33N
+proj4string(env.and.res) <- crs.geo  # define projection system of our data
+
+bubble(env.and.res, "residuals", col = c("black","grey"),
+       main = "Residuals", xlab = "X-coordinates", ylab = "Y-coordinates")
+
+coordinates(check.res) <- c("x","y")
+proj4string(check.res) <- crs.geo  # define projection system of our data
+bubble(check.res, "residuals", col = c("black","grey"),
+       main = "Residuals", xlab = "X-coordinates", ylab = "Y-coordinates")
+```
+
+
+## Plot Sites
+```{r r eval = FALSE}
+
+basemap <-tm_shape(gb1) +
+  tm_borders()
+
+
+pointsmap <- basemap +
+tm_shape(env.and.res) +
+  tm_symbols(size = 0.25, col = "blue")
+
+print(pointsmap)
+
+checkmap <- basemap +
+tm_shape(check.res) +
+  tm_symbols(size = 0.25, col = "blue")
+
+print(checkmap)
 ```
 
 
@@ -148,3 +325,96 @@ anova(gam1, gam2, test = "Chisq")
 
 anova(gam1, gam3, test = "Chisq")
 ```
+
+
+```{r}
+data.reduced <- as.data.frame(env.and.res)
+data.reduced <- data.reduced[ !(data.reduced$residuals < -14 & data.reduced$mean.ann.temp > 14), ]
+
+# gaussian
+gam4 <- gam(species.richness ~ s(mean.ann.temp, k = 10, bs="cr") + s(log10.mean.ann.rain, k = 10, bs="cr") + s(topographic.wetness, k = 10, bs="cr") + s(ph, k = 10, bs="cr") + s(total.n, k = 10, bs="cr") + s(tree.density, k = 10, bs="cr") + s(log10.pesticide.risk, k = 10, bs="cr") + s(log10.humans, k = 10, bs="cr"),  data = data.reduced, method= "REML")
+
+
+```
+
+```{r}
+summary(gam4)
+plot(gam4)
+gam.check(gam4)
+
+```
+
+
+# GAMM add spatial autocorrelation
+```{r}
+
+
+#note, 104 sites with same x and y coordinates, check how this arises
+
+#site.by.env.xy.richness <- as.data.frame(env.and.res)
+
+site.by.env.xy.richness <- cbind(site.by.env.and.richness, site.by.xy)
+
+site.by.env.xy.richness <- distinct(site.by.env.xy.richness, x, y, .keep_all = TRUE)
+
+#check memory limit
+#file.edit(file.path("~", ".Rprofile"))
+
+#then in .Rprofile type this and save
+
+#invisible(utils::memory.limit(size = 60000))
+
+# gaussian
+
+# time consuming
+gam5 <- gamm(species.richness ~ s(mean.ann.temp, k = 10, bs="cr") + s(log10.mean.ann.rain, k = 10, bs="cr") + s(topographic.wetness, k = 10, bs="cr") + s(ph, k = 10, bs="cr") + s(total.n, k = 10, bs="cr") + s(tree.density, k = 10, bs="cr") + s(log10.pesticide.risk, k = 10, bs="cr") + s(log10.humans, k = 10, bs="cr"),  data = site.by.env.xy.richness, method= "REML", correlation=corGaus(form = ~x+y))
+
+summary(gam5$gam)
+
+
+plot.gam(gam5$gam)
+  
+gam.check(gam5$gam)
+
+vis.gam(gam5$gam)
+
+qqnorm(residuals(gam5$lme,type="normalized"))
+
+acf(residuals(gam5$lme,type="normalized"),main="standardized residual ACF")
+
+```
+
+
+
+
+```{r}
+# pospoisson
+vgam1 <- vgam(species.richness ~ VGAM::s(mean.ann.temp, df = 4) + VGAM::s(log10.mean.ann.rain, df = 4) + VGAM::s(topographic.wetness, df = 4) + VGAM::s(ph, df = 4) + VGAM::s(total.n, df = 4) + VGAM::s(tree.density, df = 4) + VGAM::s(log10.pesticide.risk, df = 4) + VGAM::s(log10.humans, df = 4),  data = site.by.env.and.richness, family = "pospoisson", link = "loglink")
+
+
+summary(vgam1)
+
+plot(vgam1)
+```
+
+```{r}
+# pospoisson
+vgam2<- vgam(species.richness ~ sm.ps(mean.ann.temp) + sm.ps(log10.mean.ann.rain) + sm.ps(topographic.wetness) + sm.ps(ph) + sm.ps(total.n) + sm.ps(tree.density) + sm.ps(log10.pesticide.risk) + sm.ps(log10.humans),  data = site.by.env.and.richness, family = "pospoisson", link = "loglink")
+
+
+summary(vgam2)
+
+plot(vgam2, se = TRUE)
+
+summary(vgam2)
+
+qqnorm(resid(vgam2))
+abline(a = 0, b = 1)
+
+qqnorm(resid(vgam1))
+abline(a = 0, b = 1)
+
+```
+
+
+
