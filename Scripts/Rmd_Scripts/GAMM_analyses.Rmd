@@ -102,7 +102,7 @@ hist(site.by.env.xy.richness.distinct$species.richness)
 
 # GAMMs for different correlation structures 
 ```{r}
-corStructs <- c("corGaus(form = ~x+y)", "corExp(form = ~x+y)", "corLin(form = ~x+y)", "corRatio(form = ~x+y)", "corSpher(form = ~x+y)" )
+corStructs <- list(corGaus(form = ~x+y, nugget = TRUE), corExp(form = ~x+y, nugget = TRUE), corLin(form = ~x+y, nugget = TRUE), corRatio(form = ~x+y, nugget = TRUE), corSpher(form = ~x+y, nugget = TRUE) )
 
 pb <- progress_estimated(length(corStructs))
 
@@ -112,7 +112,7 @@ gamm_cor_struct_list <- list()
 # Nugget allows non-zero autocorrelation at 0 distance
 for (i in 1:length(corStructs)) {
 slow_function(i, .pb=pb)
-my.gamm <- gamm(species.richness ~ s(mean.ann.temp) + s(log10.mean.ann.rain) + s(topographic.wetness) + s(ph) + s(total.n) + s(tree.density) + s(log10.pesticide.risk) + s(log10.humans),  data = site.by.env.xy.richness.distinct, method = "REML", correlation = corStructs[i], nugget = TRUE)
+my.gamm <- gamm(species.richness ~ s(mean.ann.temp) + s(log10.mean.ann.rain) + s(topographic.wetness) + s(ph) + s(total.n) + s(tree.density) + s(log10.pesticide.risk) + s(log10.humans),  data = site.by.env.xy.richness.distinct, method = "REML", correlation = corStructs[[i]])
 
 print(paste0("gamm", corStructs[i]))
 print(Sys.time())
@@ -124,7 +124,7 @@ gamm_cor_struct_list[[i]] <- my.gamm
 names(gamm_cor_struct_list) <- (paste0("gamm_", corStructs))
 
 
-# gammGaus <- gamm(species.richness ~ s(mean.ann.temp) + s(log10.mean.ann.rain) + s(topographic.wetness) + s(ph) + s(total.n) + s(tree.density) + s(log10.pesticide.risk) + s(log10.humans),  data = site.by.env.xy.richness.distinct, method= "REML", correlation=corGaus(form = ~x+y))
+# gammGaus <- gamm(species.richness ~ s(mean.ann.temp) + s(log10.mean.ann.rain) + s(topographic.wetness) + s(ph) + s(total.n) + s(tree.density) + s(log10.pesticide.risk) + s(log10.humans),  data = site.by.env.xy.richness.distinct, method= "REML", correlation=corGaus(form = ~x+y, nugget = TRUE))
 # 
 # gammExp <- gamm(species.richness ~ s(mean.ann.temp) + s(log10.mean.ann.rain) + s(topographic.wetness) + s(ph) + s(total.n) + s(tree.density) + s(log10.pesticide.risk) + s(log10.humans),  data = site.by.env.xy.richness.distinct, method= "REML", correlation=corExp(form = ~x+y, nugget = TRUE))
 # 
@@ -192,7 +192,6 @@ round(concurvity(best_gamm$gam, full = FALSE)$estimate, 2)
 
 #   
 # }
-
-
+```
 
 

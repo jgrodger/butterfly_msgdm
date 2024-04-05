@@ -737,7 +737,7 @@ site.by.env.xy.richness.distinct <- distinct(site.by.env.xy.richness, x, y, .kee
 
 
 # time consuming
-gammGaus <- gamm(species.richness ~ s(mean.ann.temp) + s(log10.mean.ann.rain) + s(topographic.wetness) + s(ph) + s(total.n) + s(tree.density) + s(log10.pesticide.risk) + s(log10.humans),  data = site.by.env.xy.richness.distinct, method= "REML", correlation=corGaus(form = ~x+y), nugget = TRUE))
+gammGaus <- gamm(species.richness ~ s(mean.ann.temp) + s(log10.mean.ann.rain) + s(topographic.wetness) + s(ph) + s(total.n) + s(tree.density) + s(log10.pesticide.risk) + s(log10.humans),  data = site.by.env.xy.richness.distinct, method= "REML", correlation=corGaus(form = ~x+y), nugget = TRUE)
 
 gammExp <- gamm(species.richness ~ s(mean.ann.temp) + s(log10.mean.ann.rain) + s(topographic.wetness) + s(ph) + s(total.n) + s(tree.density) + s(log10.pesticide.risk) + s(log10.humans),  data = site.by.env.xy.richness.distinct, method= "REML", correlation=corExp(form = ~x+y, nugget = TRUE))
 
