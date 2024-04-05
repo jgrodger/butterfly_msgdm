@@ -1,0 +1,198 @@
+---
+title: "GAMMs"
+output: html_document
+
+params:
+  dataset: "all_species"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+
+#### Packages
+```{r}
+here::i_am("Scripts/Rmd_Scripts/GAMM_analyses.Rmd")
+
+library(tmap)
+library(tidyverse)
+library(mgcv)
+library(mgcViz)
+library(magrittr)
+library(sp)
+library(sf)
+library(gstat)
+library(terra)
+library(knitr)
+library(knitrProgressBar)
+library(tictoc)
+library(here)
+library(conflicted)
+conflicts_prefer(dplyr::filter)
+conflicts_prefer(dplyr::select)
+conflicts_prefer(knitrProgressBar::progress_estimated)
+
+# there is a same-named function in dplyr, check it out
+```
+
+
+
+
+#### Functions
+```{r}
+# From https://stackoverflow.com/questions/71252509/is-there-a-way-to-get-progress-information-whan-a-chunk-is-running-in-rmarkdown
+
+slow_function <- function(i, .pb=NULL) {  
+  update_progress(.pb)  
+  Sys.sleep(0.5)  
+  i  
+}
+
+# create an R6 progress object for
+# the number of loops/iterations in the target chunk
+```
+
+#### File Paths
+```{r}
+data_path <- paste0("./Data/Processed_Data/Spatial/", params$dataset, ".rds")
+
+out_path <-  paste0(here("Output/Spatial/GAM"), "/","GAMM", "_" , params$dataset,  "/")
+
+if(!dir.exists(out_path)) dir.create(out_path)
+```
+
+#### Data
+```{r}
+data <- readRDS(here(data_path))
+
+site.by.species <- data$site.by.species
+  
+site.by.env <- data$site.by.env
+
+site.by.xy <- data$site.by.xy
+
+# gb polygon
+
+# gb <- readRDS(here("./Data/Input_Environmental_Data/gb_multipolygon.rds"))
+# 
+# str(gb, max.level = 1)
+# 
+# crs(gb)
+
+
+#note, 104 sites with same x and y coordinates, check how this arises
+
+#site.by.env.xy.richness <- as.data.frame(env.and.res)
+
+site.by.env.and.richness <- cbind(site.by.env, rowSums(site.by.species)) %>%
+  cbind(site.by.xy) %>%
+rename(species.richness = 'rowSums(site.by.species)')
+
+site.by.env.xy.richness <- cbind(site.by.env.and.richness, site.by.xy)
+
+site.by.env.xy.richness.distinct <- distinct(site.by.env.xy.richness, x, y, .keep_all = TRUE)
+```
+
+```{r}
+hist(site.by.env.xy.richness.distinct$species.richness)
+```
+
+
+# GAMMs for different correlation structures 
+```{r}
+corStructs <- c("corGaus(form = ~x+y)", "corExp(form = ~x+y)", "corLin(form = ~x+y)", "corRatio(form = ~x+y)", "corSpher(form = ~x+y)" )
+
+pb <- progress_estimated(length(corStructs))
+
+gamm_cor_struct_list <- list()
+
+# Loop through the gamms saving output in list
+# Nugget allows non-zero autocorrelation at 0 distance
+for (i in 1:length(corStructs)) {
+slow_function(i, .pb=pb)
+my.gamm <- gamm(species.richness ~ s(mean.ann.temp) + s(log10.mean.ann.rain) + s(topographic.wetness) + s(ph) + s(total.n) + s(tree.density) + s(log10.pesticide.risk) + s(log10.humans),  data = site.by.env.xy.richness.distinct, method = "REML", correlation = corStructs[i], nugget = TRUE)
+
+print(paste0("gamm", corStructs[i]))
+print(Sys.time())
+
+gamm_cor_struct_list[[i]] <- my.gamm
+
+}
+
+names(gamm_cor_struct_list) <- (paste0("gamm_", corStructs))
+
+
+# gammGaus <- gamm(species.richness ~ s(mean.ann.temp) + s(log10.mean.ann.rain) + s(topographic.wetness) + s(ph) + s(total.n) + s(tree.density) + s(log10.pesticide.risk) + s(log10.humans),  data = site.by.env.xy.richness.distinct, method= "REML", correlation=corGaus(form = ~x+y))
+# 
+# gammExp <- gamm(species.richness ~ s(mean.ann.temp) + s(log10.mean.ann.rain) + s(topographic.wetness) + s(ph) + s(total.n) + s(tree.density) + s(log10.pesticide.risk) + s(log10.humans),  data = site.by.env.xy.richness.distinct, method= "REML", correlation=corExp(form = ~x+y, nugget = TRUE))
+# 
+# gammLin <- gamm(species.richness ~ s(mean.ann.temp) + s(log10.mean.ann.rain) + s(topographic.wetness) + s(ph) + s(total.n) + s(tree.density) + s(log10.pesticide.risk) + s(log10.humans),  data = site.by.env.xy.richness.distinct, method= "REML", correlation=corLin(form = ~x+y, nugget = TRUE))
+# 
+# gammRatio <- gamm(species.richness ~ s(mean.ann.temp) + s(log10.mean.ann.rain) + s(topographic.wetness) + s(ph) + s(total.n) + s(tree.density) + s(log10.pesticide.risk) + s(log10.humans),  data = site.by.env.xy.richness.distinct, method= "REML", correlation=corRatio(form = ~x+y, nugget = TRUE))
+# 
+# gammSpher <- gamm(species.richness ~ s(mean.ann.temp) + s(log10.mean.ann.rain) + s(topographic.wetness) + s(ph) + s(total.n) + s(tree.density) + s(log10.pesticide.risk) + s(log10.humans),  data = site.by.env.xy.richness.distinct, method= "REML", correlation=corSpher(form = ~x+y, nugget = TRUE))
+```
+
+
+#### Write output
+```{r}
+write_rds(gamm_cor_struct_list, file = paste0(here(out_path), "/", params$dataset, "_gamm_cor_struct_compare.rds"))
+```
+
+#### Find best correlation structure
+```{r}
+aic_table <- AIC(gammGaus$lme, gammExp$lme, gammLin$lme, gammRatio$lme, gammSpher$lme)
+aic_table
+
+index_best <- which(aic_table$AIC == min(aic_table$AIC))
+
+best_gamm <- gamm_cor_struct_list[[index_best]]
+```
+
+#### View output for best correlation structure
+```{r}
+
+(summary(best_gamm$gam))
+
+par(mfrow = c(2, 2))
+plot(best_gamm$gam, residuals = TRUE, seWithMean = TRUE, shade = TRUE, shift = coef(best_gamm$gam)[1])
+
+par(mfrow = c(2, 2))
+(gam.check(best_gamm$gam))
+
+acf(residuals(best_gamm$lme,type="normalized"),main="standardized residual ACF")
+
+concurvity(best_gamm$gam, full = TRUE)
+print("worst")
+round(concurvity(best_gamm$gam, full = FALSE)$worst, 2)
+print("observed")
+round(concurvity(best_gamm$gam, full = FALSE)$observed, 2)
+print("estimate")
+round(concurvity(best_gamm$gam, full = FALSE)$estimate, 2)
+
+```
+
+#####if used more than once, do as function
+```{r}
+
+# get_GAMM_output <- function(gamm_x){
+# 
+# (summary(gamm_x$gam))
+# 
+# par(mfrow = c(2, 2))
+# plot(gamm_x$gam, residuals = TRUE, seWithMean = TRUE, shade = TRUE, shift = coef(gamm_x$gam)[1])
+# 
+# par(mfrow = c(2, 2))  
+# (gam.check(gamm_x$gam))
+# 
+# acf(residuals(gamm_x$lme,type="normalized"),main="standardized residual ACF")
+
+
+#   
+# }
+
+
+
+
