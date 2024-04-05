@@ -366,7 +366,7 @@ zeta.ddecays <- Zeta.ddecays(xy = site.by.xy, site.by.species, sam = 10000 , ord
 plot = TRUE, confint.level = 0.95)
 
 
-write_rds(zeta.ddecays, file = here("./Output/zeta_decay_orders_100_san_10000.rds"))
+write_rds(zeta.ddecays, file = here("./Output/zeta_decay_orders_100_sam_10000.rds"))
 ```
 
 

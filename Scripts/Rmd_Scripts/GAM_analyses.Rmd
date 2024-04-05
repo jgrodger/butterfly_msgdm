@@ -26,26 +26,37 @@ knitr::opts_chunk$set(echo = TRUE)
 
 #### Packages
 ```{r}
-here::i_am("Scripts/Rmd_Scripts/run_zeta_msgdm.Rmd")
+here::i_am("Scripts/Rmd_Scripts/GAM_analyses.Rmd")
 
 library(tmap)
 library(tidyverse)
 library(mgcv)
-library(here)
-library(conflicted)
+library(mgcViz)
 library(magrittr)
+library(sp)
 library(sf)
+library(gstat)
 library(terra)
 library(knitr)
 library(knitrProgressBar)
 library(tictoc)
-
+library(here)
+library(conflicted)
 conflicts_prefer(dplyr::filter)
 conflicts_prefer(dplyr::select)
 conflicts_prefer(knitrProgressBar::progress_estimated)
 
 # there is a same-named function in dplyr, check it out
 ```
+
+
+```{r}
+
+#https://fukamilab.github.io/BIO202/08-B-spatial-regression.html
+
+
+```
+
 
 #### Functions
 ```{r}
@@ -97,8 +108,6 @@ print(params)
 
 #### Simplify the basemap (transfer later to another script)
 ```{r}
-plot(gb1)
-
 gb1 <- st_simplify(gb, preserveTopology = FALSE, dTolerance = 100)
 
 ggplot(gb1) + geom_sf()
@@ -166,6 +175,7 @@ write.csv(t2, file = paste0(here(out_path), "/",  "env_var_spearman_cor.csv"))
 
 
 site.by.env.and.richness <- cbind(site.by.env, rowSums(site.by.species)) %>%
+  cbind(site.by.xy) %>%
 rename(species.richness = 'rowSums(site.by.species)')
 
 
@@ -176,38 +186,169 @@ hist(site.by.env.and.richness$species.richness)
 pairs(site.by.env.and.richness[,c(1, 2, 3, 9)])
 pairs(site.by.env.and.richness[, c(4, 5, 6, 9)])
 pairs(site.by.env.and.richness[,6:9])
+
+pairs(site.by.env.and.richness[c(10, 11, 9)])
 ```
+## GAM analyses
+
+#### Check if selecting smoothing makes a difference
 
 ```{r}
 
-#https://fukamilab.github.io/BIO202/08-B-spatial-regression.html
-library(sp)
-library(gstat)
-library(magrittr)
+# Note, k = -1 is the same as k = 10 in these analyses with both bs = "cr" and default bs = "tp"
 
+# Set k manually k = 10
+gam1 <- gam(species.richness ~ s(mean.ann.temp) + s(log10.mean.ann.rain) + s(topographic.wetness) + s(ph) + s(total.n) + s(tree.density) + s(log10.pesticide.risk) + s(log10.humans),  data = site.by.env.and.richness, method= "REML", family = "poisson", link = "log")
+
+# choose smoothing automatically 
+gam2 <- gam(species.richness ~ s(mean.ann.temp, sp = -1) + s(log10.mean.ann.rain, sp = -1) + s(topographic.wetness, sp = -1) + s(ph, sp = -1) + s(total.n, sp = -1) + s(tree.density, sp = -1) + s(log10.pesticide.risk, sp = -1) + s(log10.humans, sp = -1),  data = site.by.env.and.richness, method= "REML", family = "poisson", link = "log")
+
+```
+
+```{r}
+summary(gam1)
+par(mfrow = c(2, 2))
+gam.check(gam1)
+```
+```{r}
+summary(gam2)
+par(mfrow = c(2, 2))
+gam.check(gam2)
 ```
 
 
 
-## GAM analyses
-```{r warning = FALSE}
-# see answer here for k https://stats.stackexchange.com/questions/359568/choosing-k-in-mgcvs-gam
+##### no advantage to choosing smoothing
+```{r}
+AIC(gam1, gam2)
 
+```
 
-# poisson
-gam1 <- gam(species.richness ~ s(mean.ann.temp, k = 10, bs="cr") + s(log10.mean.ann.rain, k = 10, bs="cr") + s(topographic.wetness, k = 10, bs="cr") + s(ph, k = 10, bs="cr") + s(total.n, k = 10, bs="cr") + s(tree.density, k = 10, bs="cr") + s(log10.pesticide.risk, k = 10, bs="cr") + s(log10.humans, k = 10, bs="cr"),  data = site.by.env.and.richness, method= "REML", family = "poisson", link = "log")
-
+# Check family argument
+```{r}
 # quasipoisson
-gam2 <- gam(species.richness ~ s(mean.ann.temp, k = 10, bs="cr") + s(log10.mean.ann.rain, k = 10, bs="cr") + s(topographic.wetness, k = 10, bs="cr") + s(ph, k = 10, bs="cr") + s(total.n, k = 10, bs="cr") + s(tree.density, k = 10, bs="cr") + s(log10.pesticide.risk, k = 10, bs="cr") + s(log10.humans, k = 10, bs="cr"), data = site.by.env.and.richness, method= "REML", family = "quasipoisson", link = "log")
+gam3 <- gam(species.richness ~ s(mean.ann.temp) + s(log10.mean.ann.rain) + s(topographic.wetness) + s(ph) + s(total.n) + s(tree.density) + s(log10.pesticide.risk) + s(log10.humans), data = site.by.env.and.richness, method= "REML", family = "quasipoisson", link = "log")
+
+# Tweedie, p = 1
+gam4 <- gam(species.richness ~ s(mean.ann.temp) + s(log10.mean.ann.rain) + s(topographic.wetness) + s(ph) + s(total.n) + s(tree.density) + s(log10.pesticide.risk) + s(log10.humans), data = site.by.env.and.richness, method= "REML", family = Tweedie(p = 1.1, link = "log"))
+
+# Tweedie, p = 2
+gam5 <- gam(species.richness ~ s(mean.ann.temp) + s(log10.mean.ann.rain) + s(topographic.wetness) + s(ph) + s(total.n) + s(tree.density) + s(log10.pesticide.risk) + s(log10.humans), data = site.by.env.and.richness, method= "REML", family = Tweedie(p = 2, link = "log"))
 
 # gaussian
-gam3 <- gam(species.richness ~ s(mean.ann.temp, k = 10, bs="cr") + s(log10.mean.ann.rain, k = 10, bs="cr") + s(topographic.wetness, k = 10, bs="cr") + s(ph, k = 10, bs="cr") + s(total.n, k = 10, bs="cr") + s(tree.density, k = 10, bs="cr") + s(log10.pesticide.risk, k = 10, bs="cr") + s(log10.humans, k = 10, bs="cr"),  data = site.by.env.and.richness, method= "REML")
+gam6 <- gam(species.richness ~ s(mean.ann.temp) + s(log10.mean.ann.rain) + s(topographic.wetness) + s(ph) + s(total.n) + s(tree.density) + s(log10.pesticide.risk) + s(log10.humans),  data = site.by.env.and.richness, method= "REML")
+```
 
-summary(gam1)
 
-par(mfrow = c(2,4))
-plot.gam(gam1)
-dev.off()  
+
+# Family = gaussian (the default) is preferred
+```{r}
+AIC(gam1, gam3, gam4, gam5, gam6)
+```
+
+##### No advantage to Quasipoisson
+```{r}
+summary(gam3)
+par(mfrow = c(2, 2))
+gam.check(gam3)
+```
+
+##### No advantage to Tweedie
+```{r}
+summary(gam4)
+par(mfrow = c(2, 2))
+gam.check(gam4)
+```
+# Family = gaussian (the default) is preferred by aic
+```{r}
+summary(gam6)
+par(mfrow = c(2, 2))
+gam.check(gam6)
+```
+```{r}
+# gaussian
+gam30 <- gam(species.richness ~ s(x, y) + s(mean.ann.temp) + s(log10.mean.ann.rain) + s(topographic.wetness) + s(ph) + s(total.n) + s(tree.density) + s(log10.pesticide.risk) + s(log10.humans),  data = site.by.env.and.richness, method= "REML")
+```
+
+```{r}
+summary(gam30)
+plot(gam30, residuals = TRUE, seWithMean = TRUE, shade = TRUE, shift = coef(gam30)[1])
+par(mfrow = c(2, 2))
+gam.check(gam30)
+
+AIC(gam6, gam30)
+```
+
+```{r}
+# change k
+gam7 <- gam(species.richness ~ s(mean.ann.temp) + s(log10.mean.ann.rain) + s(topographic.wetness, k = 20) + s(ph, k = 20) + s(total.n, k = 20) + s(tree.density) + s(log10.pesticide.risk, k = 20) + s(log10.humans),  data = site.by.env.and.richness, method= "REML")
+
+# change k
+gam8 <- gam(species.richness ~ s(mean.ann.temp) + s(log10.mean.ann.rain) + s(topographic.wetness, k = 40) + s(ph, k = 40) + s(total.n, k = 40) + s(tree.density) + s(log10.pesticide.risk, k = 40) + s(log10.humans),  data = site.by.env.and.richness, method= "REML")
+
+# change k
+gam9 <- gam(species.richness ~ s(mean.ann.temp) + s(log10.mean.ann.rain) + s(topographic.wetness, k = 80) + s(ph, k = 80) + s(total.n, k = 40) + s(tree.density) + s(log10.pesticide.risk, k = 80) + s(log10.humans),  data = site.by.env.and.richness, method= "REML")
+
+```
+
+```{r}
+summary(gam7)
+par(mfrow = c(2, 2))
+gam.check(gam7)
+```
+```{r}
+summary(gam8)
+par(mfrow = c(2, 2))
+gam.check(gam8)
+```
+
+```{r}
+summary(gam9)
+par(mfrow = c(2, 2))
+gam.check(gam9)
+```
+
+```{r}
+AIC(gam6, gam7, gam8, gam9)
+```
+
+```{r}
+plot(gam6, residuals = TRUE, seWithMean = TRUE, shade = TRUE, shift = coef(gam6)[1])
+vis.gam(gam6, view = c("ph", "total.n"),theta= -135)
+vis.gam(gam6, view = c("ph", "mean.ann.temp"),theta= -45)
+vis.gam(gam6, view = c("ph", "log10.pesticide.risk"),theta= -45)
+```
+#### Concurvity tells us about relationships between smoothed terms
+
+full = TRUE gives overall estimates of relationship of each smoothed term with all others, 
+full = FALSE gives pairwise relationship according to three different methods.
+
+```{r}
+concurvity(gam6, full = TRUE)
+print("worst")
+round(concurvity(gam6, full = FALSE)$worst, 2)
+print("observed")
+round(concurvity(gam6, full = FALSE)$observed, 2)
+print("estimate")
+round(concurvity(gam6, full = FALSE)$estimate, 2)
+```
+
+
+```{r}
+plot(gam8, seWithMean = TRUE, shade = TRUE, shift = coef(gam6)[1], pages = 2)
+vis.gam(gam8, view = c("ph", "total.n"),theta= -135)
+vis.gam(gam8, view = c("ph", "mean.ann.temp"),theta= -45)
+vis.gam(gam8, view = c("ph", "log10.pesticide.risk"),theta= -45)
+```
+
+
+
+
+
+
+
+```{r warning = FALSE}
+# see answer here for k https://stats.stackexchange.com/questions/359568/choosing-k-in-mgcvs-gam
 
 # 
 # pdf(here("./Output/gam.pdf"))
@@ -219,72 +360,47 @@ dev.off()
 
 #including log observations 
 
-
-
 #zeta.gam <- Zeta.msgdm(site.by.species, site.by.env,xy=NULL,order=1,sam=50000,normalize = FALSE,reg.type = "gam",family=gaussian(),control=glm.control(maxit = 500),empty.row = "remove",kn=10)
 
 
-
-summary(gam1)
-plot(gam1)
-gam.check(gam1)
-
 ```
 
 
+# Add residuals to env variables to check patterns
 ```{r}
-summary(gam2)
-plot(gam2)
-gam.check(gam2)
-```
-
-```{r}
-summary(gam3)
-plot(gam3)
-gam.check(gam3)
-
-```
-
-```{r}
-
-xy.res <- cbind(site.by.xy, resid(gam3))
+xy.res <- cbind(site.by.xy, resid(gam6))
 names(xy.res) <- c("x", "y", "residuals")
 env.and.res <- cbind(xy.res, site.by.env.and.richness)
-
-
-
 ```
 
 
 ```{r}
-
-
-pairs(env.and.res)
-
 pairs(env.and.res[,c(1, 2, 3)])
 pairs(env.and.res[, c(4, 5, 6, 3)])
 pairs(env.and.res[, c(7, 8, 9, 3)])
 pairs(env.and.res[, c(10, 11, 3)])
 ```
+##### Residual plots show a group of observations with low observed species richness but high predicted species richness
+
 ```{r}
 plot(residuals ~ mean.ann.temp, data = env.and.res)
 plot(residuals ~ mean.ann.temp, data = env.and.res, xlim = c(14, 16.1), ylim = c(-22, -14))
 
+plot(residuals ~ species.richness, data = env.and.res, xlim = c(1, 35), ylim = c(-23, 14))
+
+
 check.res <-filter(env.and.res, residuals < -14, mean.ann.temp > 14)
 
-plot(residuals ~ species.richness, data = env.and.res, xlim = c(1, 35), ylim = c(-23, 14))
 plot(residuals ~ species.richness, data = check.res, xlim = c(1, 35), ylim = c(-23, 14))
-
-
 ```
-
+#### Look at geographic pattern in residuals
 ```{r}
 
 #env.and.res <- st_as_sf(env.and.res, coords=c("x","y"), remove = FALSE, crs = 27700)
 
 coordinates(env.and.res) <- c("x","y") 
 
-crs.geo <- CRS("+init=epsg:27700")  # looks up UTM 33N
+crs.geo <- CRS("+init=epsg:27700")  # looks up BNG crs
 proj4string(env.and.res) <- crs.geo  # define projection system of our data
 
 bubble(env.and.res, "residuals", col = c("black","grey"),
@@ -303,28 +419,19 @@ bubble(check.res, "residuals", col = c("black","grey"),
 basemap <-tm_shape(gb1) +
   tm_borders()
 
-
 pointsmap <- basemap +
 tm_shape(env.and.res) +
-  tm_symbols(size = 0.25, col = "blue")
+  tm_symbols(size = 0.25, col = "residuals", midpoint = NA)
 
 print(pointsmap)
 
 checkmap <- basemap +
 tm_shape(check.res) +
-  tm_symbols(size = 0.25, col = "blue")
+  tm_symbols(size = 0.25, col = "residuals", midpoint = NA)
 
 print(checkmap)
 ```
 
-
-```{r}
-AIC(gam1, gam2, gam3)
-
-anova(gam1, gam2, test = "Chisq")
-
-anova(gam1, gam3, test = "Chisq")
-```
 
 
 ```{r}
@@ -332,17 +439,310 @@ data.reduced <- as.data.frame(env.and.res)
 data.reduced <- data.reduced[ !(data.reduced$residuals < -14 & data.reduced$mean.ann.temp > 14), ]
 
 # gaussian
-gam4 <- gam(species.richness ~ s(mean.ann.temp, k = 10, bs="cr") + s(log10.mean.ann.rain, k = 10, bs="cr") + s(topographic.wetness, k = 10, bs="cr") + s(ph, k = 10, bs="cr") + s(total.n, k = 10, bs="cr") + s(tree.density, k = 10, bs="cr") + s(log10.pesticide.risk, k = 10, bs="cr") + s(log10.humans, k = 10, bs="cr"),  data = data.reduced, method= "REML")
+gam10 <- gam(species.richness ~ s(mean.ann.temp) + s(log10.mean.ann.rain) + s(topographic.wetness) + s(ph) + s(total.n) + s(tree.density) + s(log10.pesticide.risk) + s(log10.humans),  data = data.reduced, method= "REML")
 
 
 ```
 
 ```{r}
-summary(gam4)
-plot(gam4)
-gam.check(gam4)
+summary(gam10)
+plot(gam10, seWithMean = TRUE, shade = TRUE, shift = coef(gam6)[1], pages = 2)
+gam.check(gam10)
 
 ```
+
+#### check other bs options
+```{r}
+# cr
+gam11 <- gam(species.richness ~ s(mean.ann.temp, bs="cr") + s(log10.mean.ann.rain, bs="cr") + s(topographic.wetness, bs="cr") + s(ph, bs="cr") + s(total.n, bs="cr") + s(tree.density, bs="cr") + s(log10.pesticide.risk, bs="cr") + s(log10.humans, bs="cr"),  data = site.by.env.and.richness, method= "REML")
+
+# cs
+gam12 <- gam(species.richness ~ s(mean.ann.temp, bs="cs") + s(log10.mean.ann.rain, bs="cs") + s(topographic.wetness, bs="cs") + s(ph, bs="cs") + s(total.n, bs="cs") + s(tree.density, bs="cs") + s(log10.pesticide.risk, bs="cs") + s(log10.humans, bs="cs"),  data = site.by.env.and.richness, method= "REML")
+
+# cs
+gam13 <- gam(species.richness ~ s(mean.ann.temp, bs="ts") + s(log10.mean.ann.rain, bs="ts") + s(topographic.wetness, bs="ts") + s(ph, bs="ts") + s(total.n, bs="ts") + s(tree.density, bs="ts") + s(log10.pesticide.risk, bs="ts") + s(log10.humans, bs="ts"),  data = site.by.env.and.richness, method= "REML")
+```
+
+
+
+
+```{r}
+summary(gam6)
+plot(gam6, seWithMean = TRUE, shade = TRUE, shift = coef(gam6)[1], pages = 2)
+par(mfrow = c(2, 2))
+gam.check(gam6)
+```
+
+```{r}
+summary(gam11)
+plot(gam11, seWithMean = TRUE, shade = TRUE, shift = coef(gam11)[1], pages = 2)
+par(mfrow = c(2, 2))
+gam.check(gam11)
+```
+
+```{r}
+summary(gam12)
+plot(gam12, seWithMean = TRUE, shade = TRUE, shift = coef(gam12)[1], pages = 2)
+par(mfrow = c(2, 2))
+gam.check(gam12)
+
+summary(gam12)$s.pv
+```
+
+```{r}
+summary(gam13)
+plot(gam13, seWithMean = TRUE, shade = TRUE, shift = coef(gam12)[1], pages = 2)
+par(mfrow = c(2, 2))
+gam.check(gam13)
+
+summary(gam13)$s.pv
+```
+# select = TRUE
+```{r}
+gam14 <- gam(species.richness ~ s(mean.ann.temp) + s(log10.mean.ann.rain) + s(topographic.wetness) + s(ph) + s(total.n) + s(tree.density) + s(log10.pesticide.risk) + s(log10.humans),  data = site.by.env.and.richness, method= "REML", select = TRUE)
+
+#method = ML
+gam15 <- gam(species.richness ~ s(mean.ann.temp) + s(log10.mean.ann.rain) + s(topographic.wetness) + s(ph) + s(total.n) + s(tree.density) + s(log10.pesticide.risk) + s(log10.humans),  data = site.by.env.and.richness, method= "ML", select = TRUE)
+
+#As for gam6 but with ML
+gam16 <- gam(species.richness ~ s(mean.ann.temp) + s(log10.mean.ann.rain) + s(topographic.wetness) + s(ph) + s(total.n) + s(tree.density) + s(log10.pesticide.risk) + s(log10.humans),  data = site.by.env.and.richness, method= "ML")
+
+
+```
+
+```{r}
+summary(gam14)
+plot(gam14, seWithMean = TRUE, shade = TRUE, shift = coef(gam12)[1], pages = 2)
+par(mfrow = c(2, 2))
+gam.check(gam14)
+```
+
+
+```{r}
+
+#check if appropriate to compare reml and ml
+AIC(gam6, gam11, gam12, gam13, gam14, gam15, gam16)
+
+```
+
+# leave out tree density first
+```{r}
+gam17 <- gam(species.richness ~ s(mean.ann.temp) + s(log10.mean.ann.rain) + s(topographic.wetness) + s(ph) + s(total.n)  + s(log10.pesticide.risk) + s(log10.humans),  data = site.by.env.and.richness, method= "ML")
+
+anova(gam16, gam17, test = "F")
+
+AIC(gam16, gam17)
+
+summary(gam17)
+plot(gam17, seWithMean = TRUE, shade = TRUE, shift = coef(gam17)[1], pages = 2)
+par(mfrow = c(2, 2))
+gam.check(gam17)
+```
+
+```{r}
+concurvity(gam17, full = TRUE)
+print("worst")
+round(concurvity(gam17, full = FALSE)$worst, 2)
+print("observed")
+round(concurvity(gam17, full = FALSE)$observed, 2)
+print("estimate")
+round(concurvity(gam17, full = FALSE)$estimate, 2)
+```
+
+
+# check what happens when terms are dropped (note, here we use ML)
+```{r}
+
+
+
+# -temp
+gam18 <- gam(species.richness ~  s(log10.mean.ann.rain) + s(topographic.wetness) + s(ph) + s(total.n)  + s(log10.pesticide.risk) + s(log10.humans),  data = site.by.env.and.richness, method= "ML")
+
+# - rain
+gam19 <- gam(species.richness ~ s(mean.ann.temp) + s(topographic.wetness) + s(ph) + s(total.n)  + s(log10.pesticide.risk) + s(log10.humans),  data = site.by.env.and.richness, method= "ML")
+
+# - wetness
+gam20 <- gam(species.richness ~ s(mean.ann.temp) + s(log10.mean.ann.rain)  + s(ph) + s(total.n)  + s(log10.pesticide.risk) + s(log10.humans),  data = site.by.env.and.richness, method= "ML")
+
+# - ph
+gam21 <- gam(species.richness ~ s(mean.ann.temp) + s(log10.mean.ann.rain) + s(topographic.wetness) + s(total.n)  + s(log10.pesticide.risk) + s(log10.humans),  data = site.by.env.and.richness, method= "ML")
+
+#- n
+gam22 <- gam(species.richness ~ s(mean.ann.temp) + s(log10.mean.ann.rain) + s(topographic.wetness) + s(ph)   + s(log10.pesticide.risk) + s(log10.humans),  data = site.by.env.and.richness, method= "ML")
+
+# - pesticide
+gam23 <- gam(species.richness ~ s(mean.ann.temp) + s(log10.mean.ann.rain) + s(topographic.wetness) + s(ph) + s(total.n)  + s(log10.humans),  data = site.by.env.and.richness, method= "ML")
+
+# - humans
+gam24 <- gam(species.richness ~ s(mean.ann.temp) + s(log10.mean.ann.rain) + s(topographic.wetness) + s(ph) + s(total.n)  + s(log10.pesticide.risk),  data = site.by.env.and.richness, method= "ML")
+
+```
+
+```{r}
+
+# -temp
+anova(gam17, gam18, test = "F")
+
+# -rain
+anova(gam17, gam19, test = "F")
+
+# -wetness
+anova(gam17, gam20, test = "F")
+
+# -ph
+anova(gam17, gam21, test = "F")
+
+#-n
+anova(gam17, gam22, test = "F")
+
+# -pesticide
+anova(gam17, gam23, test = "F")
+
+# -humans
+anova(gam17, gam24, test = "F")
+
+
+AIC(gam17, gam18, gam19, gam20, gam21, gam22, gam23, gam24)
+```
+
+
+##### reduce concurvity by leaving out one of pairs of variables with high concurvity (here we go back to REML)
+```{r}
+# leave out rainfall (concurv with temp), pesticide risk(concurve with N) and humans (concurv with temp)
+gam25 <- gam(species.richness ~ s(mean.ann.temp) + s(topographic.wetness) + s(ph) + s(total.n)   ,  data = site.by.env.and.richness, method= "REML")
+
+#leave out temp, pesticide risk, and humans
+
+gam26 <- gam(species.richness ~ s(log10.mean.ann.rain) + s(topographic.wetness) + s(ph) + s(total.n),  data = site.by.env.and.richness, method= "REML")
+
+# leave out rainfall, temp and ph
+gam27 <- gam(species.richness ~  s(topographic.wetness)  + s(total.n) + s(tree.density) + s(log10.pesticide.risk) + s(log10.humans),  data = site.by.env.and.richness, method= "REML")
+```
+
+```{r}
+
+summary(gam25)
+plot(gam25, seWithMean = TRUE, shade = TRUE, shift = coef(gam25)[1], pages = 2)
+par(mfrow = c(2, 2))
+gam.check(gam25)
+```
+
+```{r}
+summary(gam26)
+plot(gam26, seWithMean = TRUE, shade = TRUE, shift = coef(gam26)[1], pages = 2)
+par(mfrow = c(2, 2))
+gam.check(gam26)
+```
+
+##### If temp, rainfall and ph are left out, opposite relationships are produced for humans and pesticide risk
+```{r}
+summary(gam27)
+plot(gam27, seWithMean = TRUE, shade = TRUE, shift = coef(gam27)[1], pages = 3)
+par(mfrow = c(2, 2))
+gam.check(gam27)
+```
+
+```{r}
+summary(gam6)
+plot(gam6, seWithMean = TRUE, shade = TRUE, shift = coef(gam6)[1], pages = 4)
+```
+
+
+# Play with mgcVis
+```{r}
+vis6 <- getViz(gam6)
+
+#adapted from https://cran.r-project.org/web/packages/mgcViz/vignettes/mgcviz.html
+#We added the fitted smooth effect, rugs on the x and y axes, confidence lines at 95%, partial residual points and we changed the plotting theme to ggplot2::theme_classic. Functions such as l_fitLine or l_rug are effect-specific layers. To see all the layers available for each effect plot we do:
+
+#mul = 2 means interval +- 2 SE shown, narrower than 95% CI of course (default here)
+p1 <- plot(sm(vis6, 1))
+p1 + l_fitLine(colour = "red") + l_rug(mapping = aes(x=x, y=y), alpha = 0.8) +
+    l_ciLine(colour = "blue", linetype = 2) + 
+    l_points(shape = 19, size = 1, alpha = 0.1) + theme_classic()
+
+p2 <- plot(sm(vis6, 2))
+p2 + l_fitLine(colour = "red") + l_rug(mapping = aes(x=x, y=y), alpha = 0.8) +
+    l_ciLine(colour = "blue", linetype = 2) + 
+    l_points(shape = 19, size = 1, alpha = 0.1) + theme_classic()
+
+p3 <- plot(sm(vis6, 3))
+p3 + l_fitLine(colour = "red") + l_rug(mapping = aes(x=x, y=y), alpha = 0.8) +
+    l_ciLine(colour = "blue", linetype = 2) + 
+    l_points(shape = 19, size = 1, alpha = 0.1) + theme_classic()
+
+p4 <- plot(sm(vis6, 4))
+p4 + l_fitLine(colour = "red") + l_rug(mapping = aes(x=x, y=y), alpha = 0.8) +
+    l_ciLine(colour = "blue", linetype = 2) + 
+    l_points(shape = 19, size = 1, alpha = 0.1) + theme_classic()
+
+p5 <- plot(sm(vis6, 5))
+p5 + l_fitLine(colour = "red") + l_rug(mapping = aes(x=x, y=y), alpha = 0.8) +
+    l_ciLine(colour = "blue", linetype = 2) + 
+    l_points(shape = 19, size = 1, alpha = 0.1) + theme_classic()
+
+p6 <- plot(sm(vis6, 6))
+p6 + l_fitLine(colour = "red") + l_rug(mapping = aes(x=x, y=y), alpha = 0.8) +
+    l_ciLine(colour = "blue", linetype = 2) + 
+    l_points(shape = 19, size = 1, alpha = 0.1) + theme_classic()
+
+p7 <- plot(sm(vis6, 7))
+p7 + l_fitLine(colour = "red") + l_rug(mapping = aes(x=x, y=y), alpha = 0.8) +
+    l_ciLine(colour = "blue", linetype = 2) + 
+    l_points(shape = 19, size = 1, alpha = 0.1) + theme_classic()
+
+p8 <- plot(sm(vis6, 8))
+p8 + l_fitLine(colour = "red") + l_rug(mapping = aes(x=x, y=y), alpha = 0.8) +
+    l_ciLine(colour = "blue", linetype = 2) + 
+    l_points(shape = 19, size = 1, alpha = 0.1) + theme_classic()
+
+```
+
+
+```{r}
+v1 <-   variogram(residuals ~ 1, loc= ~ x+y, data = xy.res)
+fit1 <- fit.variogram(v1, vgm(c("Sph", "Exp"))); 
+plot(v1, fit1)
+
+# extract the nugget and range from the variogram model to create the correlation structure 
+# to include in the magic formula
+fit1
+```
+
+
+```{r}
+cs1Exp <- corSpher(c(39508.08, 11.661148), form = ~ x + y, nugget=TRUE)
+cs1Exp <- Initialize(cs1Exp, dataPOD1x1s)
+# follow instructions from mgcv 'magic' function
+V <- corMatrix(cs1Exp)
+Cv <- chol(V) 
+## gam ignoring correlation
+b <- gam(dam ~ s(lat, long) + 
++            s(f_edge),
++          family = binomial,
++          data=data,
++          method = "ML",
++          select = TRUE,
++          na.action = "na.fail")
+## Fit smooth, taking account of *known* correlation...
+w <- solve(t(Cv)) # V^{-1} = w'w
+## Use `gam' to set up model for fitting...
+G <- gam(dam10_15 ~ s(lat, long) +
++            s(f_edge),
++          family = binomial,
++          data=dataPOD1x1s,
++          method = "ML",
++          select = TRUE,
++          na.action = "na.fail",
++          fit=FALSE)
+## fit using magic, with weight *matrix*
+mgfit <- magic(G$y,G$X,G$sp,G$S,G$off,rank=G$rank,C=G$C,w=w)
+mg.stuff <- magic.post.proc(G$X,mgfit,w)
+b$edf <- mg.stuff$edf;b$Vp <- mg.stuff$Vb
+b$coefficients <- mgfit$b 
+summary(gam1x1)
+```
+
 
 
 # GAMM add spatial autocorrelation
@@ -367,7 +767,7 @@ site.by.env.xy.richness <- distinct(site.by.env.xy.richness, x, y, .keep_all = T
 # gaussian
 
 # time consuming
-gam5 <- gamm(species.richness ~ s(mean.ann.temp, k = 10, bs="cr") + s(log10.mean.ann.rain, k = 10, bs="cr") + s(topographic.wetness, k = 10, bs="cr") + s(ph, k = 10, bs="cr") + s(total.n, k = 10, bs="cr") + s(tree.density, k = 10, bs="cr") + s(log10.pesticide.risk, k = 10, bs="cr") + s(log10.humans, k = 10, bs="cr"),  data = site.by.env.xy.richness, method= "REML", correlation=corGaus(form = ~x+y))
+gamm1 <- gamm(species.richness ~ s(mean.ann.temp, k = 10, bs="cr") + s(log10.mean.ann.rain, k = 10, bs="cr") + s(topographic.wetness, k = 10, bs="cr") + s(ph, k = 10, bs="cr") + s(total.n, k = 10, bs="cr") + s(tree.density, k = 10, bs="cr") + s(log10.pesticide.risk, k = 10, bs="cr") + s(log10.humans, k = 10, bs="cr"),  data = site.by.env.xy.richness, method= "REML", correlation=corGaus(form = ~x+y))
 
 summary(gam5$gam)
 

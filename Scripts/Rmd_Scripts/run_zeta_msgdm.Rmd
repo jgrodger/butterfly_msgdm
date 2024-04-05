@@ -55,44 +55,40 @@ render_report = function(analysis_script, params_list) {
 
 ## Zeta declines and decays
 ```{r}
-render_report(analysis_script = "Zeta_declines_decays_analyses.Rmd", list(dataset = "all_species", sam_ddecay = 10000))
-render_report(analysis_script = "Zeta_declines_decays_analyses.Rmd", list(dataset = "wc", sam_ddecay = 10000))
-render_report(analysis_script = "Zeta_declines_decays_analyses.Rmd", list(dataset = "wc_no_zeros", sam_ddecay = 10000))
-render_report(analysis_script = "Zeta_declines_decays_analyses.Rmd", list(dataset = "hs", sam_ddecay = 10000))
-render_report(analysis_script = "Zeta_declines_decays_analyses.Rmd", list(dataset = "hs_no_zeros", sam_ddecay = 10000))
+render_report(analysis_script = "Zeta_declines_decays_analyses.Rmd", list(dataset = "all_species", sam_ddecay = 10000, orders_ddecay = 2:100))
+render_report(analysis_script = "Zeta_declines_decays_analyses.Rmd", list(dataset = "wc", sam_ddecay = 10000, orders_ddecay = 2:100))
+render_report(analysis_script = "Zeta_declines_decays_analyses.Rmd", list(dataset = "wc_no_zeros", sam_ddecay = 10000, orders_ddecay = 2:100))
+render_report(analysis_script = "Zeta_declines_decays_analyses.Rmd", list(dataset = "hs", sam_ddecay = 10000, orders_ddecay = 2:8)) # Computational issues at higher orders
+render_report(analysis_script = "Zeta_declines_decays_analyses.Rmd", list(dataset = "hs_no_zeros", sam_ddecay = 10000, orders_ddecay = 2:10)) # Computational issues at higher orders
 ```
-## GAMs
+## GAMMs
 
 ```{r}
-
-#needs work
-
-#need now to read chapter on GAMS to validated models
-render_report(analysis_script = "GAM_analyses.Rmd", list(dataset = "all_species"))
+render_report(analysis_script = "GAMM_analyses.Rmd", list(dataset = "wc"))
 ```
 
 
 ## MSGDMs
 ```{r}
 render_report(analysis_script = "Zeta_msgdm_analyses.Rmd", list(dataset = "all_species",  
-              orders_msgdm =  c(2,3), sam_msgdm = 500, normalize_msgdm = "Sorensen"))
+              orders_msgdm =  c(2,3, 6, 10, 15, 20), sam_msgdm = 50000, normalize_msgdm = "Sorensen"))
 
 render_report(analysis_script = "Zeta_msgdm_analyses.Rmd", list(dataset = "all_species",  
-              orders_msgdm =  c(2,3), sam_msgdm = 500, normalize_msgdm = "Simpson"))
+              orders_msgdm =  c(2,3, 6, 10, 15, 20), sam_msgdm = 50000, normalize_msgdm = "Simpson"))
 
 
 render_report(analysis_script = "Zeta_msgdm_analyses.Rmd", list(dataset = "wc_no_zeros",  
-              orders_msgdm =  c(2,3), sam_msgdm = 500, normalize_msgdm = "Sorensen"))
+              orders_msgdm =  c(2,3, 6, 10, 15, 20), sam_msgdm = 50000, normalize_msgdm = "Sorensen"))
 
 render_report(analysis_script = "Zeta_msgdm_analyses.Rmd", list(dataset = "wc_no_zeros",  
-              orders_msgdm =  c(2,3), sam_msgdm = 500, normalize_msgdm = "Simpson"))
+              orders_msgdm =  c(2,3, 6, 10, 15, 20), sam_msgdm = 50000, normalize_msgdm = "Simpson"))
 
 
 render_report(analysis_script = "Zeta_msgdm_analyses.Rmd", list(dataset = "hs_no_zeros",  
-              orders_msgdm =  c(2,3), sam_msgdm = 500, normalize_msgdm = "Sorensen"))
+              orders_msgdm =  c(2,3,4, 6), sam_msgdm = 50000, normalize_msgdm = "Sorensen"))
 
 render_report(analysis_script = "Zeta_msgdm_analyses.Rmd", list(dataset = "hs_no_zeros",  
-              orders_msgdm =  c(2,3), sam_msgdm = 500, normalize_msgdm = "Simpson"))
+              orders_msgdm =  c(2,3, 4, 6), sam_msgdm = 50000, normalize_msgdm = "Simpson"))
 
 ```
 
