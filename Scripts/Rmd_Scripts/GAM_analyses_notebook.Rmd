@@ -71,7 +71,9 @@ slow_function <- function(i, .pb=NULL) {
 
 #### File Paths
 ```{r}
-data_path <- paste0("./Data/Processed_Data/Spatial/all_species.rds/")
+data_path <- paste0("./Data/Processed_Data/Spatial/wc.rds/")
+
+#data_path <- paste0("./Data/Processed_Data/Spatial/all_species.rds/")
 
 out_path <-  paste0(here("Output/Spatial/GAM/"))
 
@@ -90,60 +92,12 @@ site.by.xy <- data$site.by.xy
 
 # gb polygon
 
-gb <- readRDS(here("./Data/Input_Environmental_Data/gb_multipolygon.rds"))
+gb <- readRDS(here("./Data/Input_Environmental_Data/gb_multipolygon_simplified.rds"))
 
 str(gb, max.level = 1)
 
 crs(gb)
 ```
-
-
-#### Simplify the basemap (transfer later to another script)
-```{r}
-gb1 <- st_simplify(gb, preserveTopology = FALSE, dTolerance = 100)
-
-ggplot(gb1) + geom_sf()
-plot(gb1, 
-     zoom_to = c(13.359, 54.413), 
-      zoom_level = 8)
-
-
-lundy_box <- c(xmin = 80000, xmax = 240000,
-              ymin = 130000, ymax = 180000)
-
-lundy_cropped <- st_crop(gb1, lundy_box )
-
-scilly_box <- c(xmin = 80000, xmax = 110000,
-                ymin = 6000, ymax = 101000)
-
-
-#ac_box <- c(xmin = 180000, xmax = 210000,
- #               ymin = 600000, ymax = 615000)
-
-ac_box <- c(xmin = 180000, xmax = 210000,
-                ymin = 590000, ymax = 610000)
-ac_cropped <- st_crop(gb1, ac_box )
-
-ggplot(gb1) + geom_sf()
-ggplot(ac_cropped) + geom_sf()
-
-  
-scilly_cropped <- st_crop(gb1, scilly_box )
-
-ggplot(gb1) + geom_sf()
-ggplot(lundy_cropped) + geom_sf()
-ggplot(scilly_cropped) + geom_sf()
-
-gb1 <- st_difference(gb1, st_set_crs(st_as_sf(as(raster::extent(80000, 240000, 130000, 180000), "SpatialPolygons")), st_crs(gb1)))
-gb1 <- st_difference(gb1, st_set_crs(st_as_sf(as(raster::extent(80000, 111000, 6000, 101000), "SpatialPolygons")), st_crs(gb1)))
-gb1 <- st_difference(gb1, st_set_crs(st_as_sf(as(raster::extent(180000, 210000, 590000, 610000), "SpatialPolygons")), st_crs(gb1)))
-
-ggplot(gb1) + geom_sf()
-
-
-
-```
-
 
 
 
@@ -737,7 +691,7 @@ site.by.env.xy.richness.distinct <- distinct(site.by.env.xy.richness, x, y, .kee
 
 
 # time consuming
-gammGaus <- gamm(species.richness ~ s(mean.ann.temp) + s(log10.mean.ann.rain) + s(topographic.wetness) + s(ph) + s(total.n) + s(tree.density) + s(log10.pesticide.risk) + s(log10.humans),  data = site.by.env.xy.richness.distinct, method= "REML", correlation=corGaus(form = ~x+y), nugget = TRUE)
+gammGaus <- gamm(species.richness ~ s(mean.ann.temp) + s(log10.mean.ann.rain) + s(topographic.wetness) + s(ph) + s(total.n) + s(tree.density) + s(log10.pesticide.risk) + s(log10.humans),  data = site.by.env.xy.richness.distinct, method= "REML", correlation=corGaus(form = ~x+y, nugget = TRUE))
 
 gammExp <- gamm(species.richness ~ s(mean.ann.temp) + s(log10.mean.ann.rain) + s(topographic.wetness) + s(ph) + s(total.n) + s(tree.density) + s(log10.pesticide.risk) + s(log10.humans),  data = site.by.env.xy.richness.distinct, method= "REML", correlation=corExp(form = ~x+y, nugget = TRUE))
 

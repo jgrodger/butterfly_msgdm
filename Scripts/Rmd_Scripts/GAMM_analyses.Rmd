@@ -15,9 +15,12 @@ knitr::opts_chunk$set(echo = TRUE)
 #### Packages
 ```{r}
 here::i_am("Scripts/Rmd_Scripts/GAMM_analyses.Rmd")
+library(tidyverse)
+
+
 
 library(tmap)
-library(tidyverse)
+
 library(mgcv)
 library(mgcViz)
 library(magrittr)
@@ -37,9 +40,6 @@ conflicts_prefer(knitrProgressBar::progress_estimated)
 # there is a same-named function in dplyr, check it out
 ```
 
-
-
-
 #### Functions
 ```{r}
 # From https://stackoverflow.com/questions/71252509/is-there-a-way-to-get-progress-information-whan-a-chunk-is-running-in-rmarkdown
@@ -49,7 +49,6 @@ slow_function <- function(i, .pb=NULL) {
   Sys.sleep(0.5)  
   i  
 }
-
 # create an R6 progress object for
 # the number of loops/iterations in the target chunk
 ```
@@ -72,19 +71,6 @@ site.by.species <- data$site.by.species
 site.by.env <- data$site.by.env
 
 site.by.xy <- data$site.by.xy
-
-# gb polygon
-
-# gb <- readRDS(here("./Data/Input_Environmental_Data/gb_multipolygon.rds"))
-# 
-# str(gb, max.level = 1)
-# 
-# crs(gb)
-
-
-#note, 104 sites with same x and y coordinates, check how this arises
-
-#site.by.env.xy.richness <- as.data.frame(env.and.res)
 
 site.by.env.and.richness <- cbind(site.by.env, rowSums(site.by.species)) %>%
   cbind(site.by.xy) %>%
@@ -143,7 +129,7 @@ write_rds(gamm_cor_struct_list, file = paste0(here(out_path), "/", params$datase
 
 #### Find best correlation structure
 ```{r}
-aic_table <- AIC(gammGaus$lme, gammExp$lme, gammLin$lme, gammRatio$lme, gammSpher$lme)
+aic_table <- AIC(gamm_corGaus$lme, gamm_corExp$lme, gamm_corLin$lme, gamm_corRatio$lme, gamm_corSpher$lme)
 aic_table
 
 index_best <- which(aic_table$AIC == min(aic_table$AIC))
