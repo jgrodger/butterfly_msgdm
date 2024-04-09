@@ -7,6 +7,8 @@ Order to run:
      
 2) butterflies_combine_env_data
 
+3) run_zeta_msgdm.Rmd call Scripts to run analyses
+
 
 
 

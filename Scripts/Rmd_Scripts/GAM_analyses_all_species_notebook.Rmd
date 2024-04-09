@@ -1,0 +1,132 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+
+#### Packages
+```{r}
+here::i_am("Scripts/Rmd_Scripts/GAM_analyses.Rmd")
+library(tidyverse)
+library(sf)
+library(sp)
+library(terra)
+library(mgcv)
+library(knitr)
+library(mgcViz)
+library(gstat)
+library(knitrProgressBar)
+library(tictoc)
+library(here)
+library(conflicted)
+conflicts_prefer(dplyr::filter)
+conflicts_prefer(dplyr::select)
+conflicts_prefer(knitrProgressBar::progress_estimated)
+
+# there is a same-named function in dplyr, check it out
+```
+
+#### Functions
+```{r}
+# A function for plotting gam relationships with my preferences
+
+
+my.plot.gam <- function(gam_object){
+plot(gam_object, residuals = TRUE, seWithMean = TRUE, shade = TRUE, shift = coef(gam_object)[1], pages = 2) 
+}
+
+
+# a function to make a table for checking if smooths might be zero
+check_smooths <- function(gam_obj, capt){
+vars <- c("mean.ann.temp", "log10.mean.ann.rain", "topographic.wetness", "ph", 
+          "total.n",  "tree.density", "log10.pesticide.risk",  "log10.humans") 
+  
+gam_obj <- data.frame(cbind(vars, summary(gam_tp)$s.pv))
+names(gam_obj) <- c("Var", "p")
+gam_obj$p <- as.numeric(gam_obj$p)
+gam_obj<- kable(gam_obj, digits = 3, align = "l", caption = capt)
+}
+
+```
+
+#### File Paths
+```{r}
+data_path <- paste0("./Data/Processed_Data/Spatial/", "all_species", ".rds")
+
+```
+
+#### Data
+```{r}
+data <- readRDS(here(data_path))
+
+site.by.species <- data$site.by.species
+  
+site.by.env <- data$site.by.env
+
+site.by.xy <- data$site.by.xy
+
+
+```
+
+
+#### Environmental variable, easting, northing and richness Pearson and Spearman correlations
+```{r}
+site.by.env.and.richness <- cbind(site.by.xy) %>%
+  cbind(site.by.env, rowSums(site.by.species)) %>% 
+  rename(species.richness = 'rowSums(site.by.species)')
+  
+
+```
+
+
+
+#GAMS
+
+#### Compare GAMs with different families
+```{r}
+# Gaussian
+gam_tp <- gam(species.richness ~ s(mean.ann.temp) + s(log10.mean.ann.rain) + 
+                s(topographic.wetness) + s(ph) + s(total.n) + s(tree.density) + 
+                s(log10.pesticide.risk) + s(log10.humans),  
+                data = site.by.env.and.richness, method= "REML")
+
+# cubic regression spline
+gam_cr <- update(gam_tp, formula = species.richness ~ s(mean.ann.temp, bs="cr") + 
+            s(log10.mean.ann.rain, bs="cr") + s(topographic.wetness, bs="cr") + 
+            s(ph, bs="cr") + s(total.n, bs="cr") + s(tree.density, bs="cr") + 
+            s(log10.pesticide.risk, bs="cr") + s(log10.humans, bs="cr"))
+
+```
+
+```{r}
+
+check_tp <- check_smooths(gam_tp, "tp smooths")
+check_tp
+
+check_cr <- check_smooths(gam_cr, "cr smooths")
+check_cr
+```
+
+```{r}
+
+# cubic regression spline
+gam_cr_penalty <- update(gam_tp, formula = species.richness ~ s(mean.ann.temp, bs="cr") + 
+            s(log10.mean.ann.rain, bs="cs") + s(topographic.wetness, bs="cr") + 
+            s(ph, bs="cr") + s(total.n, bs="cr") + s(tree.density, bs="cs") + 
+            s(log10.pesticide.risk, bs="cr") + s(log10.humans, bs="cr"))
+```
+
+
+```{r}
+gam_bs_list <-list (gam_tp, gam_cr, gam_cr_penalty)
+aic_table <- AIC(gam_tp,  gam_cr, gam_cr_penalty)
+
+kable(aic_table, digits = 2, align = "l")
+index_best <- which(aic_table$AIC == min(aic_table$AIC))
+
+gam_best <- gam_bs_list[[index_best]] 
+```
+```{r}
+summary(gam_cr_penalty)
+```
+
