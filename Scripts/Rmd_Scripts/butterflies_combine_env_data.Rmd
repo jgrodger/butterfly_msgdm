@@ -28,7 +28,7 @@ To do: check we arereading correct processed input here
 ```{r}
 # load polygon to use to crop and mask as map extents a bit different
 
-gb <- readRDS(here("./Data/Input_Environmental_Data/gb_multipolygon.rds"))
+gb <- readRDS(here("./Data/Maps/gb_multipolygon_simplified.rds"))
 
 str(gb, max.level = 1)
 
