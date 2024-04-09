@@ -71,9 +71,7 @@ slow_function <- function(i, .pb=NULL) {
 
 #### File Paths
 ```{r}
-data_path <- paste0("./Data/Processed_Data/Spatial/wc.rds/")
-
-#data_path <- paste0("./Data/Processed_Data/Spatial/all_species.rds/")
+data_path <- paste0("./Data/Processed_Data/Spatial/all_species.rds/")
 
 out_path <-  paste0(here("Output/Spatial/GAM/"))
 

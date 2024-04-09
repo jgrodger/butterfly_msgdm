@@ -29,8 +29,6 @@ conflicts_prefer(dplyr::select)
 
 ##  Load functions
 ```{r}
-
-# performance: possibly do this in a different script
 source(here("./Scripts/R_scripts/get_k_fold_performance.R"))
 
 source(here("./Scripts/R_scripts/Zeta.order.mc.sam.R"))
@@ -38,20 +36,28 @@ source(here("./Scripts/R_scripts/Zeta.order.mc.sam.R"))
 source(here("./Scripts/R_scripts/get_validation_different_seeds_and_samps.R"))
 
 
-# need to work out how to run the following, see # https://bookdown.org/yihui/rmarkdown/params-knit.html#knit-with-custom-parameters
+# https://bookdown.org/yihui/rmarkdown/params-knit.html#knit-with-custom-parameters
 
 render_report = function(analysis_script, params_list) {
   out_path <- if (analysis_script == "Zeta_declines_decays_analyses.Rmd"){
-                  paste0(here("Output/Spatial/"), "/", params_list$dataset, "_" , "declines_and_decays", "/")
-              } else{
-              paste0(here("Output/Spatial/"), "/", params_list$dataset, "_" , params_list$normalize_msgdm)
-              }
-  if(!dir.exists(out_path)) dir.create(out_path)
+                    paste0(here("Output/Spatial/"), "/", params_list$dataset, "_" , "declines_and_decays", "/")
+                } else if(analysis_script == "Zeta_msgdm_analyses.Rmd") {
+                    paste0(here("Output/Spatial/"), "/", params_list$dataset, "_" , params_list$normalize_msgdm)
+                } else if(analysis_script == "GAM_analyses.Rmd") {
+                      paste0(here("Output/Spatial/GAM"), "/","GAM", "_" , params_list$dataset,  "/")  
+                } else if(analysis_script == "GAMM_analyses.Rmd"){  
+                      paste0(here("Output/Spatial/GAM"), "/","GAMM", "_" , params_list$dataset,  "/")
+                }
+  
+if(!dir.exists(out_path)) dir.create(out_path)
   rmarkdown::render(input = analysis_script,
                     output_dir = out_path,
                     params = params_list)
 }
 ```
+
+
+
 
 ## Zeta declines and decays
 ```{r}
@@ -61,12 +67,39 @@ render_report(analysis_script = "Zeta_declines_decays_analyses.Rmd", list(datase
 render_report(analysis_script = "Zeta_declines_decays_analyses.Rmd", list(dataset = "hs", sam_ddecay = 10000, orders_ddecay = 2:8)) # Computational issues at higher orders
 render_report(analysis_script = "Zeta_declines_decays_analyses.Rmd", list(dataset = "hs_no_zeros", sam_ddecay = 10000, orders_ddecay = 2:10)) # Computational issues at higher orders
 ```
+```{r}
+render_report(analysis_script = "GAM_analyses.Rmd", list(dataset = "all_species"))
+```
+
+
+```{r}
+render_report(analysis_script = "GAM_analyses.Rmd", list(dataset = "wc_no_zeros"))
+```
+
+```{r}
+render_report(analysis_script = "GAM_analyses.Rmd", list(dataset = "hs_no_zeros"))
+```
+
 ## GAMMs
 
 ```{r}
-render_report(analysis_script = "GAMM_analyses.Rmd", list(dataset = "wc"))
+#run again
+render_report(analysis_script = "GAMM_analyses.Rmd", list(dataset = "all_species"))
 ```
 
+```{r}
+render_report(analysis_script = "GAMM_analyses.Rmd", list(dataset = "wc_no_zeros"))
+```
+
+
+
+
+
+
+```{r}
+#For this, I should check poisson versus gaussian in a GAM first
+render_report(analysis_script = "GAMM_analyses.Rmd", list(dataset = "hs_no_Zeros", family = "Tweedie(p = 1.01)"))
+```
 
 ## MSGDMs
 ```{r}
