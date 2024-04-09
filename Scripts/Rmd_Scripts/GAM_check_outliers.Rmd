@@ -1,21 +1,60 @@
 ---
-title: "R Notebook"
+title: "Inspect outliers from GAM"
 output: html_notebook
 ---
 
+#### The observations isolated here are lower than expected species richness
+#### I suspect poor 
 
 
-#### File Paths
+#packages
+```{r}
+here::i_am("Scripts/Rmd_Scripts/GAM_check_outliers.Rmd")
+
+#library(tmap)
+library(tidyverse)
+library(mgcv)
+library(terra)
+library(sp)
+library(sf)
+library(tmap)
+library(here)
+library(conflicted)
+conflicts_prefer(dplyr::filter)
+conflicts_prefer(dplyr::select)
+conflicts_prefer(knitrProgressBar::progress_estimated)
+
+```
+#### Functions
+```{r}
+# A function for plotting gam relationships with my preferences
+my.plot.gam <- function(gam_object){
+plot(gam_object, residuals = TRUE, seWithMean = TRUE, shade = TRUE, shift = coef(gam_object)[1], pages = 2) 
+}
+```
+
+#### Data
 ```{r}
 
+gam_best <- read_rds(here("Output/Spatial/GAM/GAM_all_species/all_species_best_gam.rds"))
 
+data <- readRDS(here("./Data/Processed_Data/Spatial/all_species.rds"))
 
-# Need all_species data and the best gam for this to further explore residuals
-# data_path <- paste0("./Data/Processed_Data/Spatial/all_species.rds/")
-# 
-# out_path <-  paste0(here("Output/Spatial/GAM/"))
-# 
-# if(!dir.exists(out_path)) dir.create(out_path)
+site.by.species <- data$site.by.species
+  
+site.by.env <- data$site.by.env
+
+site.by.xy <- data$site.by.xy
+
+sites <- data$sites
+
+# gb polygon
+
+gb <- readRDS(here("./Data/Input_Environmental_Data/gb_multipolygon_simplified.rds"))
+
+str(gb, max.level = 1)
+
+crs(gb)
 ```
 
 
@@ -23,6 +62,10 @@ output: html_notebook
 ```{r}
 residuals <- resid(gam_best)
 xy.res <- cbind(site.by.xy, residuals)
+
+site.by.env.and.richness <- cbind(site.by.xy) %>%
+  cbind(site.by.env, rowSums(site.by.species)) %>% 
+  rename(species.richness = 'rowSums(site.by.species)')
 
 env.and.res <- cbind(site.by.env.and.richness, residuals)
 ```
@@ -43,6 +86,8 @@ plot(residuals ~ mean.ann.temp, data = env.and.res, xlim = c(14, 16.1), ylim = c
 plot(residuals ~ species.richness, data = env.and.res, xlim = c(1, 35), ylim = c(-23, 14))
 
 check.res <-filter(env.and.res, residuals < -14, mean.ann.temp > 14)
+write_rds(check.res, file = here("./Data/Processed_Data/Spatial/gam_outliers.rds"))
+
 
 plot(residuals ~ species.richness, data = check.res, xlim = c(1, 35), ylim = c(-23, 14))
 ```
@@ -88,8 +133,10 @@ print(checkmap)
 
 #### Check the influence of outliers on the model
 ```{r}
-data.reduced <- as.data.frame(env.and.res)
-data.reduced <- data.reduced[ !(data.reduced$residuals < -14 & data.reduced$mean.ann.temp > 14), ]
+env.and.res <- as.data.frame(env.and.res)
+
+#without outliers
+data.reduced <- env.and.res[ !(env.and.res$residuals < -14 & env.and.res$mean.ann.temp > 14), ]
 
 gam_without_outliers<- update(gam_best,  data = data.reduced)
 
@@ -97,6 +144,13 @@ summary(gam_without_outliers)
 par(mfrow = c(2, 2))
 gam.check(gam_without_outliers)
 my.plot.gam(gam_without_outliers)
+```
 
+Omitting the outliers improved the model, so now I am trying to understand the 
+outliers. They have lower than expected richness.I suspect some poor observation
+effort not picked up by coverage
+
+```{r}
+plot(sites$richness ~ sites$coverage)
 ```
 
