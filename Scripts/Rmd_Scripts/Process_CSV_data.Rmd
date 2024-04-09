@@ -6,7 +6,7 @@ output: html_notebook
 
 ### To do: add point density plots, remove Scilly Isle from basemap, consider removing exploration from this file, consider changing cutoff to 0.99 to include more Scottish and Welsh sites.
 
-https://www.r-bloggers.com/2023/12/beautiful-maps-with-r-v-point-densities/
+#https://www.r-bloggers.com/2023/12/beautiful-maps-with-r-v-point-densities/
 
 ## Load packages.
 ```{r}
@@ -26,8 +26,6 @@ library(sf)
 library(tmap)
 
 library(iNEXT)
-
-library(segmented)
 
 conflicts_prefer(dplyr::filter)
 conflicts_prefer(dplyr::mutate)
@@ -347,7 +345,7 @@ nrow(sites)
 ```
 
 ## Plot Sites
-```{r r eval = FALSE}
+```{r}
 plot.points <- st_as_sf(sites, coords=c("x","y"), remove = FALSE, crs = 27700) 
 
 #get a set of points for each unique grid cell
@@ -709,7 +707,7 @@ not_april_sites <- filter(sites, site %in% not_april)
 ```
 
 
-```{r r eval = FALSE}
+```{r }
 plot.points <- st_as_sf(not_april_sites, coords=c("x","y"), remove = FALSE, crs = 27700)#I want to keep coords in the dataframe
 #
 # #get a set of points for each unique grid cell
@@ -730,7 +728,7 @@ print(pointsmap2)
 
 
 ## Plot Sites
-```{r eval = FALSE}
+```{r }
 
 plot.points <- st_as_sf(sites.spatial, coords=c("x","y"), remove = FALSE, crs = 27700)
 
