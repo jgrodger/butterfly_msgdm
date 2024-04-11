@@ -93,7 +93,7 @@ summary(zd$zeta.pl)
 # Exponential")
 summary(zd$zeta.exp)
 # "AIC"
-print(zd$aic)
+kable(zd$aic)
 
 ```
 
@@ -105,7 +105,7 @@ summary(zd$zeta.pl)
 # Exponential")
 summary(zd$zeta.exp)
 # "AIC"
-print(zd$aic)
+kable(zd$aic)
 
 ```
 
@@ -117,7 +117,7 @@ summary(zd$zeta.pl)
 # Exponential")
 summary(zd$zeta.exp)
 # "AIC"
-print(zd$aic)
+kable(zd$aic)
 
 ```
 

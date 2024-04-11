@@ -62,18 +62,38 @@ site.by.env <- data$site.by.env
 
 site.by.xy <- data$site.by.xy
 
+sites<- data$sites
+
+
+# combine data for analysis
 site.by.env.and.richness <- cbind(site.by.env, rowSums(site.by.species)) %>%
   cbind(site.by.xy) %>%
 rename(species.richness = 'rowSums(site.by.species)')
-
 site.by.env.xy.richness <- cbind(site.by.env.and.richness, site.by.xy)
 
-site.by.env.xy.richness.distinct <- distinct(site.by.env.xy.richness, x, y, .keep_all = TRUE)
+#inspect 
+
+dup_xy <- sites %>%
+  mutate(xy = paste(x,y)) %>%
+group_by(xy) %>% 
+  filter(n() > 1)
+
+kable(dup_xy)  
+  
+#remove duplicates for rows with the same x and y coordinates
+site.by.env.xy.richness.distinct <- site.by.env.xy.richness %>%
+  mutate(xy = paste(x,y)) %>%
+  distinct(xy, .keep_all = TRUE)
+
+
+
 ```
 
 ```{r}
 hist(site.by.env.xy.richness.distinct$species.richness)
 ```
+
+
 
 #### GAMMs for different correlation structures 
 ```{r}
