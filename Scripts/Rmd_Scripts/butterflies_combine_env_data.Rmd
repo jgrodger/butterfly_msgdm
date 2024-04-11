@@ -95,6 +95,14 @@ filter_dataset <- function(site.by.species, site.by.xy, site.by.env, species, si
 
 ## Process Data
 
+```{r}
+sites <- sites %>%
+  mutate(site.no = site,
+         site = paste("site", site.no, sep = "_")) %>%
+   column_to_rownames("site") 
+```
+
+
 #### Rename Environmental variables and log transform where necessary
 ```{r}
 site.by.temp <- site.by.temp %>%
@@ -229,14 +237,12 @@ site.by.wetness <- site.by.wetness %>%
 # Note, there is sometimes more than one site per gridref
 # Merge is used to keep sites that have data for all variables
 site.by.env <- sites %>%
-  mutate(site.no = site,
-         site = paste("site", site.no, sep = "_"))%>%
-  select(site.no, site, ngr.1km)
+  select(site.no, ngr.1km, x, y)
 print("Sites with species data")
 nrow(sites)
 
 site.by.temp <- site.by.temp %>% #rearrange columns
-  select(c(ngr.1km, x, y, mean.ann.temp))
+  select(c(ngr.1km, mean.ann.temp))
 
 site.by.env <- site.by.env %>%
   merge(site.by.temp, by = "ngr.1km")
@@ -279,9 +285,13 @@ nrow(site.by.env)
 #order by site.number
 site.by.env <- site.by.env[base::order(site.by.env$site.no), ]
 
-#remove site.number
-site.by.env <- select(site.by.env, -site.no)
 
+
+site.by.env$site <- paste("site", site.by.env$site.no, sep = "_")
+
+rownames(site.by.env) <- site.by.env$site
+#remove site.number
+site.by.env <- select(site.by.env, -site)
 ```
 
 #### Plot  Sites
@@ -451,28 +461,30 @@ site.by.env <- site.by.env %>%
 #### Check correlation between environmental variables
 
 ```{r}
-cor(site.by.env[, 5:12], method = "pearson")
+cor(site.by.env[, 4:11], method = "pearson")
 ```
 
 
 ```{r}
-cor(site.by.env[, 5:12], method = "spearman")
+cor(site.by.env[, 4:11], method = "spearman")
 ```
 ## Obtain versions of dataset for analysis (e.g. all species, 
 ## wider countryside species, habitat specialists)
 ```{r}
+site.by.xy <- site.by.env %>%
+  select(x, y)
 
-rownames(site.by.env) <- site.by.env$site
+#inspect duplicates for coordinates
+dup_xy <- site.by.xy %>%
+  mutate(xy = paste(x,y)) %>%
+group_by(xy) %>% 
+  filter(n() > 1)
 
-site.by.xy <- select(site.by.env, x, y)
-
-site.by.env <- select(site.by.env, -c(ngr.1km, site, x, y))
+site.by.env <- select(site.by.env, -c(site.no, ngr.1km,  x, y))
 
 rownames(site.by.species) <- paste("site", rownames(site.by.species), sep = "_")
 site.by.species <- filter(site.by.species,
                           rownames(site.by.species) %in% rownames(site.by.env))
-
-rownames(sites) <- paste("site", sites$site, sep = "_")
 
 print("Number of sites matching butterfly sampling criteria")
 nrow(sites)
@@ -532,7 +544,7 @@ names(all_species) <- c("site.by.species", "site.by.xy", "site.by.env", "species
 write_rds(all_species, file = here("./Data/Processed_Data/Spatial/all_species.rds"))
 
 write_rds(wc, file = here("./Data/Processed_Data/Spatial/wc.rds"))
-write_rds(wc.no.zeros, file = here("./Data/Processed_Data/Spatial/wc_no_zeros.rds"))
+#write_rds(wc.no.zeros, file = here("./Data/Processed_Data/Spatial/wc_no_zeros.rds"))
 
 write_rds(hs, file = here("./Data/Processed_Data/Spatial/hs.rds"))
 write_rds(hs.no.zeros, file = here("./Data/Processed_Data/Spatial/hs_no_zeros.rds"))

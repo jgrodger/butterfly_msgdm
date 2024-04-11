@@ -66,13 +66,12 @@ sites<- data$sites
 
 
 # combine data for analysis
-site.by.env.and.richness <- cbind(site.by.env, rowSums(site.by.species)) %>%
+site.by.env.xy.richness <- cbind(site.by.env, rowSums(site.by.species)) %>%
   cbind(site.by.xy) %>%
 rename(species.richness = 'rowSums(site.by.species)')
-site.by.env.xy.richness <- cbind(site.by.env.and.richness, site.by.xy)
+
 
 #inspect 
-
 dup_xy <- sites %>%
   mutate(xy = paste(x,y)) %>%
 group_by(xy) %>% 
@@ -85,7 +84,14 @@ site.by.env.xy.richness.distinct <- site.by.env.xy.richness %>%
   mutate(xy = paste(x,y)) %>%
   distinct(xy, .keep_all = TRUE)
 
+dup_xy2 <- site.by.xy %>%
+  mutate(xy = paste(x,y)) %>%
+group_by(xy) %>% 
+  filter(n() > 1)
 
+dup_ngr <- sites %>%
+  group_by(ngr.1km) %>% 
+  filter(n() > 1)
 
 ```
 
