@@ -156,34 +156,26 @@ gam_tweedie2 <- update(gam_poisson, family = Tweedie(p = 2))
 
 # Gaussian
 ```{r}
-summary(gam_gaussian)
 par(mfrow = c(2, 2))
 gam.check(gam_gaussian)
-my.plot.gam(gam_gaussian)
 ```
 
 #### Poisson
 ```{r}
-summary(gam_poisson)
 par(mfrow = c(2, 2))
 gam.check(gam_poisson)
-my.plot.gam(gam_poisson)
 ```
 
 ##### Tweedie = 1.01
 ```{r}
-summary(gam_tweedie1)
 par(mfrow = c(2, 2))
 gam.check(gam_tweedie1)
-my.plot.gam(gam_tweedie1)
 ```
 
 ##### Tweedie = 2
 ```{r}
-summary(gam_tweedie2)
 par(mfrow = c(2, 2))
 gam.check(gam_tweedie2)
-my.plot.gam(gam_tweedie2)
 ```
 
 
@@ -202,6 +194,14 @@ index_best <- which(aic_table$AIC == min(aic_table$AIC))
 row.names(aic_table[index_best , ])
 gam_tp <- gam_fam_list[[index_best]] 
 ```
+```{r}
+summary(gam_tp)
+par(mfrow = c(2, 2))
+gam.check(gam_tp)
+my.plot.gam(gam_tp)
+```
+
+
 #### Check spline method
 ```{r}
 # cubic regression spline
@@ -210,6 +210,25 @@ gam_cr <- update(gam_tp, formula = species.richness ~ s(mean.ann.temp, bs="cr") 
             s(ph, bs="cr") + s(total.n, bs="cr") + s(tree.density, bs="cr") + 
             s(log10.pesticide.risk, bs="cr") + s(log10.humans, bs="cr"))
 ```
+
+
+
+
+
+#### Thin plate spline (one with the best family from previous round)
+```{r}
+summary(gam_tp)
+par(mfrow = c(2, 2))
+gam.check(gam_tp)
+```
+
+#### Cubic regression spline
+```{r}
+summary(gam_cr)
+par(mfrow = c(2, 2))
+gam.check(gam_cr)
+```
+
 
 
 #### Choose the best gam 
@@ -222,55 +241,6 @@ index_best <- which(aic_table$AIC == min(aic_table$AIC))
 
 gam_best <- gam_bs_list[[index_best]] 
 ```
-
-# check p values that (APPROXIMATELY) test null hypothesis that smooth is actually zero
-```{r}
-
-
-
-check_tp <- check_smooths(gam_tp, "tp smooths")
-check_tp
-
-check_cr <- check_smooths(gam_cr, "cr smooths")
-check_cr
-
-```
-
-
-
-#### if theses seem likely zero (large p), can try and additional penalty on smooths
-```{r}
-
-
-#Following gam.selection {mgcv}, we use automatic smoothness selection.
-
-# The second approach leaves the original smoothing penalty unchanged, but constructs an additional penalty for each smooth, which penalizes only functions in the null space of the original penalty (the ‘completely smooth’ functions). Hence, if all the smoothing parameters for a term tend to infinity, the term will be selected out of the model. This latter approach is more expensive computationally, but has the advantage that it can be applied automatically to any smooth term. The select argument to gam turns on this method.
-
-# thin plate spline with automatic smoothness selection
-#gam_tp_select <- update(gam_tp, select = TRUE)
-
-# cuic regression spline with automatic smoothness selection
-#gam_cr_select <- update(gam_cr, select = TRUE)
-```
-
-
-#### Thin plate spline (one with the best family from previous round)
-```{r}
-summary(gam_tp)
-par(mfrow = c(2, 2))
-gam.check(gam_tp)
-my.plot.gam(gam_tp)
-```
-
-#### Cubic regression spline
-```{r}
-summary(gam_cr)
-par(mfrow = c(2, 2))
-gam.check(gam_cr)
-my.plot.gam(gam_cr)
-```
-
-
 
 
 
@@ -340,6 +310,35 @@ print("estimate")
 round(concurvity(gam_best, full = FALSE)$estimate, 2)
 ```
 
+# check p values that (APPROXIMATELY) test null hypothesis that smooth is actually zero
+```{r}
+
+
+
+check_tp <- check_smooths(gam_tp, "tp smooths")
+check_tp
+
+check_cr <- check_smooths(gam_cr, "cr smooths")
+check_cr
+
+```
+
+
+#### if theses seem likely zero (large p), can try and additional penalty on smooths
+```{r}
+
+
+#Following gam.selection {mgcv}, we use automatic smoothness selection.
+
+# The second approach leaves the original smoothing penalty unchanged, but constructs an additional penalty for each smooth, which penalizes only functions in the null space of the original penalty (the ‘completely smooth’ functions). Hence, if all the smoothing parameters for a term tend to infinity, the term will be selected out of the model. This latter approach is more expensive computationally, but has the advantage that it can be applied automatically to any smooth term. The select argument to gam turns on this method.
+
+# thin plate spline with automatic smoothness selection
+#gam_tp_select <- update(gam_tp, select = TRUE)
+
+# cuic regression spline with automatic smoothness selection
+#gam_cr_select <- update(gam_cr, select = TRUE)
+```
+
 
 
 #### Write to disc
@@ -350,51 +349,51 @@ write_rds(gam_best, file = paste0(here(out_path), "/", params$dataset, "_best_ga
 
 #### Play with mgcVis
 ```{r}
-vis6 <- getViz(gam_best)
-
-#adapted from https://cran.r-project.org/web/packages/mgcViz/vignettes/mgcviz.html
-#We added the fitted smooth effect, rugs on the x and y axes, confidence lines at 95%, partial residual points and we changed the plotting theme to ggplot2::theme_classic. Functions such as l_fitLine or l_rug are effect-specific layers. To see all the layers available for each effect plot we do:
-
-#mul = 2 means interval +- 2 SE shown, narrower than 95% CI of course (default here)
-p1 <- plot(sm(vis6, 1))
-p1 + l_fitLine(colour = "red") + l_rug(mapping = aes(x=x, y=y), alpha = 0.8) +
-    l_ciLine(colour = "blue", linetype = 2) + 
-    l_points(shape = 19, size = 1, alpha = 0.1) + theme_classic()
-
-p2 <- plot(sm(vis6, 2))
-p2 + l_fitLine(colour = "red") + l_rug(mapping = aes(x=x, y=y), alpha = 0.8) +
-    l_ciLine(colour = "blue", linetype = 2) + 
-    l_points(shape = 19, size = 1, alpha = 0.1) + theme_classic()
-
-p3 <- plot(sm(vis6, 3))
-p3 + l_fitLine(colour = "red") + l_rug(mapping = aes(x=x, y=y), alpha = 0.8) +
-    l_ciLine(colour = "blue", linetype = 2) + 
-    l_points(shape = 19, size = 1, alpha = 0.1) + theme_classic()
-
-p4 <- plot(sm(vis6, 4))
-p4 + l_fitLine(colour = "red") + l_rug(mapping = aes(x=x, y=y), alpha = 0.8) +
-    l_ciLine(colour = "blue", linetype = 2) + 
-    l_points(shape = 19, size = 1, alpha = 0.1) + theme_classic()
-
-p5 <- plot(sm(vis6, 5))
-p5 + l_fitLine(colour = "red") + l_rug(mapping = aes(x=x, y=y), alpha = 0.8) +
-    l_ciLine(colour = "blue", linetype = 2) + 
-    l_points(shape = 19, size = 1, alpha = 0.1) + theme_classic()
-
-p6 <- plot(sm(vis6, 6))
-p6 + l_fitLine(colour = "red") + l_rug(mapping = aes(x=x, y=y), alpha = 0.8) +
-    l_ciLine(colour = "blue", linetype = 2) + 
-    l_points(shape = 19, size = 1, alpha = 0.1) + theme_classic()
-
-p7 <- plot(sm(vis6, 7))
-p7 + l_fitLine(colour = "red") + l_rug(mapping = aes(x=x, y=y), alpha = 0.8) +
-    l_ciLine(colour = "blue", linetype = 2) + 
-    l_points(shape = 19, size = 1, alpha = 0.1) + theme_classic()
-
-p8 <- plot(sm(vis6, 8))
-p8 + l_fitLine(colour = "red") + l_rug(mapping = aes(x=x, y=y), alpha = 0.8) +
-    l_ciLine(colour = "blue", linetype = 2) + 
-    l_points(shape = 19, size = 1, alpha = 0.1) + theme_classic()
+# vis6 <- getViz(gam_best)
+# 
+# #adapted from https://cran.r-project.org/web/packages/mgcViz/vignettes/mgcviz.html
+# #We added the fitted smooth effect, rugs on the x and y axes, confidence lines at 95%, partial residual points and we changed the plotting theme to ggplot2::theme_classic. Functions such as l_fitLine or l_rug are effect-specific layers. To see all the layers available for each effect plot we do:
+# 
+# #mul = 2 means interval +- 2 SE shown, narrower than 95% CI of course (default here)
+# p1 <- plot(sm(vis6, 1))
+# p1 + l_fitLine(colour = "red") + l_rug(mapping = aes(x=x, y=y), alpha = 0.8) +
+#     l_ciLine(colour = "blue", linetype = 2) + 
+#     l_points(shape = 19, size = 1, alpha = 0.1) + theme_classic()
+# 
+# p2 <- plot(sm(vis6, 2))
+# p2 + l_fitLine(colour = "red") + l_rug(mapping = aes(x=x, y=y), alpha = 0.8) +
+#     l_ciLine(colour = "blue", linetype = 2) + 
+#     l_points(shape = 19, size = 1, alpha = 0.1) + theme_classic()
+# 
+# p3 <- plot(sm(vis6, 3))
+# p3 + l_fitLine(colour = "red") + l_rug(mapping = aes(x=x, y=y), alpha = 0.8) +
+#     l_ciLine(colour = "blue", linetype = 2) + 
+#     l_points(shape = 19, size = 1, alpha = 0.1) + theme_classic()
+# 
+# p4 <- plot(sm(vis6, 4))
+# p4 + l_fitLine(colour = "red") + l_rug(mapping = aes(x=x, y=y), alpha = 0.8) +
+#     l_ciLine(colour = "blue", linetype = 2) + 
+#     l_points(shape = 19, size = 1, alpha = 0.1) + theme_classic()
+# 
+# p5 <- plot(sm(vis6, 5))
+# p5 + l_fitLine(colour = "red") + l_rug(mapping = aes(x=x, y=y), alpha = 0.8) +
+#     l_ciLine(colour = "blue", linetype = 2) + 
+#     l_points(shape = 19, size = 1, alpha = 0.1) + theme_classic()
+# 
+# p6 <- plot(sm(vis6, 6))
+# p6 + l_fitLine(colour = "red") + l_rug(mapping = aes(x=x, y=y), alpha = 0.8) +
+#     l_ciLine(colour = "blue", linetype = 2) + 
+#     l_points(shape = 19, size = 1, alpha = 0.1) + theme_classic()
+# 
+# p7 <- plot(sm(vis6, 7))
+# p7 + l_fitLine(colour = "red") + l_rug(mapping = aes(x=x, y=y), alpha = 0.8) +
+#     l_ciLine(colour = "blue", linetype = 2) + 
+#     l_points(shape = 19, size = 1, alpha = 0.1) + theme_classic()
+# 
+# p8 <- plot(sm(vis6, 8))
+# p8 + l_fitLine(colour = "red") + l_rug(mapping = aes(x=x, y=y), alpha = 0.8) +
+#     l_ciLine(colour = "blue", linetype = 2) + 
+#     l_points(shape = 19, size = 1, alpha = 0.1) + theme_classic()
 
 ```
 
