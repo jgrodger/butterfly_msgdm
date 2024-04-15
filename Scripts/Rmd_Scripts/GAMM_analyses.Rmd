@@ -146,7 +146,7 @@ gamm_corSpher <- gamm_cor_struct_list[[5]]
 
 
 aic_table <- AIC(gamm_corGaus$lme, gamm_corExp$lme, gamm_corLin$lme, gamm_corRatio$lme, gamm_corSpher$lme)
-aic_table
+kable(aic_table)
 
 index_best <- which(aic_table$AIC == min(aic_table$AIC))
 
