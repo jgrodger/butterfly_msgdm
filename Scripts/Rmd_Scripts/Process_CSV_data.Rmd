@@ -1,16 +1,17 @@
 ---
-title: "Process_butterflies"
+title: "Processing butterfly data from UKBMS"
 output: html_notebook
 ---
-# Data cleaning, obtaining site by species matrices.
 
-### To do: add point density plots, remove Scilly Isle from basemap, consider removing exploration from this file, consider changing cutoff to 0.99 to include more Scottish and Welsh sites.
 
-#https://www.r-bloggers.com/2023/12/beautiful-maps-with-r-v-point-densities/
+This script loads ukbms data for records, sites and species. It cleans data, renames columns for ease of use
 
-## Load packages.
+
+#Some sites have incomplete info, one site remains with latitude and longitude in wrong columns and no other info, such sites are filtered in this file.(check where)
+
+
+#### Load packages.
 ```{r}
-
 here::i_am("Scripts//Rmd_Scripts//Process_CSV_data.Rmd")
 
 library(conflicted)
@@ -32,7 +33,7 @@ conflicts_prefer(dplyr::mutate)
 conflicts_prefer(dplyr::select)
 ```
 
-## Load data.
+#### Data.
 ```{r}
 
 # UKBMS records data extracted by David Roy on 10th March 2023
@@ -41,7 +42,7 @@ records <- read_csv(here("./Data/CSV_Data/ukbms_Rogers_10-3-23.csv"))
 # UKBMS site data extracted by David Roy on 10th March 2023 with some preprocessing using excel (see below)
 sites <- read_csv(here("./Data/CSV_Data/ukbms_Rogers_sites_10-3-23_to_correct.csv"))
 
-#UKBMS site data provided by Rob Cooke. This includes type of survey for each site
+# UKBMS site data provided by Rob Cooke. This includes type of survey for each site
 sites.more.info <- read_csv(here("./Data/CSV_Data/ukbmsSiteLocationData1976-2019.csv"))
 
 # UKBMS species data extracted by David Roy on 10th March 2023
@@ -55,22 +56,40 @@ GB_simpl <- readRDS(here("./Data./Maps./gb_multipolygon_simplified.rds"))
 
 ```
 
-## Inspect records.
+#### Inspect records.
 ```{r}
 head(records)
-print("records")
-nrow(records)
-summary(records$YEAR)
 ```
-## Inspect sites.
+#### Inspect sites.
 ```{r}
 head(sites)
-nrow(sites)
 ```
 
-## Clean and combine site data, rename columns in sites, species and records.
+
+#### Inspect species.
 ```{r}
-# In the CSV, I  added in column headings and I did a sort and added in extra columns to help correct entries in incorrect columns. Some sites have incomplete info, one site remains with latitude and longitude in wrong columns and no other info, such sites are filtered in this file.
+head(species)
+```
+
+
+#### Amount of data
+```{r}
+prisma <- tibble(
+"Step" = "Imported Data",
+"Records" = nrow(records),
+"Sites in records" = length(unique(records$SITE)),
+"Species in records" = length(unique(records$SPECIES)),
+"Sites in sites" = nrow(sites),
+"Species in species" = nrow(species)
+)
+
+prisma
+```
+
+
+#### Clean and combine site data from two dataframes, rename columns in sites, species and records.
+```{r}
+# In the original CSV, some sites had site name info spread across multiple columns, so that part of the site name was in the GRIDREF and LONGITUDE columns and data for the other columns were shifted to the right.  I  added in column headings "extracol1" and "extracol2"; did a sort and added in columns called "paste2cols"  and "paste3cols" to identify rows where site name info was spread across two or three columns respectively. I uploaded the CSV with these additions and it is cleaned here.
 
 # Rename columns in sites and sites.more.info
 names(sites)
@@ -122,18 +141,31 @@ records<- records %>%
         count = COUNT) %>% 
   mutate(species.no = as.character(species.no))
 
-
-print("rows of records")
-nrow(records)
-
-print("sites in records")
-length(unique(records$site))
-
-print("species in records")
-length(unique(records$species.no))
+# The warnings are because latitude and longitude are missing for some sites, so they get NAs from as.numeric()
 ```
 
-# Merge site data
+#### Function to add amount of data to prisma-type table
+```{r}
+add_prisma <- function(tibble = prisma, step_name = "?"){
+prisma_temp <- tibble(
+"Step" = step_name,
+"Records" = nrow(records),
+"Sites in records" = length(unique(records$site)),
+"Species in records" = length(unique(records$species.no)),
+"Sites in sites" = nrow(sites),
+"Species in species" = nrow(species)) 
+
+new_prisma <- rbind(prisma, prisma_temp)
+}
+```
+
+```{r}
+prisma <- add_prisma(step_name = "Renamed")
+prisma
+```
+
+
+#### Merge site data
 ```{r}
 # Some sites  were not in site data from Rob , they must have been filtered out from the data he used for some reason
 print("number of sites before merging operation")
@@ -149,29 +181,19 @@ names(sites)
 table(sites$survey.type)
 ```
 
-
-## Filter out zero counts to make processing quicker (note this removes info on survey effort).
+#### Filter out zero counts to make processing quicker (note this removes info on surveys where no butterflies were seen).
 ```{r}
 #The original dataset includes zeros where species were not observed at a site. The pivot_wider() function can reintroduce them in the site by species matrix, and meanwhile, we don't need to process them with the rest of the records. 
 
 records <- filter(records, count !=0) #keep records where one or more butterflies of a species were seen at a site
 
-print("rows of records")
-nrow(records)
-
-print("sites in records")
-length(unique(records$site))
-
-print("species in records")
-length(unique(records$species.no))
+prisma <- add_prisma(step_name = "Removed zero counts")
+prisma
 ```
 
-## Combine records for small and essex skipper (species.nos 119 and 120), including those where observer recorded it as either of the two (species.no 200). These species cannot be reliably distinguished on the wing.
+#### Combine records for small and essex skipper (species.nos 119 and 120), including those where observer recorded it as either of the two (species.no 200). These species cannot be reliably distinguished on the wing.
 ```{r}
-print ("number of rows in species dataframe")
-nrow(species)
-
-#contents for new row
+# contents for new row
 new.row <- c ("1000", "Combined Skippers", "Thymelicus lineola-sylvestris", "Wider countryside sp", "Grassland", 1)
 
 species <- species  %>%
@@ -180,27 +202,15 @@ species <- species  %>%
          species.no!= 120, 
          species.no!= 200)
 
-print("number of rows in species dataframe after combining skippers")
-nrow(species)
-```
-
-## Recode species.no in records for the two skipper species in the records dataframe to 1000 to match species dataframe.
-```{r}
+# Recode species.no in records for the two skipper species in the records dataframe to 1000 to match species dataframe.
 records <- records %>% 
  mutate(species.no = case_match(species.no, c("119", "120", "200") ~ "1000", .default = species.no))
 
-print("Rows of records after combining skippers ") # Check it is the same
-
-nrow(records)
-
-print("sites in records")
-length(unique(records$site))
-
-print("species in records") # Check it is lower
-length(unique(records$species.no))
+prisma <- add_prisma(step_name = "Combined 2 skippers")
+prisma
 ```
 
-## Filter out records that are moths, or do not identify to species level (low taxonomic resolution) or that denote that no butterflies were seen
+#### Filter out records that are moths, or do not identify to species level (low taxonomic resolution) or that denote that no butterflies were seen
 ```{r}
 # Filter species dataset to only include butterflies
 species <- species %>%
@@ -217,23 +227,17 @@ records <- records %>%
 sites <- sites %>% 
   filter(site %in% unique(records$site))
 
-print("rows of sites after removing moths and low taxonomic resolution and no butterflies seen categories")
-nrow(sites)
-
-print("sites in records")
-length(unique(records$site))
-
-print("rows of records removing records of moths and low taxonomic resolution and no butterflies seen categories ")
-nrow(records)
-
-print("species in records")
-length(unique(records$species.no))
+prisma <- add_prisma(step_name = "Removed moths, low-res ids")
+prisma
 ```
 
-# Remove migrants and extinct species. Two extinct species were considered extinct before records started, and so any records now are eigher migrants or from butterfly farms, so can be removed with migrants. Also remove Large Copper Lycaena dispar (species.no 66), which is classified as a habitat specialist but is only present in a few sites and years following failed reintroduction attempts (not present in 2015-2019 data anyway) 
+#### Remove migrants and extinct species.
+```{r}
+# Two extinct species were considered extinct before records started, and so any records now are eigher migrants or from butterfly farms, so can be removed with migrants. Also remove Large Copper Lycaena dispar (species.no 66), which is classified as a habitat specialist but is only present in a few sites and years following failed reintroduction attempts (not present in 2015-2019 data anyway) 
 # https://butterfly-conservation.org/butterflies/large-tortoiseshell
 # https://butterfly-conservation.org/butterflies/black-veined-white
-```{r}
+
+
 # Filter species
 table(species$strategy)
 
@@ -243,35 +247,19 @@ species <- species %>%
 
 table(species$strategy)
 
-print("number of rows in species dataset")
-nrow(species)
-
 # Filter records to these species
 records <- records %>%
   filter(species.no %in% species$species.no)
-
-sites <- sites %>% 
-  filter(site %in% unique(records$site))
-
-print("After removing records ofextinct, vagrants, migrants and large copper ")
-
-print("rows of records")
-nrow(records)
-
-print("sites in records")
-length(unique(records$site))
-
-print("species in records")
-length(unique(records$species.no))
 
 # Filter out sites that no longer have any records
 sites <- sites %>% 
   filter(site %in% unique(records$site))
 
-print("sites after removing sites not represented in records")
-nrow(sites)
-
+print("Check only ukbms surveys remain")
 table(sites$survey.type)
+
+prisma <- add_prisma(step_name = "Removed migrants etc.")
+prisma
 ```
 ## Check for sites with inadequate locality info.
 ```{r}
@@ -285,39 +273,30 @@ nrow(bad.sites)
 
 # Remove sites in Ireland,  Channel Islands, Lundy, Scilly, Isle of Man from sites data.
 ```{r}
+print("All countries")
 table(sites$country)
 
+# Filter sites
 sites <- sites%>%
   filter(country != "Channel Isles" & country != "Isle of Man" & country != "Northern Ireland",
-               site != 1791 & site != 1837)  # sites on Lundy and Scilly were identified previously
+               site != 1791 & site != 1837)  # sites on Lundy and Scilly were identified manually
 
+print("Remaining countries")
 table(sites$country)
 
-print("number of rows of sites")
-nrow(sites)
-
+# Filter records
 records <- records %>% 
   filter(site %in% sites$site)
 
+# Filter species
 species <- species %>% 
   filter (species.no %in% records$species.no) #species after filtering out Ireland,  Channel Islands, Lundy, Scilly, Isle of Man"
 
-print("rows of records")
-nrow(records)
-
-
-print("sites in records")
-length(unique(records$site))
-
-
-print("species in records")
-length(unique(records$species.no))
-
-print("number of rows in species dataframe")
-nrow(species)
+prisma <- add_prisma(step_name = "Removed Ireland etc.")
+prisma
 ```
 
-# Add eastings, northings and National Grid References to site data
+#### Add eastings, northings and National Grid References to site data
 ```{r}
 # Check if all sites have latitude
 any(is.na(sites$latitude))
@@ -336,12 +315,8 @@ pts.df1 <- pts.df1 %>%
          ngr.1km = str_replace_all(ngr.1km, fixed(" "), ""))  %>%  #get rid of white spaces
   select(x, y, ngr.1km, site)
  
-# add data to sites dataframe
-print("number of sites before merging operation")
-nrow(sites)
-sites <- merge(sites, pts.df1, by = "site")
-print("number of sites after merging operation")
-nrow(sites)
+prisma <- add_prisma(step_name = "Added NGR etc.")
+prisma
 ```
 
 ## Plot Sites
