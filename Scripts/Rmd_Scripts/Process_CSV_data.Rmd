@@ -27,6 +27,8 @@ library(tmap)
 
 library(iNEXT)
 
+library(tictoc)
+
 conflicts_prefer(dplyr::filter)
 conflicts_prefer(dplyr::mutate)
 conflicts_prefer(dplyr::select)
@@ -34,7 +36,7 @@ conflicts_prefer(dplyr::select)
 
 #### Data.
 ```{r}
-
+tic()
 # UKBMS records data extracted by David Roy on 10th March 2023
 records <- read_csv(here("./Data/CSV_Data/ukbms_Rogers_10-3-23.csv"))
 
@@ -71,6 +73,10 @@ add_prisma <- function(tibble = prisma, recs = records, step_name = "?"){
 new_prisma <- rbind(prisma, prisma_temp)
 }
 
+# function for filtering data: assumes that the environment contains objects 
+# called records, sites, species as prepared above. The argument is the one that
+# dataset that will already have been filtered by another criterion. The other 
+# two are then filtered to contain records still relevant
 
 filter_ukbms <- function(filter_by){
   if (filter_by == "records") {
@@ -110,7 +116,7 @@ head(species)
 ```
 
 
-#### Amount of data
+#### Make a table to summarise remaining data and check data filtering at each step
 ```{r}
 # Make a table
 prisma <- tibble(
@@ -126,7 +132,7 @@ prisma
 ```
 
 
-#### Clean and combine site data from two dataframes, rename columns in sites, species and records.
+#### Clean data and rename columns in sites, species and records.
 ```{r}
 # In the original CSV, some sites had site name info spread across multiple columns, so that part of the site name was in the GRIDREF and LONGITUDE columns and data for the other columns were shifted to the right.  I  added in column headings "extracol1" and "extracol2"; did a sort and added in columns called "paste2cols"  and "paste3cols" to identify rows where site name info was spread across two or three columns respectively. I uploaded the CSV with these additions and it is cleaned here.
 
@@ -155,6 +161,7 @@ sites <- sites %>%
                              .default = as.numeric(latitude))) %>% 
   select(-c(extracol1, extracol2, paste2cols, paste3cols))
 
+# For sites data from Rob, get relevant columns and rename them
 sites.more.info <- sites.more.info %>%
   dplyr::select(-c("Site Name", "Gridreference", "Easting", "Northing","No. yrs surveyed", "First year surveyed", "Last year surveyed"))
  
@@ -214,13 +221,18 @@ table(sites$survey.type)
 
 records <- filter(records, count !=0) #keep records where one or more butterflies of a species were seen at a site
 
+filtered_data <- filter_ukbms("records")
+list2env(filtered_data, envir = .GlobalEnv)
+
 prisma <- add_prisma(step_name = "Removed zero counts")
 prisma
 
-filter_ukbms("records")
 ```
 
 #### Combine records for small and essex skipper (species.nos 119 and 120), including those where observer recorded it as either of the two (species.no 200). These species cannot be reliably distinguished on the wing.
+
+
+
 ```{r}
 # contents for new row
 new.row <- c ("1000", "Combined Skippers", "Thymelicus lineola-sylvestris", "Wider countryside sp", "Grassland", 1)
@@ -245,7 +257,6 @@ prisma
 species <- species %>%
   filter(include ==1)
 
-
 filtered_data <- filter_ukbms("species")
 list2env(filtered_data, envir = .GlobalEnv)
 
@@ -261,6 +272,7 @@ prisma
 
 
 # Filter species
+print("Species strategies before filtering")
 table(species$strategy)
 
 species <- species %>% 
@@ -270,20 +282,19 @@ species <- species %>%
 filtered_data <- filter_ukbms("species")
 list2env(filtered_data, envir = .GlobalEnv)
 
+print("Species strategies before filtering")
 table(species$strategy)
+
 print("Check only ukbms surveys remain")
 table(sites$survey.type)
-
-
 
 prisma <- add_prisma(step_name = "Removed migrants etc.")
 prisma
 ```
-## Check for sites with inadequate locality info.
+#### Check for sites with inadequate locality info.
 ```{r}
 # for inspection only, sites that have no co-ordinates or grid square reference
-bad.sites <- filter(sites, is.na(longitude) == T &  is.na(gridref) ==T, 
-                    gridref != "Lurgan")
+bad.sites <- filter(sites, is.na(longitude) == T | is.na(gridref) ==T | gridref == "Lurgan")
 
 print("number of sites with inadequate locality info")
 nrow(bad.sites)
@@ -361,8 +372,7 @@ print(pointsmap)
 print(pointsmap2)
 ```
 
-## filter records to 2015-2019 
-
+#### Filter records to 2015-2019 
 ```{r}
 print("filter to 2015-2019")
 records <- records %>% 
@@ -375,17 +385,16 @@ prisma <- add_prisma(step_name = "Kept 2015-2019")
 prisma
 ```
 
-#### Explore sampling effort and create variable to group surveys by sampling period. Divide the prescribed sampling period into 4 quarters. To have equal length quarters, the last week of March (week 0) is included in the first period and first week of October (week 40) in 4th period
+#### Explore survey effort in terms of sampling spread across the survey period
+```{r}
+# Create a variable to group surveys by sampling period. Divide the prescribed survey period into 4 quarters. To have equal length quarters, the last week of March (week 0) is included in the first period and first week of October (week 40) in 4th period, although they are outside the survey period
 
 #### create columns to check sampling effort, richness, total observations
-```{r}
 # Create columns to identify survey events and site-year combinations.
 records <- records %>%
   mutate(survey.info = paste(site, year, month, day, week.no, sep = "_"),
          site.year.month = paste(site, year, month, sep = "_"),
          site.year = paste(site, year, sep = "_"))
-
-
 # Check variation in sampling effort by week
 table(records$week.no)
 hist(records$week.no)
@@ -414,15 +423,16 @@ surveys.by.period <- records %>%
   ungroup()
 
 # Get the site-year combinations with sampling in all 4 periods in 2015 to 2019
-# and the number of well sampled years for each
+# and the number of well surveyed years for each (sampled in all 4 periods)
 surveys.by.period.all.4  <- surveys.by.period %>% 
   filter(all.4 == TRUE) %>% 
   group_by(site) %>%
   summarise(well.sampled.years = n())
 
-# Check how many sites were well sampled in 1, 2 , 3, 4 or 5 years
+# Check how many sites were well surveyed in 1, 2 , 3, 4 or 5 years
 table(surveys.by.period.all.4$well.sampled.years)
 
+#extract survey data to merge intor records
 surveys.all.4 <- select(surveys.by.period, site.year, all.4)
 
 # Subset records to those from sites sampled in all four years
@@ -430,13 +440,9 @@ records <- merge(records, surveys.all.4, by = "site.year", all.x = TRUE)
 
 #add number of well-sampled years records
 records <- merge(records, surveys.by.period.all.4, by = "site", all.x = TRUE)
-
-check <- head(records, 100)
-
-
-
 ```
-#### Filter to well sampled years
+
+#### Filter to well surveyed years
 ```{r}
 print("filter to sites with two years sampled in all four periods")
 records <- records %>% 
@@ -451,7 +457,6 @@ table(sites$country)
 prisma <- add_prisma(step_name = "Filtered all 4 periods")
 tail(prisma)
 ```
-
 
 #### Find sites with 8 surveys in at least two years also satifying criteria above
 ```{r}
@@ -473,7 +478,6 @@ enough$enough_surveys <- rowSums(enough) > 2
 
 enough <- data.frame(cbind(surveys.by.year$site, enough$enough_surveys))
 names(enough) <- c("site", "enough_surveys")
-
 ```
 #### Filter to only sites with 8 surveys in at least two years also satifying criteria above
 
@@ -494,8 +498,6 @@ prisma <- add_prisma(step_name = "Filtered >= 8 surveys Pa")
 tail(prisma)
 ```
 
-
-
 #### Inspect surveys per site
 ```{r}
 surveys.by.site <- records %>%
@@ -514,22 +516,20 @@ check <- filter(surveys.by.site, surveys < 100)
 hist(check$surveys)
 ```
 
-
+#### Aggregate records across the five years
 ```{r}
-# Summarise records to get records per species per site 
-
+#### Sum records for each species in each site across years 
 records <-  records %>%
   group_by (site, species.no)  %>% 
 summarise(total.records = sum(count))  %>% 
   ungroup()
-
 
 prisma <- add_prisma(recs = records, step_name = "Aggregated records")
 
 tail(prisma)
 ```
 
-# Get site by species count matrix
+#### Get site by species count and presence/absence matrices
 ```{r}
 # Get a site by species dataframe with counts of observations
 site.by.obs.5.year.counts <- records %>%
@@ -538,21 +538,19 @@ site.by.obs.5.year.counts <- records %>%
               values_fill = 0) %>% # for cases when there wasn't a zero count record for a species that wasn't recorded in a survey, should still be zero
   column_to_rownames(var = "site")
 
-
 print("sites and species in matrix")
 print("sites, species")
 dim(site.by.obs.5.year.counts)
 
-#make a presence absence site by specie matrix
+#make a presence/absence site by specie matrix
 
 site.by.obs.5.year.presabs <- site.by.obs.5.year.counts
 site.by.obs.5.year.presabs[site.by.obs.5.year.presabs[, ] > 0] <- 1
 ```
 
 
-## check coverage and filter to sites with adequate coverage
+#### Calculate coverage and combine with richness and abundance data
 ```{r}
-
 #Transpose sity by counts matrix for use  by iNEXT package functions
 check.coverage <- t(site.by.obs.5.year.counts)
 
@@ -574,7 +572,7 @@ cov.merge <- coverage %>%
 names(cov.merge) <- c("site", "total.butterflies", "richness", "coverage")
 ```
 
-# add coverage data to sites and explore coverage
+#### Add coverage, richnees and abundance data to sites and explore coverage
 ```{r}
 sites <- merge(sites, cov.merge, by = "site")
 
@@ -596,11 +594,10 @@ sum3 <- sites%>%
             mean.coverage = mean(coverage)
       )
 sum3
-
 ```
 
 
-## Explore the relationship between coverage and richness, for different ranges of coverage
+#### Explore the relationship between coverage and richness, for different ranges of coverage
 ```{r}
 plot(richness~coverage, data = sites)
 
@@ -628,7 +625,7 @@ summary(m4)
 summary(m5)
 ```
 
-# Filter to sites with sufficient coverage and effort. 0.999 gives an expectation that one thousand individuals would have to be observed before a new species was observed.
+#### Filter to sites with sufficient coverage and effort. 0.999 gives an expectation that one thousand individuals would have to be observed before a new species was observed.
 ```{r}
 sites <- sites%>% 
                 filter(coverage >= 0.999)
@@ -644,7 +641,7 @@ tail(prisma)
 
 #### redo site.by.species matrices after filtering
 ```{r}
-# make species.no explicit
+# make species.no entries into format "species_1" etc
 records$species.no <- paste("species", records$species.no, sep = "_")
 
 # Get a site by species dataframe with counts of observations
@@ -654,17 +651,16 @@ site.by.obs.5.year.counts <- records %>%
               values_fill = 0) %>% # for cases when there wasn't a zero count record for a species that wasn't recorded in a survey, should still be zero
   column_to_rownames(var = "site")
 
-
 print("sites and species in matrix")
 print("sites, species")
 dim(site.by.obs.5.year.counts)
 
-#make a presence absence site by specie matrix
-
+#make a presence absence site by species matrix
 site.by.obs.5.year.presabs <- site.by.obs.5.year.counts
 site.by.obs.5.year.presabs[site.by.obs.5.year.presabs[, ] > 0] <- 1
 ```
 
+#### Check all sites and species have occurrence data
 ```{r}
 print("are there any species with no records")
 any(colSums(site.by.obs.5.year.presabs)==0)
@@ -678,9 +674,6 @@ print("sites, species")
 dim(site.by.obs.5.year.presabs)
 #make a presence absence site by species matrix
 ```
-
-
-##### Check how many of these were sampled in April. April surveys may be omitted quite frequently due to poor weather. setdiff() shows that 65 of the sites not sampled in April met the coverage criterion. Quite a few of these are in Scotland, and would be expected to have delayed sampling starts relative to England. I would rather keep these sites in. I think the other criteria are sufficient.
 
 #### Plot Sites
 ```{r }
@@ -714,6 +707,8 @@ print(pointsmap2)
 dev.off()
 
 ```
+
+
 #### Extract data on number of sites in 2015-2019 data before and after subsequent filtering
 ```{r}
 prisma_short <- prisma[c(9, 12, 13), c(1,3) ]
@@ -722,10 +717,11 @@ prisma_short$Step <- c("All records", "Adequate effort", "Adequate coverage")
 
 names(prisma_short) <- c("Records", "Sites Remaining")
 
-prisma_short$`Sites Dropped` <- c(NA, diff(prisma_short$`Sites Remaining`))
+prisma_short$`Sites Dropped` <- c(NA, abs(diff(prisma_short$`Sites Remaining`)))
+
+toc()
 
 ```
-
 
 #### Save processed data and filtering summaries
 ```{r}
