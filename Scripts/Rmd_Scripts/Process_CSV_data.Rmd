@@ -229,27 +229,6 @@ prisma
 
 ```
 
-#### Combine records for small and essex skipper (species.nos 119 and 120), including those where observer recorded it as either of the two (species.no 200). These species cannot be reliably distinguished on the wing.
-
-
-
-```{r}
-# contents for new row
-new.row <- c ("1000", "Combined Skippers", "Thymelicus lineola-sylvestris", "Wider countryside sp", "Grassland", 1)
-
-species <- species  %>%
-  rbind(new.row)    %>%
-  filter(species.no!= 119,
-         species.no!= 120, 
-         species.no!= 200)
-
-# Recode species.no in records for the two skipper species in the records dataframe to 1000 to match species dataframe.
-records <- records %>% 
- mutate(species.no = case_match(species.no, c("119", "120", "200") ~ "1000", .default = species.no))
-
-prisma <- add_prisma(step_name = "Combined 2 skippers")
-prisma
-```
 
 #### Filter out records that are moths, or do not identify to species level (low taxonomic resolution) or that denote that no butterflies were seen
 ```{r}
@@ -384,6 +363,26 @@ list2env(filtered_data, envir = .GlobalEnv)
 prisma <- add_prisma(step_name = "Kept 2015-2019")
 prisma
 ```
+
+#### Combine records for small and essex skipper (species.nos 119 and 120), including those where observer recorded it as either of the two (species.no 200). These species cannot be reliably distinguished on the wing.
+```{r}
+# contents for new row
+new.row <- c ("1000", "Combined Skippers", "Thymelicus lineola-sylvestris", "Wider countryside sp", "Grassland", 1)
+
+species <- species  %>%
+  rbind(new.row)    %>%
+  filter(species.no!= 119,
+         species.no!= 120, 
+         species.no!= 200)
+
+# Recode species.no in records for the two skipper species in the records dataframe to 1000 to match species dataframe.
+records <- records %>% 
+ mutate(species.no = case_match(species.no, c("119", "120", "200") ~ "1000", .default = species.no))
+
+prisma <- add_prisma(step_name = "Combined 2 skippers")
+prisma
+```
+
 
 #### Explore survey effort in terms of sampling spread across the survey period
 ```{r}
