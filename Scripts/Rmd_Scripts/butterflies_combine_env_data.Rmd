@@ -16,6 +16,7 @@ library(conflicted)
 library(terra)
 library(sf)
 library(tmap)
+library(tictoc)
 library(here)
 
 conflicts_prefer(dplyr::filter)
@@ -66,17 +67,6 @@ surveys.site.year <- readRDS(here("./Data/Processed_Data/surveys_site_year.rds")
 log10_plusone <- function(x)
 {log10(x + 1)}
 
-# A function to make raster and plot it
-# Always does the first layer only if there are multiple layers
-
-plot.df <- function(df, main.title){
-rast1 <- rast(df, crs = "EPSG:27700") 
-plot(rast1, xlab = "", ylab = "")
-title(main = main.title)
-}
-
-
-
 # A function to filter the rest of the output dataset after the site by species data is filtered/subsetted
 
 filter_dataset <- function(site.by.species, site.by.xy, site.by.env, species, sites){
@@ -93,9 +83,11 @@ filter_dataset <- function(site.by.species, site.by.xy, site.by.env, species, si
 
 ```
 
-## Process Data
+#### Process Data
 
 ```{r}
+
+tic()
 sites <- sites %>%
   mutate(site.no = site,
          site = paste("site", site.no, sep = "_")) %>%
@@ -153,145 +145,81 @@ site.by.log10.mean.ann.rain <- site.by.prec %>%
 ```
 
 
-#### Plot environmental variables
-```{r eval = FALSE}
-plot.df(df = site.by.temp, main.title ="Temperature")
-plot.df(df = site.by.prec,  main.title = "Rainfall")
-plot.df(site.by.log10.mean.ann.rain,  main.title = "Log Rainfall")
-plot.df(df = site.by.wetness,  main.title = "Topographic Wetness")
-plot.df(df = site.by.ph,  main.title = "Ph")
-plot.df(df = site.by.trees,  main.title = "Tree Density")
-plot.df(df = site.by.nitrogen,  main.title = "Total Nitrogen Deposition")
-plot.df(site.by.pesticide.risk,  main.title = "Pesticide Risk")
-plot.df(site.by.log10.pesticide.risk,  main.title = "Log Pesticide Risk")
-plot.df(df = site.by.humans,  main.title = "Human Population Density")
-plot.df(site.by.log10.humans,  main.title = "Log Human Population")
-```
 
-#### Save pdf
-```{r eval = FALSE}
-pdf(file= here("./Output/raw_maps.pdf"))
-par(mfrow = c(2,4))
-  plot.df(df = site.by.temp,  main.title ="Temperature")
-  plot.df(df = site.by.prec,  main.title = "Rainfall")
-  plot.df(df = site.by.wetness,  main.title = "Topographic Wetness")
-  plot.df(df = site.by.ph,  main.title = "Ph")
-  plot.df(df = site.by.trees,  main.title = "Tree Density")
-  plot.df(df = site.by.nitrogen,  main.title = "Total Nitrogen Deposition")
-  plot.df(site.by.pesticide.risk,  main.title = "Pesticide Risk")
-dev.off() 
-
-
-# raw and transformed data
-pdf(file= here("./Output/transformed_maps.pdf"))
-par(mfrow = c(3,2))
-  plot.df(site.by.pesticide.risk,  main.title = "Pesticide Risk")
-  plot.df(site.by.log10.pesticide.risk,  main.title = "log Pesticide Risk")  
-  plot.df(df = site.by.humans,  main.title = "Human Population Density")  
-  plot.df(site.by.log10.humans,  main.title = "Log Human Population")
-  plot.df(df = site.by.prec,  main.title = "Rainfall")
-  plot.df(site.by.log10.mean.ann.rain,  main.title = "Log Rainfall")
-dev.off() 
-```
-
-
-#### Select the required rows for merging for environmental data dataframes
-
+#### Merge env variables
 ```{r}
-#get site as a variable in the sites and site by species data frames
+# make a list to be able to use lapply
+layers <- list(site.by.prec, site.by.log10.mean.ann.rain, site.by.wetness, 
+               site.by.ph, site.by.nitrogen, site.by.trees, site.by.pesticide.risk, site.by.log10.pesticide.risk, 
+               site.by.humans, site.by.log10.humans)
 
-site.by.prec <- site.by.prec %>%
-  select(-c(x,y))
+#remove x and y from 7 of the layers as this is not needed for merging
+layers2 <- lapply(layers, select, -c(x, y)) 
 
-site.by.ph <- site.by.ph %>%
-  select(-c(x, y))
+# make a datframe for merged data for plotting
+comb <- merge(site.by.temp, layers2[[1]], by = "ngr.1km")
 
-site.by.humans <- site.by.humans %>%
-  select(-c(x, y))
+# merge each env var dataframe into the combined one
+for (i in 2:length(layers2)){
+  
+  comb <- merge(comb, layers2[[i]], by = "ngr.1km")
+}
 
-site.by.log10.humans <- site.by.log10.humans %>%
-  select(-c(x, y))
-
-site.by.trees <- site.by.trees %>%
-  select(-c(x, y))
-
-site.by.nitrogen <- site.by.nitrogen %>%
-  select(-c(x, y))
-
-site.by.pesticide.risk <- site.by.pesticide.risk  %>%
-  select(-c(x, y))
-
-site.by.log10.pesticide.risk <- site.by.log10.pesticide.risk %>%
-  select(-c(x, y)) 
-
-site.by.log10.mean.ann.rain <- site.by.log10.mean.ann.rain %>%
-  select(-c(x, y))
-
-site.by.wetness <- site.by.wetness %>%
-  select(-c(x,y))
 ```
 
-#### Merge environmental data to obtain dataframe of sites with data for all environmental variables
+
+
+#### Plot env vars and save pngs for figures
+```{r}
+
+# two sets of vars to be plotted 
+comb1 <- select(comb, x, y,  mean.ann.temp, topographic.wetness, ph, total.n)
+comb2 <- select(comb, x, y,  log10.mean.ann.rain, tree.density, log10.pesticide.risk, log10.humans)
+
+comb1 <- rast(comb1, crs = "EPSG:27700")
+comb2 <- rast(comb2, crs = "EPSG:27700")
+
+plot(comb1)
+plot(comb2)
+
+png(file= here("./Output/Spatial/Figures/fig_2_env_vars.png"))
+plot(comb1)
+dev.off() 
+ 
+png(file= here("./Output/Spatial/Figures/fig_s1_other_env_vars.png"))
+plot(comb2)
+dev.off() 
+```
+
+
+#### Merge env vars with site data to make site.by.env and site.by.xy dataframes
 
 ```{r}
 # Note, there is sometimes more than one site per gridref
 # Merge is used to keep sites that have data for all variables
+
 site.by.env <- sites %>%
   select(site.no, ngr.1km, x, y)
 print("Sites with species data")
 nrow(sites)
 
-site.by.temp <- site.by.temp %>% #rearrange columns
-  select(c(ngr.1km, mean.ann.temp))
+comb <- select(comb, -c(x, y))
 
-site.by.env <- site.by.env %>%
-  merge(site.by.temp, by = "ngr.1km")
-print("Sites also with temperature")
+site.by.env <- merge(site.by.env, comb, by = "ngr.1km")
 nrow(site.by.env)
 
-site.by.env <- merge(site.by.env, site.by.prec, by = "ngr.1km")
-site.by.env <- merge(site.by.env, site.by.log10.mean.ann.rain, by = "ngr.1km")
-print("Sites also with rainfall")
-nrow(site.by.env)
-
-site.by.env <- merge(site.by.env, site.by.wetness, by = "ngr.1km")
-print("Sites also with topographic wetness")
-nrow(site.by.env)
-
-site.by.env <- merge(site.by.env,site.by.ph,  by = "ngr.1km")
-print("Sites also with pH")
-nrow(site.by.env)
-
-site.by.env <- merge(site.by.env, site.by.nitrogen, by = "ngr.1km")
-print("Sites also with nitrogen")
-nrow(site.by.env)
-
-site.by.env <- merge(site.by.env, site.by.humans, by = "ngr.1km") 
-print("Sites also with human population density")
-
-site.by.env <- merge(site.by.env, site.by.log10.humans, by = "ngr.1km") 
-nrow(site.by.env)
-
-site.by.env <- merge(site.by.env, site.by.pesticide.risk, by = "ngr.1km")
-site.by.env <- merge(site.by.env, site.by.log10.pesticide.risk, by = "ngr.1km")
-print("Sites also with pesticide risk")
-nrow(site.by.env)
-
-site.by.env <- merge(site.by.env, site.by.trees, by = "ngr.1km")
-print("Sites also with tree density")
-nrow(site.by.env)
-
+# Note, there is sometimes more than one site per gridref
 
 #order by site.number
 site.by.env <- site.by.env[base::order(site.by.env$site.no), ]
-
-
 
 site.by.env$site <- paste("site", site.by.env$site.no, sep = "_")
 
 rownames(site.by.env) <- site.by.env$site
 #remove site.number
 site.by.env <- select(site.by.env, -site)
+
+head(site.by.env)
 ```
 
 #### Plot  Sites
@@ -320,7 +248,7 @@ print(pointsmap2)
 
 #### Save as pdf
 ```{r}
-pdf(file= here("./Output/1406_sites_maps.pdf"))
+pdf(file= here("./Output/1122_sites_maps.pdf"))
 par(mfrow = c(1,2))
 print(pointsmap)
 print(pointsmap2)
@@ -535,6 +463,8 @@ hs <- filter_dataset(site.by.species.hs, site.by.xy, site.by.env, species, sites
 
 wc.no.zeros <- filter_dataset(site.by.species.wc.no.zeros, site.by.xy, site.by.env, species, sites)
 hs.no.zeros <- filter_dataset(site.by.species.hs.no.zeros, site.by.xy, site.by.env, species, sites)
+
+toc()
 ```
 
 #### Save data
