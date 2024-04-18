@@ -4,10 +4,10 @@ output: html_notebook
 ---
 
 
-This script loads ukbms data for records, sites and species. It cleans data, 
+This script loads ukbms data for records, sites and species. It cleans the data, 
 renames columns for ease of use, filters by various criteria, including coverage 
-and sampling effort, and saves data for further use (combining with env vars 
-and analyses)
+and sampling effort, and saves data for further use, and including extracting 
+environmental data from matching grid cells in butterflies_combine_env_data.Rmd.
 
 #### Load packages.
 ```{r}
@@ -58,40 +58,36 @@ GB_simpl <- readRDS(here("./Data./Maps./gb_multipolygon_simplified.rds"))
 
 #### Functions
 ```{r}
-# Function to add amount of data to prisma-type table
+# A function to add numbers of records, species and sites at each step to a table
 add_prisma <- function(tibble = prisma, recs = records, step_name = "?"){
   records <- recs
-  
   prisma_temp <- tibble(
-  "Step" = step_name,
-"Records" = nrow(records),
-"Sites in records" = length(unique(records$site)),
-"Species in records" = length(unique(records$species.no)),
-"Sites in sites" = nrow(sites),
-"Species in species" = nrow(species)) 
-
-new_prisma <- rbind(prisma, prisma_temp)
+    "Step" = step_name,
+    "Records" = nrow(records),
+    "Sites in records" = length(unique(records$site)),
+    "Species in records" = length(unique(records$species.no)),
+    "Sites in sites" = nrow(sites),
+    "Species in species" = nrow(species)) 
+  new_prisma <- rbind(prisma, prisma_temp)
 }
 
-# function for filtering data: assumes that the environment contains objects 
-# called records, sites, species as prepared above. The argument is the one that
-# dataset that will already have been filtered by another criterion. The other 
+# A function for filtering data: this assumes that the environment contains objects 
+# called records, sites, species as prepared above. The argument is the dataset that 
+# will already have been filtered by another criterion. The other 
 # two are then filtered to contain records still relevant
-
 filter_ukbms <- function(filter_by){
-  if (filter_by == "records") {
-
+  
+  if(filter_by == "records") {
   species <- filter (species, species.no %in% records$species.no)   
-  sites <-  filter(sites, site %in% unique(records$site))  
+  sites <-  filter(sites, site %in% records$site)  
   
   } else if  ((filter_by == "sites")) {
   records <- filter(records, site %in% sites$site)
   species <- filter (species, species.no %in% records$species.no) 
   
   } else if (filter_by == "species"){
-# Filter records  remaining species
   records <- filter(records, species.no %in% species$species.no)
-  sites <-  filter(sites, site %in% unique(records$site))
+  sites <-  filter(sites, site %in% records$site)
   }
   
   filtered_data <- list(records, sites, species)
@@ -134,9 +130,9 @@ prisma
 
 #### Clean data and rename columns in sites, species and records.
 ```{r}
-# In the original CSV, some sites had site name info spread across multiple columns, so that part of the site name was in the GRIDREF and LONGITUDE columns and data for the other columns were shifted to the right.  I  added in column headings "extracol1" and "extracol2"; did a sort and added in columns called "paste2cols"  and "paste3cols" to identify rows where site name info was spread across two or three columns respectively. I uploaded the CSV with these additions and it is cleaned here.
+# In the original CSV, some sites had site name info spread across multiple columns, so that part of the site name was in the GRIDREF and LONGITUDE columns and data for the other columns were shifted to the right. In the edited CSV  I  added in column headings "extracol1" and "extracol2"; did a sort and added in columns called "paste2cols"  and "paste3cols" to identify rows where site name info was spread across two or three columns respectively. I uploaded the CSV with these additions and it is cleaned here.
 
-##Some sites have incomplete info, one site remains with latitude and longitude in wrong columns and no other info, such sites are filtered on other criteria
+# Some sites have incomplete info, one site remains with latitude and longitude in wrong columns and no other info. These sites are filtered on other criteria below.
 
 # Rename columns in sites and sites.more.info
 names(sites)
@@ -201,17 +197,14 @@ prisma
 
 #### Merge site data from David and Rob
 ```{r}
-# Some sites  were not in site data from Rob , they must have been filtered out from the data he used for some reason
+# Some sites in David's list were not in site data from Rob
 print("number of sites before merging operation")
 nrow(sites)
 
 sites <- merge(sites, sites.more.info, by = "site", all.x = TRUE)
-
 print("number of sites after merging operation")
 nrow(sites)
-
 names(sites)
-
 table(sites$survey.type)
 ```
 
@@ -220,13 +213,12 @@ table(sites$survey.type)
 #The original dataset includes zeros where species were not observed at a site. The pivot_wider() function can reintroduce them in the site by species matrix, and meanwhile, we don't need to process them with the rest of the records. 
 
 records <- filter(records, count !=0) #keep records where one or more butterflies of a species were seen at a site
-
 filtered_data <- filter_ukbms("records")
+# This updates the objects in the global environment with filtered versions
 list2env(filtered_data, envir = .GlobalEnv)
 
 prisma <- add_prisma(step_name = "Removed zero counts")
 prisma
-
 ```
 
 
@@ -235,7 +227,6 @@ prisma
 # Filter species dataset to only include butterflies
 species <- species %>%
   filter(include ==1)
-
 filtered_data <- filter_ukbms("species")
 list2env(filtered_data, envir = .GlobalEnv)
 
@@ -245,10 +236,9 @@ prisma
 
 #### Remove migrants and extinct species.
 ```{r}
-# Two extinct species were considered extinct before records started, and so any records now are eigher migrants or from butterfly farms, so can be removed with migrants. Also remove Large Copper Lycaena dispar (species.no 66), which is classified as a habitat specialist but is only present in a few sites and years following failed reintroduction attempts (not present in 2015-2019 data anyway) 
+# Two species were considered extinct before records started, and so any records now are eigher migrants or from butterfly farms, so can be removed with migrants. Also remove Large Copper Lycaena dispar (species.no 66), which is classified as a habitat specialist but is only present in a few sites and years following failed reintroduction attempts (not present in 2015-2019 data anyway) 
 # https://butterfly-conservation.org/butterflies/large-tortoiseshell
 # https://butterfly-conservation.org/butterflies/black-veined-white
-
 
 # Filter species
 print("Species strategies before filtering")
@@ -261,14 +251,14 @@ species <- species %>%
 filtered_data <- filter_ukbms("species")
 list2env(filtered_data, envir = .GlobalEnv)
 
-print("Species strategies before filtering")
-table(species$strategy)
-
-print("Check only ukbms surveys remain")
-table(sites$survey.type)
-
 prisma <- add_prisma(step_name = "Removed migrants etc.")
 prisma
+
+print("Species strategies after filtering")
+table(species$strategy)
+
+print("Check that only ukbms surveys remain")
+table(sites$survey.type)
 ```
 #### Check for sites with inadequate locality info.
 ```{r}
@@ -281,7 +271,7 @@ nrow(bad.sites)
 
 # Remove sites in Ireland,  Channel Islands, Lundy, Scilly, Isle of Man from sites data.
 ```{r}
-print("All countries")
+print("Sites in all countries before locality filtering")
 table(sites$country)
 
 # Filter sites
@@ -292,11 +282,11 @@ sites <- sites%>%
 filtered_data <- filter_ukbms("sites")
 list2env(filtered_data, envir = .GlobalEnv) 
 
-print("Remaining countries")
-table(sites$country)
-
 prisma <- add_prisma(step_name = "Removed Ireland etc.")
 prisma
+
+print("Sites in remaining countries after locality filterint")
+table(sites$country)
 ```
 
 #### Add eastings, northings and National Grid References to site data
@@ -331,13 +321,9 @@ prisma
 ```{r}
 plot.points <- st_as_sf(sites, coords=c("x","y"), remove = FALSE, crs = 27700) 
 
-#get a set of points for each unique grid cell
-
-print("sites")
-nrow(plot.points)
-
 basemap <-tm_shape(GB) +
   tm_borders()
+
 pointsmap <- basemap +
 tm_shape(plot.points) +
   tm_symbols(size = 0.05, col = "blue")
@@ -345,7 +331,6 @@ tm_shape(plot.points) +
 pointsmap2 <- basemap +
 tm_shape(plot.points) +
   tm_symbols(size = 0.5, col = "blue")
-
 
 print(pointsmap)
 print(pointsmap2)
@@ -366,16 +351,19 @@ prisma
 
 #### Combine records for small and essex skipper (species.nos 119 and 120), including those where observer recorded it as either of the two (species.no 200). These species cannot be reliably distinguished on the wing.
 ```{r}
-# contents for new row
+# Make a new row in species dataset for the combined species
 new.row <- c ("1000", "Combined Skippers", "Thymelicus lineola-sylvestris", "Wider countryside sp", "Grassland", 1)
 
 species <- species  %>%
   rbind(new.row)    %>%
   filter(species.no!= 119,
          species.no!= 120, 
-         species.no!= 200)
+         species.no!= 200)# in the original dataset, when it was identified as one
+# of the two species, it was coded as 200. These are no longer present 
+# after filtering above, so this is redundant 
 
-# Recode species.no in records for the two skipper species in the records dataframe to 1000 to match species dataframe.
+# Recode species.no in records for the two skipper species in the records dataframe 
+# to 1000 to match species dataframe.
 records <- records %>% 
  mutate(species.no = case_match(species.no, c("119", "120", "200") ~ "1000", .default = species.no))
 
@@ -388,8 +376,7 @@ prisma
 ```{r}
 # Create a variable to group surveys by sampling period. Divide the prescribed survey period into 4 quarters. To have equal length quarters, the last week of March (week 0) is included in the first period and first week of October (week 40) in 4th period, although they are outside the survey period
 
-#### create columns to check sampling effort, richness, total observations
-# Create columns to identify survey events and site-year combinations.
+# Create columns to identify survey events, site-year-month, and site-year combinations.
 records <- records %>%
   mutate(survey.info = paste(site, year, month, day, week.no, sep = "_"),
          site.year.month = paste(site, year, month, sep = "_"),
@@ -440,6 +427,11 @@ records <- merge(records, surveys.all.4, by = "site.year", all.x = TRUE)
 #add number of well-sampled years records
 records <- merge(records, surveys.by.period.all.4, by = "site", all.x = TRUE)
 ```
+```{r}
+head(records)
+```
+
+
 
 #### Filter to well surveyed years
 ```{r}
@@ -450,47 +442,42 @@ records <- records %>%
 filtered_data <- filter_ukbms("records")
 list2env(filtered_data, envir = .GlobalEnv)
 
-print("number of sites")
-table(sites$country)
-
 prisma <- add_prisma(step_name = "Filtered all 4 periods")
 tail(prisma)
+
+print("number of sites")
+table(sites$country)
 ```
 
 #### Find sites with 8 surveys in at least two years also satifying criteria above
 ```{r}
 # Get the surveys per year for each site in each year 2015:2019
-surveys.by.year <- records %>%
+
+well.sampled <- records %>%
   distinct(survey.info, .keep_all = TRUE) %>%
   group_by(site, year) %>%
-    summarise(surveys.per.year = n()) %>%
-      pivot_wider(names_from = year,
-        values_from = surveys.per.year,
-        values_fill = 0)
+    summarise(surveys.per.year = n()) %>% #surveys per year  
+      mutate(site.year = paste(site, year, sep = "_")) %>%
+        merge(surveys.all.4, by = "site.year") %>%
+         mutate(eightormore = surveys.per.year >= 8)
 
-# Replace number of surveys with 1 if >= 8 or 0 otherwise
-enough <- surveys.by.year[, 2:6] 
-enough[enough < 8] <- 0
-enough[enough >= 8] <- 1
-# A column indicating if at least two years have enough surveys
-enough$enough_surveys <- rowSums(enough) > 2
+well.sampled.sum <- well.sampled %>% # logical for critererion
+  filter(eightormore == TRUE & all.4 == TRUE) %>% #filter to well_sampled site-year combinations
+    group_by(site) %>%
+summarise(well.sampled.years = n()) %>%
+  filter(well.sampled.years >=2) #filter to sites with two well sampled years
 
-enough <- data.frame(cbind(surveys.by.year$site, enough$enough_surveys))
-names(enough) <- c("site", "enough_surveys")
 ```
-#### Filter to only sites with 8 surveys in at least two years also satifying criteria above
 
+#### Filter to only sites with 8 surveys in at least two years also satifying criteria above
 ```{r}
 # Subset records to those from sites sampled in all four years
-records <- merge(records, enough, by = "site", all.x = TRUE)
-
 print("filter to sites with two years sampled in all four periods AND
       at least eight samples per year in those years")
-records <- records %>% 
-  filter(well.sampled.years >=2,
-         enough_surveys == 1 )
+sites <- filter(sites, site %in% well.sampled.sum$site)
 
-filtered_data <- filter_ukbms("records")
+
+filtered_data <- filter_ukbms("sites")
 list2env(filtered_data, envir = .GlobalEnv)
 
 prisma <- add_prisma(step_name = "Filtered >= 8 surveys Pa")
