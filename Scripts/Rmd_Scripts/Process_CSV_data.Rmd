@@ -456,12 +456,13 @@ table(sites$country)
 well.sampled <- records %>%
   distinct(survey.info, .keep_all = TRUE) %>%
   group_by(site, year) %>%
-    summarise(surveys.per.year = n()) %>% #surveys per year  
+    summarise(surveys.per.year = n()) %>% #surveys per year
+    ungroup() %>%
       mutate(site.year = paste(site, year, sep = "_")) %>%
         merge(surveys.all.4, by = "site.year") %>%
-         mutate(eightormore = surveys.per.year >= 8)
+         mutate(eightormore = surveys.per.year >= 8)# logical criterion
 
-well.sampled.sum <- well.sampled %>% # logical for critererion
+well.sampled.sum <- well.sampled %>% 
   filter(eightormore == TRUE & all.4 == TRUE) %>% #filter to well_sampled site-year combinations
     group_by(site) %>%
 summarise(well.sampled.years = n()) %>%
@@ -613,19 +614,18 @@ summary(m5)
 
 #### Filter to sites with sufficient coverage and effort. 0.999 gives an expectation that one thousand individuals would have to be observed before a new species was observed.
 ```{r}
-sites <- sites%>% 
+sites <- sites %>% 
                 filter(coverage >= 0.999)
 
 filtered_data <- filter_ukbms("sites")
 list2env(filtered_data, envir = .GlobalEnv)
 
 prisma <- add_prisma(recs = records, step_name = "Removed low coverage")
-
 tail(prisma)
 ```
 
 
-#### redo site.by.species matrices after filtering
+#### redo site.by.species matrices after filtering for coverage
 ```{r}
 # make species.no entries into format "species_1" etc
 records$species.no <- paste("species", records$species.no, sep = "_")
@@ -652,18 +652,14 @@ print("are there any species with no records")
 any(colSums(site.by.obs.5.year.presabs)==0)
 
 print("are there any sites with no records")
-
 any(rowSums(site.by.obs.5.year.presabs)==0)
 
 print("sites and species in matrix")
-print("sites, species")
 dim(site.by.obs.5.year.presabs)
-#make a presence absence site by species matrix
 ```
 
 #### Plot Sites
 ```{r }
-
 plot.points <- st_as_sf(sites, coords=c("x","y"), remove = FALSE, crs = 27700)
 
 print("sites")
@@ -681,16 +677,6 @@ tm_shape(plot.points) +
 
 print(pointsmap)
 print(pointsmap2)
-
-pdf(file = "map_sites.pdf",
-    width = 4, # The width of the plot in inches
-    height = 4) # The height of the plot in inches
-
-print(pointsmap2)
-
-
-# Step 3: Run dev.off() to create the file!
-dev.off()
 
 ```
 
