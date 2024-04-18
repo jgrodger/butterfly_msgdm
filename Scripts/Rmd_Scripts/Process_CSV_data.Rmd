@@ -496,19 +496,16 @@ print("number of species")
 nrow(species)
 
 hist(surveys.by.site$surveys, breaks = 100)
-
 min(surveys.by.site$surveys)
-
-check <- filter(surveys.by.site, surveys < 100)
-hist(check$surveys)
 ```
 
 #### Aggregate records across the five years
 ```{r}
-#### Sum records for each species in each site across years 
+# Sum records for each species in each site across years, getting total counted
+# over 5 years for each species
 records <-  records %>%
   group_by (site, species.no)  %>% 
-summarise(total.records = sum(count))  %>% 
+summarise(total.count = sum(count))  %>% 
   ungroup()
 
 prisma <- add_prisma(recs = records, step_name = "Aggregated records")
@@ -521,8 +518,8 @@ tail(prisma)
 # Get a site by species dataframe with counts of observations
 site.by.obs.5.year.counts <- records %>%
   pivot_wider(names_from = species.no,
-              values_from = total.records,
-              values_fill = 0) %>% # for cases when there wasn't a zero count record for a species that wasn't recorded in a survey, should still be zero
+              values_from = total.count,
+              values_fill = 0) %>% # zeros were filtered out at start, added back in here
   column_to_rownames(var = "site")
 
 print("sites and species in matrix")
@@ -538,12 +535,11 @@ site.by.obs.5.year.presabs[site.by.obs.5.year.presabs[, ] > 0] <- 1
 
 #### Calculate coverage and combine with richness and abundance data
 ```{r}
-#Transpose sity by counts matrix for use  by iNEXT package functions
-check.coverage <- t(site.by.obs.5.year.counts)
-
-#DataInfo() performs the first part of what iNEXT() does in seconds. the whole iNEXT() function would have to be left overnight for the whole dataset
+#Note, dataInfo() performs the first part of what iNEXT() does in seconds. the whole iNEXT() function would have to be left overnight for the whole dataset
 #https://cran.r-project.org/web/packages/iNEXT/vignettes/Introduction.pdf
 
+# get coverage values
+check.coverage <- t(site.by.obs.5.year.counts)
 coverage <- DataInfo(check.coverage,  datatype ="abundance")
 
 # Inspect the distribution of coverage values
@@ -551,7 +547,6 @@ hist(coverage$SC)
 hist(coverage$SC, ylim = c(0, 50))
 hist(coverage$SC, xlim = c(0.95, 1), breaks = 1000)
 quantile(coverage$SC, seq(from = 0, to = 1, by = 0.01))
-
 
 # Get a dataframe with coverage values to merge into the sites dataframe
 cov.merge <- coverage %>%
@@ -588,7 +583,6 @@ sum3
 ```{r}
 plot(richness~coverage, data = sites)
 
-
 pdf(file = "rich+cov.pdf",  
     width = 4,
     height = 4) 
@@ -614,6 +608,8 @@ summary(m5)
 
 #### Filter to sites with sufficient coverage and effort. 0.999 gives an expectation that one thousand individuals would have to be observed before a new species was observed.
 ```{r}
+# Note also, the relationship between coverage and richness was not significant 
+# for this range (m5 above)
 sites <- sites %>% 
                 filter(coverage >= 0.999)
 
@@ -628,13 +624,14 @@ tail(prisma)
 #### redo site.by.species matrices after filtering for coverage
 ```{r}
 # make species.no entries into format "species_1" etc
+# this line is different, otherwise code should be kept identical to code above
 records$species.no <- paste("species", records$species.no, sep = "_")
 
 # Get a site by species dataframe with counts of observations
 site.by.obs.5.year.counts <- records %>%
   pivot_wider(names_from = species.no,
-              values_from = total.records,
-              values_fill = 0) %>% # for cases when there wasn't a zero count record for a species that wasn't recorded in a survey, should still be zero
+              values_from = total.count,
+              values_fill = 0) %>% # zeros were filtered out at start, added back in here
   column_to_rownames(var = "site")
 
 print("sites and species in matrix")
