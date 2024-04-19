@@ -58,8 +58,6 @@ site.by.wetness <- readRDS(here("./Data/Masked_Cropped_Environmental_Data/site_b
 site.by.temp <- readRDS(here("./Data/Masked_Cropped_Environmental_Data/site_by_temp.rds"))
 
 site.by.prec <- readRDS(here("./Data/Masked_Cropped_Environmental_Data/site_by_prec.rds"))
-
-surveys.site.year <- readRDS(here("./Data/Processed_Data/surveys_site_year.rds"))
 ```
 
 #### Functions
@@ -72,31 +70,19 @@ log10_plusone <- function(x)
 filter_dataset <- function(site.by.species, site.by.xy, site.by.env, species, sites){
   site.by.xy <- filter(site.by.xy, rownames(site.by.xy) %in% rownames(site.by.species))
   site.by.env <- filter(site.by.env, rownames(site.by.env) %in% rownames(site.by.species))
+  sites <- filter(sites, rownames(sites)  %in% rownames(site.by.species)) 
   species <- filter(species, species.no %in% names(site.by.species))
-  sites <- filter(sites, rownames(sites)  %in% rownames(site.by.species))  
   
   dataset <- list(site.by.species, site.by.xy, site.by.env, species, sites)
   names(dataset) <- c("site.by.species", "site.by.xy", "site.by.env", "species", "sites")
   
   return(dataset)
 }
-
 ```
-
-#### Process Data
-
-```{r}
-
-tic()
-sites <- sites %>%
-  mutate(site.no = site,
-         site = paste("site", site.no, sep = "_")) %>%
-   column_to_rownames("site") 
-```
-
 
 #### Rename Environmental variables and log transform where necessary
 ```{r}
+tic()
 site.by.temp <- site.by.temp %>%
   rename(mean.ann.temp = mean)%>%
     filter(is.na(mean.ann.temp)==F)

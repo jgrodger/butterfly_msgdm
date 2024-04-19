@@ -695,9 +695,16 @@ names(prisma_short) <- c("Records", "Sites Remaining")
 
 prisma_short$`Sites Dropped` <- c(NA, abs(diff(prisma_short$`Sites Remaining`)))
 
-toc()
-
 ```
+#### modify sites dataframe for use later
+```{r}
+sites <- sites %>%
+  mutate(site.no = site,
+         site = paste("site", site.no, sep = "_")) %>%
+   column_to_rownames("site") 
+toc()
+```
+
 
 #### Save processed data and filtering summaries
 ```{r}
