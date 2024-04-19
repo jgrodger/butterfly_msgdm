@@ -395,51 +395,49 @@ records <- mutate(records,
                     21:27 ~ "per4",
                     28:40 ~ "post-september"))
 
+table(records$sampling.period)
+
 # Get a dataframe with the number of surveys per period in each site in each year
 surveys.by.period <- records %>%
   distinct(survey.info, .keep_all = TRUE) %>%
   group_by(site, year, sampling.period) %>%
-    summarise(surveys.per.period = n()) %>%
-      pivot_wider(names_from = sampling.period,
-        values_from = surveys.per.period,
-        values_fill = 0) %>%
-    mutate(site.year = paste(site, year, sep = "_"), 
+  summarise(surveys.per.period = n()) %>%
+  pivot_wider(names_from = sampling.period,
+    values_from = surveys.per.period,
+    values_fill = 0) %>%
+  mutate(site.year = paste(site, year, sep = "_"), 
          #criterion for inclusion, being sampled in all 4 periods
          all.4 = per1 > 0 & per2 > 0 & per3 > 0 & per4 > 0) %>% 
   ungroup()
 
-# Get the site-year combinations with sampling in all 4 periods in 2015 to 2019
-# and the number of well surveyed years for each (sampled in all 4 periods)
-surveys.by.period.all.4  <- surveys.by.period %>% 
+
+hist(surveys.by.period$per1, breaks = seq(-0.5, 27.5, 1))
+hist(surveys.by.period$per2, breaks = seq(-0.5, 27.5, 1))
+hist(surveys.by.period$per3, breaks = seq(-0.5, 27.5, 1))
+hist(surveys.by.period$per4, breaks = seq(-0.5, 27.5, 1))
+```
+
+#### Filter to sites with two years sampled in all four sampling periods
+```{r}
+# Get number of years for each site that there were surveys in all four periods
+sites.years.with.all.four  <- surveys.by.period %>% 
   filter(all.4 == TRUE) %>% 
   group_by(site) %>%
-  summarise(well.sampled.years = n())
+  summarise(years.with.all.four.periods = n())
 
-# Check how many sites were well surveyed in 1, 2 , 3, 4 or 5 years
-table(surveys.by.period.all.4$well.sampled.years)
-
-#extract survey data to merge intor records
-surveys.all.4 <- select(surveys.by.period, site.year, all.4)
-
-# Subset records to those from sites sampled in all four years
-records <- merge(records, surveys.all.4, by = "site.year", all.x = TRUE)
-
-#add number of well-sampled years records
-records <- merge(records, surveys.by.period.all.4, by = "site", all.x = TRUE)
-```
-```{r}
-head(records)
-```
+# Check how many sites were well surveyed in 1, 2, 3, 4 or 5 years
+table(sites.years.with.all.four$years.with.all.four.periods)
 
 
+sites.years.with.all.four.in.two.years <- sites.years.with.all.four  %>%
+  filter(years.with.all.four.periods >= 2)
 
-#### Filter to well surveyed years
-```{r}
+# this merge adds info on number of years with all four periods and filters
+# to only include years with two or more sites
+sites <- merge(sites, sites.years.with.all.four.in.two.years, by = "site")
+
 print("filter to sites with two years sampled in all four periods")
-records <- records %>% 
-  filter(well.sampled.years >=2)
-
-filtered_data <- filter_ukbms("records")
+filtered_data <- filter_ukbms("sites")
 list2env(filtered_data, envir = .GlobalEnv)
 
 prisma <- add_prisma(step_name = "Filtered all 4 periods")
@@ -447,27 +445,34 @@ tail(prisma)
 
 print("number of sites")
 table(sites$country)
+
 ```
 
-#### Find sites with 8 surveys in at least two years also satifying criteria above
+#### Find sites with 8 surveys in at least two years
 ```{r}
-# Get the surveys per year for each site in each year 2015:2019
+# get criterion that all four years must be sampled in a dataframe to merge with
+# the dataframe created below with number of surveys per year
+periods.for.site.year <- select(surveys.by.period, site.year, all.4)
 
-well.sampled <- records %>%
+# Get the surveys per year for each site in each year 2015:2019
+site.years.by.surveys <- records %>%
   distinct(survey.info, .keep_all = TRUE) %>%
   group_by(site, year) %>%
-    summarise(surveys.per.year = n()) %>% #surveys per year
-    ungroup() %>%
-      mutate(site.year = paste(site, year, sep = "_")) %>%
-        merge(surveys.all.4, by = "site.year") %>%
-         mutate(eightormore = surveys.per.year >= 8)# logical criterion
+  summarise(surveys.per.year = n()) %>% #surveys per year
+  ungroup() %>%
+  mutate(site.year = paste(site, year, sep = "_")) %>%
+  mutate(eightormore = surveys.per.year >= 8) %>% # logical criterion
+  merge(periods.for.site.year, by = "site.year")
 
-well.sampled.sum <- well.sampled %>% 
+
+well.surveyed.sum <- site.years.by.surveys  %>% 
   filter(eightormore == TRUE & all.4 == TRUE) %>% #filter to well_sampled site-year combinations
     group_by(site) %>%
-summarise(well.sampled.years = n()) %>%
-  filter(well.sampled.years >=2) #filter to sites with two well sampled years
+summarise(well.sampled.years = n())
 
+table(well.surveyed.sum$well.sampled.years)
+well.surveyed.sum <- filter(well.surveyed.sum, well.sampled.years >=2)
+table(well.surveyed.sum$well.sampled.years)
 ```
 
 #### Filter to only sites with 8 surveys in at least two years also satifying criteria above
@@ -475,7 +480,7 @@ summarise(well.sampled.years = n()) %>%
 # Subset records to those from sites sampled in all four years
 print("filter to sites with two years sampled in all four periods AND
       at least eight samples per year in those years")
-sites <- filter(sites, site %in% well.sampled.sum$site)
+sites <- filter(sites, site %in% well.surveyed.sum$site)
 
 
 filtered_data <- filter_ukbms("sites")
@@ -483,6 +488,8 @@ list2env(filtered_data, envir = .GlobalEnv)
 
 prisma <- add_prisma(step_name = "Filtered >= 8 surveys Pa")
 tail(prisma)
+
+head(sites)
 ```
 
 #### Inspect surveys per site
