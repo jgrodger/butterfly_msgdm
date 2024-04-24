@@ -5,18 +5,18 @@ output: html_notebook
 
 #### Setup and Packages
 ```{r}
-#https://github.com/jennybc/here_here
+#All the packes are used, checked24/04/2024
 
 here::i_am("Scripts/Rmd_Scripts/butterflies_combine_env_data.Rmd")
 
 library(tidyverse)
-library(gridExtra)
-library(ggpubr)
 library(conflicted)
+library(tictoc)
 library(terra)
 library(sf)
 library(tmap)
-library(tictoc)
+library(gridExtra)
+library(ggpubr)
 library(here)
 
 conflicts_prefer(dplyr::filter)
@@ -114,7 +114,7 @@ site.by.wetness <- site.by.wetness %>%
   rename(topographic.wetness = Band1) %>%
     filter(is.na(topographic.wetness)==F)
 
-# log 10 transformations
+# log base 10 transformations
 
 site.by.log10.pesticide.risk <- site.by.pesticide.risk %>%
   mutate(log10.pesticide.risk = log10_plusone(pesticide.risk)) %>%
@@ -134,30 +134,28 @@ site.by.log10.mean.ann.rain <- site.by.prec %>%
 
 #### Merge env variables
 ```{r}
-# make a list to be able to use lapply
+# Make a list to be able to use lapply
 layers <- list(site.by.prec, site.by.log10.mean.ann.rain, site.by.wetness, 
                site.by.ph, site.by.nitrogen, site.by.trees, site.by.pesticide.risk, site.by.log10.pesticide.risk, 
                site.by.humans, site.by.log10.humans)
 
-#remove x and y from 7 of the layers as this is not needed for merging
+# Remove x and y from 7 of the layers as this is not needed for merging
 layers2 <- lapply(layers, select, -c(x, y)) 
 
-# make a datframe for merged data for plotting
+# Make a datframe for merged data for plotting, including the first env var
 comb <- merge(site.by.temp, layers2[[1]], by = "ngr.1km")
 
-# merge each env var dataframe into the combined one
+# Merge each remaining env var dataframe into the combined one
 for (i in 2:length(layers2)){
   
   comb <- merge(comb, layers2[[i]], by = "ngr.1km")
 }
-
 ```
 
 
 
 #### Plot env vars and save pngs for figures
 ```{r}
-
 # two sets of vars to be plotted 
 comb1 <- select(comb, x, y,  mean.ann.temp, topographic.wetness, ph, total.n)
 comb2 <- select(comb, x, y,  log10.mean.ann.rain, tree.density, log10.pesticide.risk, log10.humans)
@@ -179,7 +177,6 @@ dev.off()
 
 
 #### Merge env vars with site data to make site.by.env and site.by.xy dataframes
-
 ```{r}
 # Note, there is sometimes more than one site per gridref
 # Merge is used to keep sites that have data for all variables
@@ -189,20 +186,21 @@ site.by.env <- sites %>%
 print("Sites with species data")
 nrow(sites)
 
+# We need the xy co-ordinates for sites themselves, not their gridsquares
 comb <- select(comb, -c(x, y))
 
 site.by.env <- merge(site.by.env, comb, by = "ngr.1km")
 nrow(site.by.env)
 
-# Note, there is sometimes more than one site per gridref
+# Note, there is sometimes more than one site per grid cell
 
 #order by site.number
 site.by.env <- site.by.env[base::order(site.by.env$site.no), ]
 
 site.by.env$site <- paste("site", site.by.env$site.no, sep = "_")
 
+# get site as rownamesfor site.by.env
 rownames(site.by.env) <- site.by.env$site
-#remove site.number
 site.by.env <- select(site.by.env, -site)
 
 head(site.by.env)
@@ -234,7 +232,7 @@ print(pointsmap2)
 
 #### Save as pdf
 ```{r}
-pdf(file= here("./Output/1122_sites_maps.pdf"))
+pdf(file= here("./Output/Spatial/env_var_exploration/1122_sites_maps.pdf"))
 par(mfrow = c(1,2))
 print(pointsmap)
 print(pointsmap2)
@@ -348,58 +346,59 @@ dev.off()
 
 #### Save pdfs of histograms
 ```{r}
-pdf(file= here("./Output/env_var_histograms_1.pdf"))
+pdf(file= here("./Output/Spatial/env_var_exploration/env_var_histograms_1.pdf"))
 figure <- grid.arrange(p1, p2, p3, p4, p12, p13, p14, p15 + rremove("x.text"), 
              ncol = 4, nrow = 2)
 dev.off()
 
-pdf(file= here("./Output/env_var_histograms_2.pdf"))
+pdf(file= here("./Output/Spatial/env_var_exploration/env_var_histograms_2.pdf"))
 figure <- grid.arrange(p5, p6, p7, p16, p17, p18 + rremove("x.text"), 
              ncol = 3, nrow = 2)
 dev.off()
 
 
-pdf(file= here("./Output/env_var_histograms_3.pdf"))
+pdf(file= here("./Output/Spatial/env_var_exploration/env_var_histograms_3.pdf"))
 figure <- grid.arrange(p8, p9, p10, p11, p19, p20, p21, p22 + rremove("x.text"), 
              ncol = 4, nrow = 2)
 dev.off()
 
 ```
-
-#### Remove untransformed versions of log-transformed variables from environmetal data
-```{r}
-site.by.env <- site.by.env %>%
-  select(-c(mean.ann.rain, pesticide.risk, humans))
-```
-
 #### Check correlation between environmental variables
 
 ```{r}
-cor(site.by.env[, 4:11], method = "pearson")
+#### Remove untransformed versions of log-transformed variables from environmetal data
+
+site.by.env <- site.by.env %>%
+  select(-c(mean.ann.rain, pesticide.risk, humans))
+
+cor(site.by.env[, 3:12], method = "pearson")
 ```
 
 
 ```{r}
-cor(site.by.env[, 4:11], method = "spearman")
+cor(site.by.env[, 3:12], method = "spearman")
 ```
-## Obtain versions of dataset for analysis (e.g. all species, 
+## Obtain versions of dataset for analysis (i.e. all species, 
 ## wider countryside species, habitat specialists)
 ```{r}
+# Finalise site.by.xy dataframe for analyses
 site.by.xy <- site.by.env %>%
   select(x, y)
 
-#inspect duplicates for coordinates
+# Inspect duplicates for coordinates
 dup_xy <- site.by.xy %>%
   mutate(xy = paste(x,y)) %>%
 group_by(xy) %>% 
   filter(n() > 1)
 
+# Finalise site.by.env dataframe for analyses
 site.by.env <- select(site.by.env, -c(site.no, ngr.1km,  x, y))
 
 rownames(site.by.species) <- paste("site", rownames(site.by.species), sep = "_")
 site.by.species <- filter(site.by.species,
                           rownames(site.by.species) %in% rownames(site.by.env))
 
+# Finalise site.by.species dataframe for analyses
 print("Number of sites matching butterfly sampling criteria")
 nrow(sites)
 sites <- sites %>%
@@ -428,6 +427,9 @@ site.by.species.hs <- site.by.species %>%
 
 site.by.species.wc <- site.by.species %>%
   select(all_of(wider.countryside.spp))
+
+print("number of sites in all species dataset")
+nrow(site.by.species)
 
 print("number of sites with no habitat specialists")
 nrow(site.by.species.hs[rowSums(site.by.species.hs)==0, ])
