@@ -5,21 +5,20 @@ output: html_document
 params:
   dataset: "all_species"
   sam_ddecay: 100
-  orders_ddecay: !r c(2,3)
+  orders_ddecay: !r 2:100
 ---
-
-"You can also run arbitrary R expressions by prefacing the parameter value with !r"
-https://r4ds.had.co.nz/r-markdown.html
-
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
+```{r}
+# Parameterised reports: see https://r4ds.had.co.nz/r-markdown.html
+```
 
 #### Packages
 ```{r}
-here::i_am("Scripts/Rmd_Scripts/run_zeta_msgdm.Rmd")
+here::i_am("Scripts/Rmd_Scripts/Zeta_declines_decays_analyses.Rmd")
 
 library(tidyverse)
 library(zetadiv)
@@ -32,25 +31,18 @@ library(tictoc)
 
 conflicts_prefer(dplyr::select)
 conflicts_prefer(knitrProgressBar::progress_estimated)
-
-# there is a same-named function in dplyr, check it out
 ```
 
 #### Functions
 ```{r}
-# # if several of these small functions are needed, put them in an R script
-
-
 # From https://stackoverflow.com/questions/71252509/is-there-a-way-to-get-progress-information-whan-a-chunk-is-running-in-rmarkdown
-
+# create an R6 progress object for
+# the number of loops/iterations in the target chunk
 slow_function <- function(i, .pb=NULL) {  
   update_progress(.pb)  
   Sys.sleep(0.5)  
   i  
 }
-
-# create an R6 progress object for
-# the number of loops/iterations in the target chunk
 
 
 
@@ -60,11 +52,9 @@ slow_function <- function(i, .pb=NULL) {
 ```{r}
 data_path <- paste0("./Data/Processed_Data/Spatial/", params$dataset, ".rds")
 
-out_path <-  paste0(here("Output/Spatial/"), "/", params$dataset, "_" , "declines_and_decays", "/")
+out_path <-  paste0(here("Output/Spatial/zeta_declines_decays"), "/", params$dataset, "/")
 
-if(!dir.exists(out_path)) dir.create(out_path)
-
-
+if(!dir.exists(out_path)) dir.create(out_path, recursive = TRUE)
 ```
 
 #### Data
@@ -76,6 +66,8 @@ site.by.species <- data$site.by.species
 site.by.env <- data$site.by.env
 
 site.by.xy <- data$site.by.xy
+
+species <- data$species
 ```
 
 #### Parameters for this report
@@ -93,7 +85,26 @@ summary(zd$zeta.pl)
 # Exponential")
 summary(zd$zeta.exp)
 # "AIC"
-kable(zd$aic)
+# zd$aic has dollar signs in rownames, which messes up resulting table from kable
+# therefore I edit the rownames
+zd_performance <- zd$aic
+rownames(zd_performance) <- c("Exp_to_zeta_10", "PL_to_zeta_10")
+zd_performance$R.sq.multi <- c(summary(zd$zeta.exp)$r.squared, 
+                              summary(zd$zeta.pl)$r.squared)
+zd_performance$R.sq.adj <- c(summary(zd$zeta.exp)$adj.r.squared, 
+                              summary(zd$zeta.pl)$adj.r.squared)
+kable(zd_performance)
+
+# Keep to add values from below
+all_performance <- zd_performance
+```
+
+```{r}
+
+png(file = paste0(out_path, params$dataset, "_", "zeta_decline_to_10.png"))
+par(mfrow = c(2,2))
+Plot.zeta.decline(zd, arrange.plots = FALSE)
+dev.off()
 
 ```
 
@@ -105,31 +116,95 @@ summary(zd$zeta.pl)
 # Exponential")
 summary(zd$zeta.exp)
 # "AIC"
-kable(zd$aic)
+zd_performance <- zd$aic
+rownames(zd_performance) <- c("Exp_to_zeta_60", "PL_to_zeta_60")
+zd_performance$R.sq.multi <- c(summary(zd$zeta.exp)$r.squared, 
+                              summary(zd$zeta.pl)$r.squared)
+zd_performance$R.sq.adj <- c(summary(zd$zeta.exp)$adj.r.squared, 
+                              summary(zd$zeta.pl)$adj.r.squared)
+kable(zd_performance)
+
+all_performance <- rbind(all_performance, zd_performance)
 
 ```
 
-### Orders 1:200
 ```{r}
-zd <- Zeta.decline.ex(data.spec = site.by.species, orders = 1:200)
+
+png(file = paste0(out_path, params$dataset, "_", "zeta_decline_to_60.png"))
+par(mfrow = c(2,2))
+Plot.zeta.decline(zd, arrange.plots = FALSE)
+dev.off()
+
+```
+
+### Orders 1:250
+```{r}
+zd <- Zeta.decline.ex(data.spec = site.by.species, orders = 1:250)
 # "Power Law"
 summary(zd$zeta.pl)
 # Exponential")
 summary(zd$zeta.exp)
 # "AIC"
-kable(zd$aic)
+zd_performance <- zd$aic
+rownames(zd_performance) <- c("Exp_to_zeta_250", "PL_to_zeta_250")
+zd_performance$R.sq.multi <- c(summary(zd$zeta.exp)$r.squared, 
+                              summary(zd$zeta.pl)$r.squared)
+zd_performance$R.sq.adj <- c(summary(zd$zeta.exp)$adj.r.squared, 
+                              summary(zd$zeta.pl)$adj.r.squared)
+kable(zd_performance)
+
+# Finalise a datafram summarising performance of exponential versus power law
+# declines
+all_performance <- rbind(all_performance, zd_performance)
+infocols <- data.frame(rep(c("Exponential", "Power Law"), times = 3))
+names(infocols) <- "Regression Fit"
+infocols$'Zeta values' <- rep(c("1 to 10", "1 to 60", "1 to 250"), each = 2)
+all_performance <- cbind(infocols, all_performance)
+
+# Output the zeta diversity to csv
+zeta_div <- data.frame(cbind(zd$zeta.order, zd$zeta.val, zd$zeta.val.sd))
+names(zeta_div) <- c("Order", "Value", "SD")
+```
+
+```{r}
+write_csv(all_performance, file = paste0(out_path, "/", params$dataset, "_",  "zeta_declines_performance.csv"))
+kable(all_performance, digits = 3)
+```
+
+```{r}
+
+png(file = paste0(out_path, params$dataset, "_", "zeta_decline_to_250.png"))
+par(mfrow = c(2,2))
+Plot.zeta.decline(zd, arrange.plots = FALSE)
+dev.off()
 
 ```
+```{r}
+write_csv(zeta_div, file = paste0(out_path, params$dataset, "_",  "zeta_decline_exact.csv"))
+kable(t(zeta_div), digits = 2)
+```
+
 
 ## Zeta decay 
 ```{r, warning = FALSE, label='Zeta Distance Decay Mean Slopes'}
 set.seed(1) 
 
-zeta.ddecays <- Zeta.ddecays(xy = site.by.xy, site.by.species, sam = params$sam_ddecay, orders = params$orders_ddecay,
-plot = TRUE, confint.level = 0.95)
+zeta.ddecays<- readRDS("E:/James_on_HPC1/R_Projects/butterfly_msgdm/Output/Spatial/all_species_declines_and_decays/zeta_distance_decay.rds")
 
-write_rds(zeta.ddecays, file = paste0(here(out_path), "/", "zeta_distance_decay",  ".rds"))
+#zeta.ddecays <- Zeta.ddecays(xy = site.by.xy, site.by.species, sam = params$sam_ddecay, orders = params$orders_ddecay,
+#plot = TRUE, confint.level = 0.95)
+
+#write_rds(zeta.ddecays, file = paste0(here(out_path), "/", "zeta_distance_decay",  ".rds"))
 ```
+
+```{r}
+
+png(file = paste0(out_path, params$dataset, "_", "zeta_distance_decays.png"))
+Plot.zeta.ddecays(zeta.ddecays)
+dev.off()
+
+```
+
 
 ```{r, warning = FALSE, label='Zeta Distance Decay GAMs'}
 set.seed(1) 

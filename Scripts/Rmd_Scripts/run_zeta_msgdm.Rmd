@@ -3,7 +3,6 @@ title: "Render Analysis Reports"
 output: html_notebook
 ---
  
-
 # this calls the markdowns and generate reports with specified parameters
 
 ## setup
@@ -38,9 +37,10 @@ source(here("./Scripts/R_scripts/get_validation_different_seeds_and_samps.R"))
 
 # https://bookdown.org/yihui/rmarkdown/params-knit.html#knit-with-custom-parameters
 
+
 render_report = function(analysis_script, params_list) {
   out_path <- if (analysis_script == "Zeta_declines_decays_analyses.Rmd"){
-                    paste0(here("Output/Spatial/"), "/", params_list$dataset, "_" , "declines_and_decays", "/")
+                    paste0(here("Output/Spatial/zeta_declines_decays"), "/", params_list$dataset,  "/")
                 } else if(analysis_script == "Zeta_msgdm_analyses.Rmd") {
                     paste0(here("Output/Spatial/"), "/", params_list$dataset, "_" , params_list$normalize_msgdm)
                 } else if(analysis_script == "GAM_analyses.Rmd") {
@@ -61,26 +61,37 @@ if(!dir.exists(out_path)) dir.create(out_path)
 
 ## Zeta declines and decays
 ```{r}
+tic()
 render_report(analysis_script = "Zeta_declines_decays_analyses.Rmd", list(dataset = "all_species", sam_ddecay = 10000, orders_ddecay = 2:100))
+toc()
+tic()
 render_report(analysis_script = "Zeta_declines_decays_analyses.Rmd", list(dataset = "wc", sam_ddecay = 10000, orders_ddecay = 2:100))
-render_report(analysis_script = "Zeta_declines_decays_analyses.Rmd", list(dataset = "wc_no_zeros", sam_ddecay = 10000, orders_ddecay = 2:100))
+toc()
+#render_report(analysis_script = "Zeta_declines_decays_analyses.Rmd", list(dataset = "wc_no_zeros", sam_ddecay = 10000, orders_ddecay = 2:100))
+tic()
 render_report(analysis_script = "Zeta_declines_decays_analyses.Rmd", list(dataset = "hs", sam_ddecay = 10000, orders_ddecay = 2:8)) # Computational issues at higher orders
+toc()
+tic()
 render_report(analysis_script = "Zeta_declines_decays_analyses.Rmd", list(dataset = "hs_no_zeros", sam_ddecay = 10000, orders_ddecay = 2:10)) # Computational issues at higher orders
+toc()
 ```
+
 ```{r}
 render_report(analysis_script = "GAM_analyses.Rmd", list(dataset = "all_species"))
 ```
 
 
 ```{r}
-render_report(analysis_script = "GAM_analyses.Rmd", list(dataset = "wc_no_zeros"))
+render_report(analysis_script = "GAM_analyses.Rmd", list(dataset = "wc"))
 ```
 
 ```{r}
 render_report(analysis_script = "GAM_analyses.Rmd", list(dataset = "hs_no_zeros"))
 ```
 
-## GAMMs
+#### GAMMs
+
+using tp splines although AIC values slightly lower for cr for all species and wc
 
 ```{r}
 #run again
@@ -88,12 +99,8 @@ render_report(analysis_script = "GAMM_analyses.Rmd", list(dataset = "all_species
 ```
 
 ```{r}
-render_report(analysis_script = "GAMM_analyses.Rmd", list(dataset = "wc_no_zeros"))
+render_report(analysis_script = "GAMM_analyses.Rmd", list(dataset = "wc"))
 ```
-
-
-
-
 
 
 ```{r}
@@ -110,10 +117,10 @@ render_report(analysis_script = "Zeta_msgdm_analyses.Rmd", list(dataset = "all_s
               orders_msgdm =  c(2,3, 6, 10, 15, 20), sam_msgdm = 50000, normalize_msgdm = "Simpson"))
 
 
-render_report(analysis_script = "Zeta_msgdm_analyses.Rmd", list(dataset = "wc_no_zeros",  
+render_report(analysis_script = "Zeta_msgdm_analyses.Rmd", list(dataset = "wc",  
               orders_msgdm =  c(2,3, 6, 10, 15, 20), sam_msgdm = 50000, normalize_msgdm = "Sorensen"))
 
-render_report(analysis_script = "Zeta_msgdm_analyses.Rmd", list(dataset = "wc_no_zeros",  
+render_report(analysis_script = "Zeta_msgdm_analyses.Rmd", list(dataset = "wc",  
               orders_msgdm =  c(2,3, 6, 10, 15, 20), sam_msgdm = 50000, normalize_msgdm = "Simpson"))
 
 
