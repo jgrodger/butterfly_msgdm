@@ -1,0 +1,46 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+#### datasets used for generating results
+```{r}
+datasets <- c("all_species", "wc", "hs", "hs_no_zeros")
+datasets_names <- c("All Butterfly Species", "Wider Countryside Species", "Habitat Specialists including sites with no species", "Habitat Specialists excluding sites with no species" )
+datasets2 <- c("all_species", "wc")
+datasets_names2 <- c("All Butterfly Species", "Wider Countryside Species")
+```
+
+#### make chunks for zeta decline figs 1:10
+```{r}
+for (i in 1:length(datasets)) {
+  cat(
+    paste0("#### ", datasets_names[i],
+           "\n",
+          '```{r fig.cap = "Figure S',i+2, ". Zeta diversity decline for ", datasets_names[i], ', zeta orders 1 to 10", out.width = ','"100%"}',
+          "\n",
+          'include_graphics(here("./Output/Spatial/zeta_declines_decays/', datasets[i], "/", datasets[i], '_zeta_decline_to_10.png"))',
+          "\n",
+          "```",
+          "\n\n"
+           )
+  )
+}
+```
+#### make chunks for zeta decline figs 1:250
+
+```{r}
+for (i in 1:length(datasets2)) {
+  cat(
+    paste0("#### ", datasets_names2[i],
+           "\n",
+          '```{r fig.cap = "Figure S',i+6, ". Zeta diversity decline for ", datasets_names2[i], ', zeta orders 1 to 10", out.width = ','"100%"}',
+          "\n",
+          'include_graphics(here("./Output/Spatial/zeta_declines_decays/', datasets2[i], "/", datasets2[i], '_zeta_decline_to_250.png"))',
+          "\n",
+          "```",
+          "\n\n"
+           )
+  )
+}
+```

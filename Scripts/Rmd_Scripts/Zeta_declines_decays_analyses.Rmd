@@ -43,9 +43,6 @@ slow_function <- function(i, .pb=NULL) {
   Sys.sleep(0.5)  
   i  
 }
-
-
-
 ```
 
 #### File Paths
