@@ -26,9 +26,9 @@ conflicts_prefer(knitrProgressBar::progress_estimated)
 
 #### File Paths
 ```{r}
-data_path <- paste0("./Data/Processed_Data/Spatial/", params$dataset, ".rds")
+data_path <- paste0("./Data/Processed_Data/Spatial/all_species.rds")
 
-out_path <-  paste0(here("Output/Spatial/zeta_declines_decays"), "/", params$dataset, "/")
+out_path <-  paste0(here("Output/Spatial/zeta_declines_decays/all_species/"))
 
 if(!dir.exists(out_path)) dir.create(out_path, recursive = TRUE)
 ```
@@ -278,5 +278,19 @@ sum.influence3 <- sum.influence %>%
 ggplot(sum.influence3, aes(x=rare.cat, y=influence)) + 
          geom_point(aes(color = factor(zeta.order), size = 2.5)) 
 
+```
+#### Output occupancy table
+```{r}
+occ.out <- occ.df %>%
+  select(common.name, sci.name, strategy, habitat, occ, p.occ) %>%
+  arrange(desc(occ)) %>%
+  rename("Common name" = common.name,
+         "Scientific name" = sci.name,
+         "Ecological category " = strategy,
+         "Habitat" = habitat, 
+         "Number of sites" = occ, 
+         "Proportion of sites " = p.occ)
+ write_csv(occ.out, file = paste0(out_path, "/butterfly_occupancy.csv"))
+kable(occ.out, digits = 3)
 ```
 
