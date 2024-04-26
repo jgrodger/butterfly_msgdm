@@ -59,9 +59,9 @@ slow_function <- function(i, .pb=NULL) {
 ```{r}
 data_path <- paste0("./Data/Processed_Data/Spatial/", params$dataset, ".rds")
 
-out_path <-  paste0(here("Output/Spatial/"), "/", params$dataset, "_" , params$normalize_msgdm, "/")
+out_path <-  paste0(here("Output/Spatial/msgdms"), "/", params$dataset, "_" , params$normalize_msgdm, "/")
 
-if(!dir.exists(out_path)) dir.create(out_path)
+if(!dir.exists(out_path)) dir.create(out_path, recursive = TRUE)
 ```
 
 #### Data
@@ -120,7 +120,7 @@ print(Sys.time())
 names(output0) <- paste0("msgdm.", params$orders_msgdm)
 
 
-write_rds(output0, file = paste0(here(out_path), "/", "zeta_msgdms",  ".rds"))
+write_rds(output0, file = paste0(here(out_path), "/", params$dataset, "_", params$normalize_msgdm, "_zeta_msgdms.rds"))
 
 ```
 
@@ -146,7 +146,13 @@ print(with(summary(output0[[i]]$model), 1 - deviance/null.deviance))
 
 
 for (i in 1:length(params$orders_msgdm)) {
+  
 Plot.ispline(msgdm = output0[[i]], data.env = site.by.env, distance = TRUE,  legend = TRUE)
+  
+png(file = paste0(out_path, "ispline_plot_",params$dataset, "_", params$normalize_msgdm, "_zeta_order", params$orders_msgdm[i], ".png"))
+Plot.ispline(msgdm = output0[[i]], data.env = site.by.env, distance = TRUE,  legend = TRUE)
+dev.off()  
+  
 }
 
 ```
@@ -163,10 +169,13 @@ names(varparts) <- paste0("zeta.vapart.", params$orders_msgdm)
 
 for (i in 1:length(params$orders_msgdm)) {
 pie.neg(varparts[[i]][4:7,1], density = c(4, 0, 8, -1),  angle = c(90, 0, 0, 0), labels =  c("distance","undistinguishable","environment","unexplained"), radius = 0.9, main = paste0("Zeta = ", params$orders_msgdm[i]))
+  
+png(file = paste0(out_path, "msgdm_var_pie_",params$dataset, "_", params$normalize_msgdm, "_zeta_order", params$orders_msgdm[i], ".png"))
+pie.neg(varparts[[i]][4:7,1], density = c(4, 0, 8, -1),  angle = c(90, 0, 0, 0), labels =  c("distance","undistinguishable","environment","unexplained"), radius = 0.9, main = paste0("Zeta = ", params$orders_msgdm[i]))
+dev.off()  
+    
 }
 ```
 
-```{r}
 
-```
 
