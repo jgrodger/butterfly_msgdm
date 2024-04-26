@@ -44,3 +44,27 @@ for (i in 1:length(datasets2)) {
   )
 }
 ```
+
+#### All species
+```{r fig.cap = "Figure S9. Zeta diversity decay with distance for All Butterfly Species", out.width='100%'}
+include_graphics(here("./Output/Spatial/zeta_declines_decays/all_species/all_species_zeta_distance_decays.png"))
+```
+
+
+#### make chunks for zeta decays
+```{r}
+for (i in 1:length(datasets)) {
+  cat(
+    paste0("#### ", datasets_names[i],
+           "\n",
+          '```{r fig.cap = "Figure S',i+8, ". Zeta diversity decay with distance for ", ', zeta orders 1 to 100", out.width = ','"100%"}',
+          "\n",
+          'include_graphics(here("./Output/Spatial/zeta_declines_decays/', datasets[i], "/", datasets[i], '_zeta_distance_decays.png))',
+          "\n",
+          "```",
+          "\n\n"
+           )
+  )
+}
+```
+

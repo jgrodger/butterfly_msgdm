@@ -11,6 +11,12 @@ library(hrbrthemes)
 library(mapdata)
 library(fasterize)
 
+library(mapchina)
+library(terra)
+library(sf)
+library(spatstat)
+library(ggplot2)
+
 library(here)
 ```
 
@@ -18,7 +24,7 @@ library(here)
 # Basemap without outlying islands
 gb <- readRDS(here("./Data./Maps./gb_multipolygon_simplified.rds"))
 
-butterfly_data <- readRDS(here("./Data/Processed_Data/Spatial/spatial_ukbms_obs_sites_spp.rds"))
+butterfly_data <- readRDS(here("./Data/Processed_Data/Spatial/all_species.rds"))
 
 sites <- butterfly_data$sites
 
@@ -67,12 +73,7 @@ dev.off()
 
 
 https://stackoverflow.com/questions/68643517/smoothed-density-maps-for-points-in-using-sf-within-a-given-boundary-in-r
-```{r}
-library(mapchina)
-library(sf)
-library(spatstat)
-library(ggplot2)
-```
+
 
 
 

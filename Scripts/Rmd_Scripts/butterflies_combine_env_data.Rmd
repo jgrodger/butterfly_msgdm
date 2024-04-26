@@ -170,7 +170,7 @@ png(file= here("./Output/Spatial/Figures/fig_2_env_vars.png"))
 plot(comb1)
 dev.off() 
  
-png(file= here("./Output/Spatial/Figures/fig_s1_other_env_vars.png"))
+png(file= here("./Output/Spatial/Figures/fig_supp_other_env_vars.png"))
 plot(comb2)
 dev.off() 
 ```

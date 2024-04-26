@@ -15,7 +15,7 @@ library(rmarkdown)
 library(readr)
 library(knitr)
 library(knitrProgressBar)
-library(pander)
+#library(pander)
 library(tictoc)
 library(here)
 library(conflicted)
@@ -42,16 +42,41 @@ dataset_names <- c("All Butterfly Species", "Wider Countryside Species", "Habita
 #https://stackoverflow.com/questions/36373630/create-a-loop-that-includes-both-a-code-chunk-and-text
 ```
 
+# Main
+
+## Site density
+
+```{r fig.cap = "Figure 1. Geographic distribution and density of the 1149 UKBMS transects used in this study", out.width = "100%"}
+include_graphics(here("Output/Spatial/Figures/Hex_dens_transects.png/"))
+```
+## Environmental variables
+
+```{r fig.cap = "Figure 2. Four Influential environmental variables for turnover and richness of butterflies in Great Britain", out.width = "100%"}
+include_graphics(here("./Output/Spatial/Figures/fig_2_env_vars.png"))
+```
+
+
+# Supplemental Materials
 
 ## Occupancy
 
 ```{r , message=FALSE}
-occ <- read_csv(here("Output/Spatial/zeta_declines_decays/all_speciesbutterfly_occupancy.csv"))
+occ <- read_csv(here("Output/Spatial/zeta_declines_decays/all_species/butterfly_occupancy.csv"))
 
 kable(occ, digits = 3,
       caption = "Table S1. Occupancy of butterflies in the site used for this study")
 ```
 
+```{r fig.cap = "Figure S1. Rank Occupancy for butterfly species in sites in this study", out.width = "100%"}
+include_graphics(here("Output/Spatial/zeta_declines_decays/all_species/rank_occupancy.png"))
+```
+
+
+## Environmental variables
+
+```{r fig.cap = "Figure S2. Four less influential environmental variables for turnover and richness of butterflies in Great Britain", out.width = "100%"}
+include_graphics(here("./Output/Spatial/Figures/fig_supp_other_env_vars.png"))
+```
 
 ## Zeta Declines
 
@@ -118,22 +143,23 @@ print(kable(t(zeta_div), digits = 2,
 ```
 
 ## Zeta decays
-#### All species
-```{r fig.cap = "Figure S9. Zeta diversity decay with distance for All Butterfly Species", out.width='100%'}
+
+#### All Butterfly Species
+```{r fig.cap = "Figure S9. Zeta diversity decay with distance for , zeta orders 1 to 100", out.width = "100%"}
 include_graphics(here("./Output/Spatial/zeta_declines_decays/all_species/all_species_zeta_distance_decays.png"))
 ```
 
-#### Wider countryside species
-```{r fig.cap = "Figure S10. Zeta diversity decay with distance for Wider Countryside Species", out.width='100%'}
+#### Wider Countryside Species
+```{r fig.cap = "Figure S10. Zeta diversity decay with distance for , zeta orders 1 to 100", out.width = "100%"}
 include_graphics(here("./Output/Spatial/zeta_declines_decays/wc/wc_zeta_distance_decays.png"))
 ```
 
-#### Habitat specialists, including sites with no species
-```{r fig.cap = "Figure S11. Zeta diversity decay with distance for Habitat Specialists including sites with no species", out.width='100%'}
+#### Habitat Specialists including sites with no species
+```{r fig.cap = "Figure S11. Zeta diversity decay with distance for , zeta orders 1 to 100", out.width = "100%"}
 include_graphics(here("./Output/Spatial/zeta_declines_decays/hs/hs_zeta_distance_decays.png"))
 ```
 
-#### Habitat specialists, excluding sites with no species
-```{r fig.cap = "Figure S12. Zeta diversity decay with distance for Habitat Specialists excluding sites with no species", out.width='100%'}
+#### Habitat Specialists excluding sites with no species
+```{r fig.cap = "Figure S12. Zeta diversity decay with distance for , zeta orders 1 to 100", out.width = "100%"}
 include_graphics(here("./Output/Spatial/zeta_declines_decays/hs_no_zeros/hs_no_zeros_zeta_distance_decays.png"))
 ```

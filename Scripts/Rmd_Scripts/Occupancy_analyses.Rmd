@@ -15,6 +15,7 @@ library(tidyverse)
 library(zetadiv)
 library(tidyverse)
 library(here)
+library(knitr)
 library(conflicted)
 library(tictoc)
 
@@ -142,6 +143,11 @@ occ.df <- occ.df %>%
     )
 
 hist(occ.df$p.occ, breaks = 20)
+
+occ.df$rank <- rank(-occ.df$p.occ, ties.method = "random")
+
+plot(occ.df$p.occ ~ occ.df$rank)
+
 
 
 #share2 is the probability that species is shared between 2 sites in one sample but not shared between 2 sites in a second sample
@@ -278,19 +284,35 @@ sum.influence3 <- sum.influence %>%
 ggplot(sum.influence3, aes(x=rare.cat, y=influence)) + 
          geom_point(aes(color = factor(zeta.order), size = 2.5)) 
 
+
+
+
 ```
 #### Output occupancy table
 ```{r}
 occ.out <- occ.df %>%
-  select(common.name, sci.name, strategy, habitat, occ, p.occ) %>%
+  select(common.name, sci.name, strategy, habitat, occ, p.occ, rank) %>%
   arrange(desc(occ)) %>%
   rename("Common name" = common.name,
          "Scientific name" = sci.name,
          "Ecological category " = strategy,
          "Habitat" = habitat, 
          "Number of sites" = occ, 
-         "Proportion of sites " = p.occ)
+         "Proportion of sites " = p.occ,
+         "Rank occupancy" = rank)
  write_csv(occ.out, file = paste0(out_path, "/butterfly_occupancy.csv"))
 kable(occ.out, digits = 3)
+
+
+rank_occ <- ggplot(occ.df, aes(x = rank, y = p.occ)) + 
+         geom_point(color='black', shape=21, size=2, aes(fill=factor(strategy))) +
+        scale_fill_manual(values = c("blue", "green")) +  
+        ylab("Proportion of sites occupied") +
+        xlab("Rank")
+rank_occ
+
+png(file = paste0(out_path, "/rank_occupancy.png"))
+rank_occ
+dev.off()
 ```
 
