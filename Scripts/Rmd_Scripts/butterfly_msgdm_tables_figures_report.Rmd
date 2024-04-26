@@ -9,13 +9,12 @@ knitr::opts_chunk$set(echo = FALSE)
 ```
 
 ```{r}
-here::i_am("Scripts/Rmd_Scripts/supp_materials_report.Rmd")
+here::i_am("Scripts/Rmd_Scripts/butterfly_msgdm_tables_figures_report.Rmd")
 
 library(rmarkdown)
 library(readr)
 library(knitr)
 library(knitrProgressBar)
-#library(pander)
 library(tictoc)
 library(here)
 library(conflicted)

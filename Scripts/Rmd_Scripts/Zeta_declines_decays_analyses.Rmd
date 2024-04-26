@@ -186,17 +186,15 @@ kable(t(zeta_div), digits = 2)
 ```{r, warning = FALSE, label='Zeta Distance Decay Mean Slopes'}
 set.seed(1) 
 
-zeta.ddecays<- readRDS("E:/James_on_HPC1/R_Projects/butterfly_msgdm/Output/Spatial/all_species_declines_and_decays/zeta_distance_decay.rds")
+zeta.ddecays <- Zeta.ddecays(xy = site.by.xy, site.by.species, sam = params$sam_ddecay, orders = params$orders_ddecay,
+plot = TRUE, confint.level = 0.95)
 
-#zeta.ddecays <- Zeta.ddecays(xy = site.by.xy, site.by.species, sam = params$sam_ddecay, orders = params$orders_ddecay,
-#plot = TRUE, confint.level = 0.95)
-
-#write_rds(zeta.ddecays, file = paste0(here(out_path), "/", "zeta_distance_decay",  ".rds"))
+write_rds(zeta.ddecays, file = paste0(out_path, params$dataset ,"_zeta_distance_decay.rds"))
 ```
 
 ```{r}
 
-png(file = paste0(out_path, params$dataset, "_", "zeta_distance_decays.png"))
+png(file = paste0(out_path, params$dataset, "_zeta_distance_decays.png"))
 Plot.zeta.ddecays(zeta.ddecays)
 dev.off()
 
