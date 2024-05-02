@@ -200,13 +200,19 @@ ggplot(occ.df, aes(x=p.occ, y=share.2)) +
 ggplot(occ.df, aes(x=p.occ, y=share.3)) + 
          geom_point(aes(color = strategy), size = 2.5)
 
-ggplot(occ.df, aes(x=p.occ, y=share.4)) + 
-         geom_point(aes(color = strategy), size = 2.5)
-
-ggplot(occ.df, aes(x=p.occ, y=share.5)) + 
+ggplot(occ.df, aes(x=p.occ, y=share.6)) + 
          geom_point(aes(color = strategy), size = 2.5)
 
 ggplot(occ.df, aes(x=p.occ, y=share.10)) + 
+         geom_point(aes(color = strategy), size = 2.5)
+
+ggplot(occ.df, aes(x=p.occ, y=share.15)) + 
+         geom_point(aes(color = strategy), size = 2.5)
+
+ggplot(occ.df, aes(x=p.occ, y=share.20)) + 
+         geom_point(aes(color = strategy), size = 2.5)
+
+ggplot(occ.df, aes(x=p.occ, y=share.50)) + 
          geom_point(aes(color = strategy), size = 2.5)
 ```
 
