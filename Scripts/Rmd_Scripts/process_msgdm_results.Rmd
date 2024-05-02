@@ -3,16 +3,242 @@ title: "R Notebook"
 output: html_notebook
 ---
 
-This is an [R Markdown](http://rmarkdown.rstudio.com) Notebook. When you execute code within the notebook, the results appear beneath the code. 
-
-Try executing this chunk by clicking the *Run* button within the chunk or by placing your cursor inside it and pressing *Ctrl+Shift+Enter*. 
-
 ```{r}
-plot(cars)
+here::i_am("Scripts/Rmd_Scripts/butterfly_msgdm_tables_figures_report.Rmd")
+
+library(rmarkdown)
+library(readr)
+library(knitr)
+library(knitrProgressBar)
+library(tictoc)
+library(gridExtra)
+library(conflicted)
+library(here)
+
+conflicts_prefer(dplyr::filter)
+conflicts_prefer(dplyr::rename)
+```
+#https://onlinelibrary.wiley.com/doi/10.1111/mec.16860
+```{r}
+my_data <- read_rds(here("./Data/Processed_Data/Spatial/all_species.rds"))
+
+my_env_data <- my_data$site.by.env
+
+my_msgdms <- read_rds(here("Output/Spatial/msgdms/all_species_Simpson/zeta_msgdms.rds"))
+
+#to do later get quantiles of env vars
+
+
+#this will need to be made flexible later
+my_orders <- c(2, 3, 6, 10, 15, 20)
+
+all_isplines <- list()
+
+#get ispline predicted change in zeta diversity and env variables from results
+for(i in 1:length(my_orders)){
+     temp_out <- Return.ispline(msgdm = my_msgdms[[i]], data.env = my_env_data, 
+                  distance = TRUE) #extract isplines and associated data using the package function
+     
+     temp_env <- temp_out$env %>%
+       rownames_to_column(var = "site")
+     
+     temp_isplines <- temp_out$Ispline #extract the Isplines into the list
+      names(temp_isplines) <- paste0("f.of.", names(temp_isplines)) #rename columns
+      temp_isplines <- temp_isplines %>%
+      mutate(zeta_order = paste0("zeta_", my_orders[i])) %>% #adding zeta_order as a column
+      mutate(zeta_order = factor(zeta_order, levels = paste0("zeta_", my_orders)))  %>%   
+      relocate(zeta_order)   %>%  
+      cbind(temp_env)%>%
+      relocate(site, .after = zeta_order) 
+       
+     all_isplines[[i]] <- temp_isplines
+}
+
+
+# change from list to single dataframe
+all_isplines <- bind_rows(all_isplines) 
+
+#ggplot(all_isplines, aes(x = mean.ann.temp, y = f.of.mean.ann.temp, group = zeta_order)) +
+#  geom_line(aes(colour = zeta_order))
+
 ```
 
-Add a new chunk by clicking the *Insert Chunk* button on the toolbar or by pressing *Ctrl+Alt+I*.
 
-When you save the notebook, an HTML file containing the code and output will be saved alongside it (click the *Preview* button or press *Ctrl+Shift+K* to preview the HTML file).
 
-The preview shows you a rendered HTML copy of the contents of the editor. Consequently, unlike *Knit*, *Preview* does not run any R code chunks. Instead, the output of the chunk when it was last run in the editor is displayed.
+#### Check if the msgdm output can be reproduced from this dataframe using ggplot
+
+#### to do, use raw rather than standardised predictor values
+```{r}
+
+for(i in 1:(ncol(my_env_data) + 1)){
+print(
+  ggplot(data = all_isplines, aes(x = all_isplines[, (i + 11)], y = all_isplines[,(i + 2)], group = zeta_order)) +
+  geom_line(aes(colour = zeta_order))  + 
+    xlab(names(all_isplines)[i + 11]) + 
+    ylab("Change in Zeta diversity")
+)
+}
+
+
+ # y_var <- names(all_isplines)[i+2]
+ # x_var <- names(all_isplines)[i+11] 
+```
+
+#### Summaries of statistisal results, p values needed to interpret ispline plots and forest plots better
+```{r}
+
+all_coef <- list()
+
+for(i in 1:length(my_orders)){
+    temp_summary <- summary(my_msgdms[[i]]$model)
+    temp_coef <- temp_summary$coefficients  %>%
+    data.frame %>%
+      rename(sd = "Std..Error",
+      z_value = "z.value", 
+      p_value = "Pr...z.." ) %>% 
+      rownames_to_column(var = "Effect")   %>% 
+      mutate(Effect = factor(Effect, levels = Effect),
+            zeta_order = paste0("zeta_", my_orders[i]),#adding zeta_order as a column
+           Lower = Estimate - 1.96*sd, #CL
+           Upper = Estimate + 1.96*sd,
+           colours = factor(c(1, rep(2:10, each = 3))), #To generalise, this will need to be changed
+           y_height = as.numeric(rev(seq(1,28))))
+    all_coef[[i]] <- temp_coef
+}
+
+all_coef <- bind_rows(all_coef) # change from list to single dataframe
+```
+
+#### Effect size plot, consider metator::forest, easier!!!
+#https://www.metafor-project.org/doku.php/plots:forest_plot_with_subgroups
+#https://bookdown.org/MathiasHarrer/Doing_Meta_Analysis_in_R/forest.html
+```{r}
+# Credit to https://yzwisalaity.github.io/Forest-Plot/,  https://rgraphs.com/high-quality-forest-plots-in-r-ggplot2/
+
+d1 <- all_coef[1:28 , ]
+
+
+p1 <- ggplot(d1, aes(x = Estimate, y = y_height)) +
+        geom_point(aes(colour = colours)) +                                     
+        geom_pointrange (aes(xmin = Lower, xmax = Upper, colour = colours)) + 
+         scale_y_continuous(name = NULL, breaks = d1$y_height,
+              labels = d1$Effect) +
+    ggtitle('Zeta = X') +
+  theme_bw() +
+ theme(panel.border = element_blank(),
+      panel.background = element_blank(),
+      panel.grid.major = element_blank(),
+      panel.grid.minor = element_blank(),
+      axis.line.x = element_line(),
+      axis.line.y = element_blank(),
+      axis.text.x = element_text(colour = "black", size = 11),
+      axis.text.y = element_blank(),
+      #axis.text.y = element_text(colour = "black", size = 10),
+      axis.ticks.x = element_line(),
+        axis.ticks.y = element_blank(),
+      axis.title.x = element_text(), 
+      plot.title = element_text(hjust = -0.86, face = "bold"),
+      legend.position="none")  +  
+      geom_vline(xintercept = 0, color = "red",linetype = "dashed", alpha = 0.5)          
+#p1
+```
+
+# Make a table in ggplot to align with forest plot
+```{r}
+table_base <- 
+  ggplot(data = d1, aes(y = y_height)) + # everything in this plot is empty 
+  ylab(NULL) + xlab('') + ggtitle('') + 
+  ylim(0, 28) + # make sure this is the same as p1
+  theme(panel.border = element_blank(),
+        panel.background = element_blank(),
+        panel.grid.major = element_blank(), 
+        panel.grid.minor = element_blank(), 
+        axis.line.x = element_blank(),
+        axis.line.y = element_blank(),
+        axis.text.x = element_text(color = "white", hjust = -3, size = 11),
+        axis.text.y = element_blank(),
+        axis.ticks.x = element_blank(),
+        axis.ticks.y = element_blank(),
+        axis.title.x = element_blank(),
+        axis.title.y = element_blank(),
+        plot.title = element_text(hjust = 0, face = "bold"),# make sure hjust is the same as p1
+        legend.position = "none") 
+
+```
+
+#### A table for p values to combine with forest plot
+```{r}
+t1 <- table_base + 
+  geom_text(aes(y = y_height, 
+                x = 0, 
+                colour = colours,
+                label = Effect), 
+                size = 3.1, hjust = 1, vjust = -0.5)  +
+            xlim(-2,0) +
+            ggtitle('') 
+
+#t1
+```
+
+#### A table for coloured effect size values to combine with forest plot
+```{r}
+t2 <- table_base + 
+  geom_text(aes(y = y_height, 
+                x = 0, 
+                colour = colours,
+                label = paste0(format(round(p_value, digits = 3), nsmall = 3))), 
+                size = 3.1, hjust = 0, vjust = -0.5)  +
+            xlim(0,2) +
+            ggtitle('') 
+
+#t2
+```
+
+
+#combine as panels
+
+```{r}
+grid.arrange(t1, p1, t2, 
+             nrow = 1, ncol = 3)
+```
+
+
+
+
+```{r}
+for (i in 1:length(my_orders)) {
+print(names(my_msgdms[i]))
+print(summary(my_msgdms[[i]]$model))
+}
+```
+
+
+
+
+
+```{r}
+plot(temp_out$Ispline$mean.ann.temp ~ temp_out$env$mean.ann.temp)
+plot(temp_out$Ispline$ph ~ temp_out$env$ph)
+```
+
+
+```{r}
+my_msgdm_i <- my_msgdms[[1]]
+
+my_data.env <- my_data$site.by.env
+
+my_isplines <- Return.ispline(msgdm = my_msgdm_i, data.env = my_data.env, distance = TRUE)
+
+# These two are almost identical except that the quantiles for distance are 
+# slightly different
+Plot.ispline(msgdm = my_msgdm_i, data.env = my_data.env, distance = TRUE)
+Plot.ispline(isplines = my_isplines)
+
+str(my_isplines, max.level = 1)
+str(my_msgdms, max.level = 1)
+
+isp_env <- my_isplines$env
+
+head(my_isplines$Ispline)
+```
+

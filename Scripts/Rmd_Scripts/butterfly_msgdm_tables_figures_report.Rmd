@@ -16,9 +16,12 @@ library(readr)
 library(knitr)
 library(knitrProgressBar)
 library(tictoc)
-library(here)
+library(gridExtra)
 library(conflicted)
 library(here)
+
+conflicts_prefer(dplyr::filter)
+conflicts_prefer(dplyr::rename)
 ```
 
 
@@ -53,6 +56,8 @@ include_graphics(here("Output/Spatial/Figures/Hex_dens_transects.png/"))
 ```{r fig.cap = "Figure 2. Four Influential environmental variables for turnover and richness of butterflies in Great Britain", out.width = "100%"}
 include_graphics(here("./Output/Spatial/Figures/fig_2_env_vars.png"))
 ```
+
+## MSGDMS
 
 
 # Supplemental Materials
@@ -162,3 +167,26 @@ include_graphics(here("./Output/Spatial/zeta_declines_decays/hs/hs_zeta_distance
 ```{r fig.cap = "Figure S12. Zeta diversity decay with distance for , zeta orders 1 to 100", out.width = "100%"}
 include_graphics(here("./Output/Spatial/zeta_declines_decays/hs_no_zeros/hs_no_zeros_zeta_distance_decays.png"))
 ```
+
+## MSGDMS
+
+```{r}
+
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
