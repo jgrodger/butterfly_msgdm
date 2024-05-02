@@ -330,7 +330,7 @@ tm_shape(plot.points) +
 
 pointsmap2 <- basemap +
 tm_shape(plot.points) +
-  tm_symbols(size = 0.5, col = "blue")
+  tm_symbols(size = 0.5, alpha = 0.5, col = "blue")
 
 print(pointsmap)
 print(pointsmap2)
