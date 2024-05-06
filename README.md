@@ -133,6 +133,7 @@ X)Filename
 	•Outputs
 		•markdown reports
 
+
 5)Zeta_declines_decays_analyses.Rmd
 	•What this does: Called by run_zeta_msgdm.Rmd;
 	analyses
@@ -171,8 +172,15 @@ X)Filename
 		•ispline plots "~ispline_plot_[dataset]_[normalize_msgdm]_zeta_order[i].png"
 		•pie plots "~msgdm_var_pie_[dataset]_[normalize_msgdm]_zeta_order[i].png"
 		•msgdm outputs in list "[dataset]_[normalize_msgdm]/zeta_msgdms.rds" 
+
+7)process_msgdm_results.RMD
+	•What this does: makes forest plots for msgdms
+	•Inputs: msgdm outputs in list "[dataset]_[normalize_msgdm]/zeta_msgdms.rds" 
+	•Outputs: 
+		•Forest plots:
+		•Associated p value tables (image)
 	
-7)process_msgdm_results.Rmd
+8)process_msgdm_results.Rmd
 	•What this does: makes plots and tables of MSGDM results for interpretation 
 	and presentation in the paper
 		•ispline plots for each variable grouped by zeta order
@@ -180,7 +188,7 @@ X)Filename
 	•Inputs: msgdm outpus from files "~zeta_msgdms.rds"
 	•Outputs	
 	
-8)GAM_analyses.Rmd
+9)GAM_analyses.Rmd
 	•What this does: Called by run_zeta_msgdm.Rmd;
 		•Exploration
 			•Plots richness against environmental variables
@@ -204,7 +212,7 @@ X)Filename
 	•Outputs: For each dataset, output of best GAM
 	"~[dataset]_best_gam.rds"
 	
-9)GAMM_analyses.Rmd
+10)GAMM_analyses.Rmd
 	•NB, these are very time consuming
 	•What this does: Called by run_zeta_msgdm.Rmd;
 	•analyses
@@ -218,7 +226,7 @@ X)Filename
 	•Outputs: For each dataset, list with all GAMM outputs 
 	"~[dataset]_gamm_cor_struct_compare.rds"
 	
-10) butterfly_msgdm_tables_figures_report.Rmd
+11) butterfly_msgdm_tables_figures_report.Rmd
 	•What this does: Generates a report containing figures and tables for main 
 	text and supplementary materials
 	•Inputs: 
@@ -226,7 +234,7 @@ X)Filename
 		•Note, some chunks are manually pasted in from generate_code_chunks_for_supp_report.Rmd
 	•Outputs: R markdown converted to html butterfly_msgdm_tables_figures_report.html
 
-11)generate_code_chunks_for_supp_report.Rmd
+12)generate_code_chunks_for_supp_report.Rmd
 	•What this does: Runs loops to automatically generated chunks for figures 
 	to avoid errors
 	•Inputs: NA.

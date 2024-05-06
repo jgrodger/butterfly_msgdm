@@ -50,7 +50,7 @@ render_report = function(analysis_script, params_list) {
                       paste0(here("Output/Spatial/msgdms"), "/", 
                       params_list$dataset, "_" , params_list$normalize_msgdm, "/", 
                       "figs_tables/")
-  
+                }
 if(!dir.exists(out_path)) dir.create(out_path, recursive = TRUE)
   rmarkdown::render(input = analysis_script,
                     output_dir = out_path,
@@ -150,22 +150,28 @@ toc()
 #### Generate tables and figures for msgdms
 ```{r}
 render_report(analysis_script = "process_msgdm_results.Rmd", 
-              list(dataset = "all_species", normalize_msgdm = "Simpson"))
+              list(dataset = "all_species", normalize_msgdm = "Simpson",
+                   orders_msgdm =  c(2, 3, 4, 6, 10, 15, 20, 50)))
 
 render_report(analysis_script = "process_msgdm_results.Rmd", 
-              list(dataset = "wc", normalize_msgdm = "Simpson"))
+              list(dataset = "wc", normalize_msgdm = "Simpson",
+                   orders_msgdm =  c(2, 3, 4, 6, 10, 15, 20, 50)))
 
 render_report(analysis_script = "process_msgdm_results.Rmd", 
-              list(dataset = "hs_no_zeros", normalize_msgdm = "Simpson"))
+              list(dataset = "hs_no_zeros", normalize_msgdm = "Simpson",
+                   orders_msgdm =  c(2, 3, 4, 5, 6)))
 
 render_report(analysis_script = "process_msgdm_results.Rmd", 
-              list(dataset = "all_species", normalize_msgdm = "Sorensen"))
+              list(dataset = "all_species", normalize_msgdm = "Sorensen",
+                   orders_msgdm =  c(2, 3, 4, 6, 10, 15, 20, 50)))
 
 render_report(analysis_script = "process_msgdm_results.Rmd", 
-              list(dataset = "wc", normalize_msgdm = "Sorensen"))
+              list(dataset = "wc", normalize_msgdm = "Sorensen",
+                   orders_msgdm =  c(2, 3, 4, 6, 10, 15, 20, 50)))
 
 render_report(analysis_script = "process_msgdm_results.Rmd", 
-              list(dataset = "hs_no_zeros", normalize_msgdm = "Sorensen"))
+              list(dataset = "hs_no_zeros", normalize_msgdm = "Sorensen",
+                   orders_msgdm =  c(2, 3, 4, 5, 6)))
 
 ```
 

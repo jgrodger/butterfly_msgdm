@@ -5,6 +5,9 @@ output: html_document
 params:
   dataset: "all_species"
   normalize_msgdm: "Simpson"
+  orders_msgdm: 
+   - 2
+   - 3
 ---
 
 ```{r}
@@ -38,6 +41,13 @@ out_path <- here(paste0("./Output/Spatial/msgdms", "/", params$dataset, "_" , pa
 if(!dir.exists(out_path)) dir.create(out_path, recursive = TRUE)
 ```
 
+```{r}
+msgdm_path <-  "./Output/Spatial/msgdms/wc_Simpson/wc_Simpson_zeta_msgdms.rds"
+
+my_msgdms <- read_rds(here(msgdm_path))
+
+
+```
 
 
 #https://onlinelibrary.wiley.com/doi/10.1111/mec.16860
@@ -54,7 +64,7 @@ my_msgdms$orders <- c(2, 3, 4, 6, 10, 15, 20, 50)
 
 
 #this will need to be made flexible later
-my_orders <- my_msgdms$orders
+my_orders <- params$orders
 
 all_isplines <- list()
 
