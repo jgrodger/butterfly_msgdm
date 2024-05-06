@@ -1,13 +1,18 @@
 ---
-title: "R Notebook"
-output: html_notebook
+title: "Zeta Msgdm Results Processing"
+output: html_document
+
+params:
+  dataset: "all_species"
+  normalize_msgdm: "Simpson"
 ---
 
 ```{r}
 here::i_am("Scripts/Rmd_Scripts/butterfly_msgdm_tables_figures_report.Rmd")
 
 library(rmarkdown)
-library(readr)
+library(tidyverse)
+library(zetadiv)
 library(knitr)
 library(knitrProgressBar)
 library(tictoc)
@@ -18,19 +23,38 @@ library(here)
 conflicts_prefer(dplyr::filter)
 conflicts_prefer(dplyr::rename)
 ```
+#### File Paths
+```{r}
+data_path <- paste0("./Data/Processed_Data/Spatial/", params$dataset, ".rds")
+
+# msgdm output
+msgdm_path <-  paste0("./Output/Spatial/msgdms", "/", params$dataset, "_" , params$normalize_msgdm, "/", 
+                      params$dataset, "_" , params$normalize_msgdm, "_zeta_msgdms.rds")
+
+# out_path
+out_path <- here(paste0("./Output/Spatial/msgdms", "/", params$dataset, "_" , params$normalize_msgdm, "/", 
+                       "/figs_tables/"))
+
+if(!dir.exists(out_path)) dir.create(out_path, recursive = TRUE)
+```
+
+
+
 #https://onlinelibrary.wiley.com/doi/10.1111/mec.16860
 ```{r}
-my_data <- read_rds(here("./Data/Processed_Data/Spatial/all_species.rds"))
+my_data <- read_rds(here(data_path))
+
+my_msgdms <- read_rds(here(msgdm_path))
 
 my_env_data <- my_data$site.by.env
 
-my_msgdms <- read_rds(here("Output/Spatial/msgdms/all_species_Simpson/all_species_Simpson_zeta_msgdms.rds"))
+my_msgdms$orders <- c(2, 3, 4, 6, 10, 15, 20, 50)
 
 #to do later get quantiles of env vars
 
 
 #this will need to be made flexible later
-my_orders <- c(2, 3, 4, 6, 10, 15, 20, 50)
+my_orders <- my_msgdms$orders
 
 all_isplines <- list()
 
@@ -40,7 +64,8 @@ for(i in 1:length(my_orders)){
                   distance = TRUE) #extract isplines and associated data using the package function
      
      temp_env <- temp_out$env %>%
-       rownames_to_column(var = "site")
+       rownames_to_column(var = "site") #%>% 
+     #  mutate(distance = temp_out$env$distance)
      
      temp_isplines <- temp_out$Ispline #extract the Isplines into the list
       names(temp_isplines) <- paste0("f.of.", names(temp_isplines)) #rename columns
@@ -48,21 +73,40 @@ for(i in 1:length(my_orders)){
       mutate(zeta_order = paste0("zeta_", my_orders[i])) %>% #adding zeta_order as a column
       mutate(zeta_order = factor(zeta_order, levels = paste0("zeta_", my_orders)))  %>%   
       relocate(zeta_order)   %>%  
-      cbind(temp_env)%>%
+      cbind(temp_env) %>%
       relocate(site, .after = zeta_order) 
        
      all_isplines[[i]] <- temp_isplines
 }
 
 
-# change from list to single dataframe
+# Change from list to single dataframe
 all_isplines <- bind_rows(all_isplines) 
-
-#ggplot(all_isplines, aes(x = mean.ann.temp, y = f.of.mean.ann.temp, group = zeta_order)) +
-#  geom_line(aes(colour = zeta_order))
 
 ```
 
+#### get environmental variables on the original scale
+```{r}
+# to do this, check do downloaded code. If that doesn't help, add to questions for Guillaume
+
+
+# head(temp_out$env)
+# head(temp_out$env.num)
+# 
+# head(temp_env)
+# 
+# head(temp_isplines)
+
+
+# mins <- temp_out$env.num %>%
+#   summarise(across(where(is.numeric), min))
+# maxs <- temp_out$env.num %>%
+#   summarise(across(where(is.numeric), max)) 
+# 
+# env_diffs <- data.frame(t(maxs-mins))
+# names(env_diffs) <- "max_possible_difference"
+
+```
 
 
 #### Check if the msgdm output can be reproduced from this dataframe using ggplot
@@ -71,11 +115,15 @@ all_isplines <- bind_rows(all_isplines)
 ```{r}
 
 for(i in 1:(ncol(my_env_data) + 1)){
+  
+  
+  
 print(
-  ggplot(data = all_isplines, aes(x = all_isplines[, (i + 11)], y = all_isplines[,(i + 2)], group = zeta_order)) +
-  geom_line(aes(colour = zeta_order))  + 
+  ggplot(data = all_isplines, aes(x = all_isplines[, (i + 11)], 
+                                  y = all_isplines[,(i + 2)], group = zeta_order)) +
+   geom_line(aes(colour = zeta_order))  + 
     xlab(names(all_isplines)[i + 11]) + 
-    ylab("Change in Zeta diversity")
+  ylab("Change in Zeta diversity")
 )
 }
 
@@ -91,22 +139,25 @@ all_coef <- list()
 
 for(i in 1:length(my_orders)){
     temp_summary <- summary(my_msgdms[[i]]$model)
-    temp_coef <- temp_summary$coefficients  %>%
-    data.frame %>%
-      rename(sd = "Std..Error",
-      z_value = "z.value", 
-      p_value = "Pr...z.." ) %>% 
+    temp_coef <- rep(paste0("zeta_order", i), nrow(temp_summary$coefficients)) %>%
+      data.frame() %>%
+      rename(zeta_order = ".") %>%
+      cbind(temp_summary$coefficients) %>%
+      rename(p_value = "Pr(>|z|)",
+             z_value = "z value",
+             Std_Error = "Std. Error") %>% 
       rownames_to_column(var = "Effect")   %>% 
       mutate(Effect = factor(Effect, levels = Effect),
             zeta_order = paste0("zeta_", my_orders[i]),#adding zeta_order as a column
-           Lower = Estimate - 1.96*sd, #CL
-           Upper = Estimate + 1.96*sd,
+           Lower = Estimate - 1.96*Std_Error, #CL
+           Upper = Estimate + 1.96*Std_Error,
            colours = factor(c(1, rep(2:10, each = 3))), #To generalise, this will need to be changed
            y_height = as.numeric(rev(seq(1,28))))
     all_coef[[i]] <- temp_coef
 }
 
-all_coef <- bind_rows(all_coef) # change from list to single dataframe
+all_coef <- bind_rows(all_coef)%>% 
+      mutate(zeta_order = factor(zeta_order)) # change from list to single dataframe
 ```
 
 #### Effect size plot, consider metator::forest, easier!!!
@@ -115,15 +166,19 @@ all_coef <- bind_rows(all_coef) # change from list to single dataframe
 ```{r}
 # Credit to https://yzwisalaity.github.io/Forest-Plot/,  https://rgraphs.com/high-quality-forest-plots-in-r-ggplot2/
 
-d1 <- all_coef[1:28 , ]
+split_coef <- split(all_coef, f = all_coef$zeta_order)
 
+forest_plots <- list()
 
-p1 <- ggplot(d1, aes(x = Estimate, y = y_height)) +
+for (i in 1:length(my_orders)){
+plot_data <- split_coef[[i]] 
+
+p <- ggplot(plot_data, aes(x = Estimate, y = y_height)) +
         geom_point(aes(colour = colours)) +                                     
         geom_pointrange (aes(xmin = Lower, xmax = Upper, colour = colours)) + 
-         scale_y_continuous(name = NULL, breaks = d1$y_height,
-              labels = d1$Effect) +
-    ggtitle('Zeta = X') +
+         scale_y_continuous(name = NULL, breaks = plot_data$y_height,
+              labels = plot_data$Effect) +
+    ggtitle(paste0("Zeta = ", my_orders[i])) +
   theme_bw() +
  theme(panel.border = element_blank(),
       panel.background = element_blank(),
@@ -137,16 +192,18 @@ p1 <- ggplot(d1, aes(x = Estimate, y = y_height)) +
       axis.ticks.x = element_line(),
         axis.ticks.y = element_blank(),
       axis.title.x = element_text(), 
-      plot.title = element_text(hjust = -0.86, face = "bold"),
+      plot.title = element_text(hjust = 0, face = "bold"),
       legend.position="none")  +  
-      geom_vline(xintercept = 0, color = "red",linetype = "dashed", alpha = 0.5)          
-#p1
+      geom_vline(xintercept = 0, color = "red",linetype = "dashed", alpha = 0.5) 
+forest_plots[[i]] <- p
+}
+
 ```
 
 # Make a table in ggplot to align with forest plot
 ```{r}
 table_base <- 
-  ggplot(data = d1, aes(y = y_height)) + # everything in this plot is empty 
+  ggplot(data = split_coef[[1]], aes(y = y_height)) + # everything in this plot is empty 
   ylab(NULL) + xlab('') + ggtitle('') + 
   ylim(0, 28) + # make sure this is the same as p1
   theme(panel.border = element_blank(),
@@ -166,7 +223,7 @@ table_base <-
 
 ```
 
-#### A table for p values to combine with forest plot
+#### A table for effect names (to be improved for presentation)
 ```{r}
 t1 <- table_base + 
   geom_text(aes(y = y_height, 
@@ -180,48 +237,79 @@ t1 <- table_base +
 #t1
 ```
 
-#### A table for coloured effect size values to combine with forest plot
+#### A list of tables of p values to combine with forest plots
 ```{r}
-t2 <- table_base + 
-  geom_text(aes(y = y_height, 
+
+p_tables <- list()
+
+for (i in 1:length(my_orders)){
+p_table <- table_base + 
+  geom_text(data = split_coef[[i]],
+    aes(y = y_height, 
                 x = 0, 
                 colour = colours,
                 label = paste0(format(round(p_value, digits = 3), nsmall = 3))), 
                 size = 3.1, hjust = 0, vjust = -0.5)  +
-            xlim(0,2) +
+            xlim(0,1) +
             ggtitle('') 
+p_tables[[i]] <- p_table
 
-#t2
+
+}
+
 ```
 
-
-#combine as panels
-
 ```{r}
-grid.arrange(t1, p1, t2, 
+
+for (i in 1:length(my_orders)){
+grid.arrange(t1, p_tables[[i]], forest_plots[[i]], 
              nrow = 1, ncol = 3)
-```
-
-
-
-
-```{r}
-for (i in 1:length(my_orders)) {
-print(names(my_msgdms[i]))
-print(summary(my_msgdms[[i]]$model))
 }
 ```
 
-
-
-
-
+#### lists for plotting
 ```{r}
-plot(temp_out$Ispline$mean.ann.temp ~ temp_out$env$mean.ann.temp)
-plot(temp_out$Ispline$ph ~ temp_out$env$ph)
+# This has to be a list to be added to existing lists
+ispline_names <- list(t1)
+
+# List for forest plot
+forest_plots <- c(ispline_names, forest_plots)
+
+# List of p values corresponding to forest plots
+p_tables <- c(ispline_names, p_tables)
+
+```
+
+#### Forest plot. Need to get sizing right! text cut off in png
+```{r}
+
+grid.arrange(grobs = forest_plots,
+              nrow = 1, ncol = 9)
+
+filepath <- paste0(out_path, "/forest_plot", ".png")
+png(file = filepath)
+grid.arrange(grobs = forest_plots,
+              nrow = 1, ncol = length(forest_plots))
+dev.off()
+
 ```
 
 
+
+#### Table of p values for all zeta orders
+```{r}
+
+grid.arrange(grobs = p_tables,
+              nrow = 1, ncol = 9)
+
+filepath <- paste0(out_path, "/forest_plot_p_values", ".png")
+png(file = filepath)
+grid.arrange(grobs = p_tables,
+              nrow = 1, ncol = 9)
+dev.off() 
+```
+
+#### Check if we can retrieve the same ispline plots
 ```{r}
 my_msgdm_i <- my_msgdms[[1]]
 

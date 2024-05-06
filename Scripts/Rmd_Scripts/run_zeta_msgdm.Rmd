@@ -7,7 +7,6 @@ output: html_notebook
 
 ## setup
 ```{r}
-
 here::i_am("Scripts/Rmd_Scripts/run_zeta_msgdm.Rmd")
 
 library(tidyverse)
@@ -47,7 +46,10 @@ render_report = function(analysis_script, params_list) {
                       paste0(here("Output/Spatial/GAM"), "/","GAM", "_" , params_list$dataset,  "/")  
                 } else if(analysis_script == "GAMM_analyses.Rmd"){  
                       paste0(here("Output/Spatial/GAM"), "/","GAMM", "_" , params_list$dataset,  "/")
-                }
+                } else if(analysis_script == "process_msgdm_results.Rmd"){  
+                      paste0(here("Output/Spatial/msgdms"), "/", 
+                      params_list$dataset, "_" , params_list$normalize_msgdm, "/", 
+                      "figs_tables/")
   
 if(!dir.exists(out_path)) dir.create(out_path, recursive = TRUE)
   rmarkdown::render(input = analysis_script,
@@ -142,6 +144,28 @@ tic()
 render_report(analysis_script = "Zeta_msgdm_analyses.Rmd", list(dataset = "hs_no_zeros",  
               orders_msgdm =  c(2, 3, 4, 5, 6), sam_msgdm = 50000, normalize_msgdm = "Sorensen"))
 toc()
+
+```
+
+#### Generate tables and figures for msgdms
+```{r}
+render_report(analysis_script = "process_msgdm_results.Rmd", 
+              list(dataset = "all_species", normalize_msgdm = "Simpson"))
+
+render_report(analysis_script = "process_msgdm_results.Rmd", 
+              list(dataset = "wc", normalize_msgdm = "Simpson"))
+
+render_report(analysis_script = "process_msgdm_results.Rmd", 
+              list(dataset = "hs_no_zeros", normalize_msgdm = "Simpson"))
+
+render_report(analysis_script = "process_msgdm_results.Rmd", 
+              list(dataset = "all_species", normalize_msgdm = "Sorensen"))
+
+render_report(analysis_script = "process_msgdm_results.Rmd", 
+              list(dataset = "wc", normalize_msgdm = "Sorensen"))
+
+render_report(analysis_script = "process_msgdm_results.Rmd", 
+              list(dataset = "hs_no_zeros", normalize_msgdm = "Sorensen"))
 
 ```
 

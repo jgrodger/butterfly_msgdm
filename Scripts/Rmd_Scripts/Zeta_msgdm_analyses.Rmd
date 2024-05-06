@@ -17,6 +17,7 @@ https://r4ds.had.co.nz/r-markdown.html
 ```{r}
 # You can also run arbitrary R expressions by prefacing the parameter value with !r
 # https://r4ds.had.co.nz/r-markdown.html
+
 ```
 
 
@@ -121,8 +122,14 @@ print(Sys.time())
 
 names(output0) <- paste0("msgdm.", params$orders_msgdm)
 
+output0$orders <- params$orders_msgdm
 
-write_rds(output0, file = paste0(here(out_path), "/", params$dataset, "_", params$normalize_msgdm, "_zeta_msgdms.rds"))
+filepath <- paste0(here(out_path), "/", params$dataset, "_", params$normalize_msgdm, "_zeta_msgdms.rds")
+
+#to make sure
+unlink(filepath, recursive = FALSE, force = FALSE) #deletes previous version with the same name
+
+write_rds(output0, file = filepath)
 
 ```
 
@@ -145,11 +152,9 @@ print(with(summary(output0[[i]]$model), 1 - deviance/null.deviance))
 ### MSGDM i-spline plots
 ```{r}
 
-
-
 for (i in 1:length(params$orders_msgdm)) {
   
-##Plot.ispline(msgdm = output0[[i]], data.env = site.by.env, distance = TRUE,  legend = TRUE)
+Plot.ispline(msgdm = output0[[i]], data.env = site.by.env, distance = TRUE,  legend = TRUE)
   filepath <- paste0(out_path, "ispline_plot_",params$dataset, "_", params$normalize_msgdm, "_zeta_order", params$orders_msgdm[i], ".png")
 
 #For unknown reasons, over writing is not happening  
@@ -175,8 +180,14 @@ names(varparts) <- paste0("zeta.vapart.", params$orders_msgdm)
 
 for (i in 1:length(params$orders_msgdm)) {
 pie.neg(varparts[[i]][4:7,1], density = c(4, 0, 8, -1),  angle = c(90, 0, 0, 0), labels =  c("distance","undistinguishable","environment","unexplained"), radius = 0.9, main = paste0("Zeta = ", params$orders_msgdm[i]))
+
+filepath <- paste0(out_path, "msgdm_var_pie_",params$dataset, "_", params$normalize_msgdm, "_zeta_order", params$orders_msgdm[i], ".png")
+
+#For unknown reasons, over writing is not happening  
+unlink(filepath, recursive = FALSE, force = FALSE) #deletes previous version with the same name  
   
-png(file = paste0(out_path, "msgdm_var_pie_",params$dataset, "_", params$normalize_msgdm, "_zeta_order", params$orders_msgdm[i], ".png"))
+    
+png(file = filepath)
 pie.neg(varparts[[i]][4:7,1], density = c(4, 0, 8, -1),  angle = c(90, 0, 0, 0), labels =  c("distance","undistinguishable","environment","unexplained"), radius = 0.9, main = paste0("Zeta = ", params$orders_msgdm[i]))
 dev.off()  
     
