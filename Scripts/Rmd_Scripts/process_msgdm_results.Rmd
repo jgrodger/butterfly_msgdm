@@ -24,13 +24,13 @@ my_data <- read_rds(here("./Data/Processed_Data/Spatial/all_species.rds"))
 
 my_env_data <- my_data$site.by.env
 
-my_msgdms <- read_rds(here("Output/Spatial/msgdms/all_species_Simpson/zeta_msgdms.rds"))
+my_msgdms <- read_rds(here("Output/Spatial/msgdms/all_species_Simpson/all_species_Simpson_zeta_msgdms.rds"))
 
 #to do later get quantiles of env vars
 
 
 #this will need to be made flexible later
-my_orders <- c(2, 3, 6, 10, 15, 20)
+my_orders <- c(2, 3, 4, 6, 10, 15, 20, 50)
 
 all_isplines <- list()
 

@@ -232,7 +232,7 @@ X)Filename
 	•Inputs: NA.
 	•Outputs: code chunks manually copied to butterfly_msgdm_tables_figures_report.Rmd
 
-#Template for file documentation
+# Template for file documentation
 
 X)Filename
 	•What this does: 

@@ -5,7 +5,9 @@ output: html_document
 params:
   dataset: "all_species"
   sam_msgdm: 100
-  orders_msgdm: !r c(2,3)
+  orders_msgdm: 
+   - 2
+   - 3
   normalize_msgdm: "Simpson"
 ---
 
@@ -147,9 +149,13 @@ print(with(summary(output0[[i]]$model), 1 - deviance/null.deviance))
 
 for (i in 1:length(params$orders_msgdm)) {
   
-Plot.ispline(msgdm = output0[[i]], data.env = site.by.env, distance = TRUE,  legend = TRUE)
-  
-png(file = paste0(out_path, "ispline_plot_",params$dataset, "_", params$normalize_msgdm, "_zeta_order", params$orders_msgdm[i], ".png"))
+##Plot.ispline(msgdm = output0[[i]], data.env = site.by.env, distance = TRUE,  legend = TRUE)
+  filepath <- paste0(out_path, "ispline_plot_",params$dataset, "_", params$normalize_msgdm, "_zeta_order", params$orders_msgdm[i], ".png")
+
+#For unknown reasons, over writing is not happening  
+unlink(filepath, recursive = FALSE, force = FALSE) #deletes previous version with the same name
+    
+png(file = filepath)
 Plot.ispline(msgdm = output0[[i]], data.env = site.by.env, distance = TRUE,  legend = TRUE)
 dev.off()  
   
