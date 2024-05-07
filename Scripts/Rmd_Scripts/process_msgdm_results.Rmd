@@ -360,4 +360,63 @@ isp_env <- my_isplines$env
 
 head(my_isplines$Ispline)
 ```
+#### Deviance explained (rough as this is a non-linear model)
+
+```{r}
+dev_table <- data.frame()
+
+for (i in 1:length(params$orders_msgdm)) {
+dev_table[i, 1] <- paste0("Zeta = ", i)
+dev_table[i, 2] <- with(summary(my_msgdms[[i]]$model), 1 - deviance/null.deviance)
+}
+names(dev_table) <- c("Zeta order", "Deviance Explained")
+
+#I have checked and csv over-writes fines
+write_csv(dev_table, file = paste0(out_path, "/", "deviance_table.csv"))
+kable(dev_table, digits = 3)
+```
+#### Deviance explained pie charts (also rough)
+```{r}
+varparts <- list()
+
+for (i in 1:length(params$orders_msgdm)) {
+  set.seed(1)
+  varparts[[i]] <- Zeta.varpart(msgdm.mod = my_msgdms[[i]], method.glm = "glm.fit2", cons.inter = -1) 
+}
+names(varparts) <- paste0("zeta.varpart.", params$orders_msgdm)
+
+par(mfrow = c(1, length(params$orders_msgdm)))
+for (i in 1:length(params$orders_msgdm)) {
+   print(pie.neg(varparts[[i]][4:7,1], density = c(4, 0, 8, -1),  angle = c(90, 0, 0, 0), 
+          labels =  c("distance","undistinguishable","environment","unexplained"), 
+          radius = 0.9, main = paste0("Zeta = ", params$orders_msgdm[i])))
+}
+
+
+filepath <- paste0(out_path, "msgdm_var_pie_",params$dataset, "_", params$normalize_msgdm, "_zeta_order", params$orders_msgdm[i], ".png")
+
+#For unknown reasons, over writing is not happening  
+unlink(filepath, recursive = FALSE, force = FALSE) #deletes previous version with the same name  
+png(file = filepath,
+   width = 130,
+   height = 70*length(forest_plots),
+   units = "mm",
+   res = 72)
+par(mfrow = c(length(params$orders_msgdm), 1))
+for (i in 1:length(params$orders_msgdm)) {
+   print(pie.neg(varparts[[i]][4:7,1], density = c(4, 0, 8, -1),  angle = c(90, 0, 0, 0), 
+          labels =  c("distance","undistinguishable","environment","unexplained"), 
+          radius = 0.9, main = paste0("Zeta = ", params$orders_msgdm[i])))
+}
+dev.off()
+
+```
+
+
+
+
+
+
+
+
 
