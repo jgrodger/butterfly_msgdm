@@ -375,6 +375,8 @@ names(dev_table) <- c("Zeta order", "Deviance Explained")
 write_csv(dev_table, file = paste0(out_path, "/", "deviance_table.csv"))
 kable(dev_table, digits = 3)
 ```
+
+
 #### Deviance explained pie charts (also rough)
 ```{r}
 varparts <- list()
@@ -393,7 +395,7 @@ for (i in 1:length(params$orders_msgdm)) {
 }
 
 
-filepath <- paste0(out_path, "msgdm_var_pie_",params$dataset, "_", params$normalize_msgdm, "_zeta_order", params$orders_msgdm[i], ".png")
+filepath <- paste0(out_path, "/msgdm_var_pie",".png")
 
 #For unknown reasons, over writing is not happening  
 unlink(filepath, recursive = FALSE, force = FALSE) #deletes previous version with the same name  
