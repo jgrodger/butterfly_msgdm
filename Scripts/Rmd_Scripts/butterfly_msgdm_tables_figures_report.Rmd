@@ -139,7 +139,7 @@ for (i in 1:length(datasets)){
 ```{r, results='asis', message=FALSE}
 
 for (i in 1:length(datasets)){
-  my_file <- paste0("./Output/Spatial/zeta_declines_decays/", datasets[i], "/", datasets[i], "_zeta_decline_exact.csv")
+my_file <- paste0("./Output/Spatial/zeta_declines_decays/", datasets[i], "/", datasets[i], "_zeta_decline_exact.csv")
 zeta_div <-  read_csv(here(my_file))
 print(kable(t(zeta_div), digits = 2,
              caption = paste0("Table S", i+5, ". Comparison of zeta diversity values for ", dataset_names[i])))
