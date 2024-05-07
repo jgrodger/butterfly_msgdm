@@ -7,9 +7,20 @@ output: html_notebook
 ```{r}
 datasets <- c("all_species", "wc", "hs", "hs_no_zeros")
 datasets_names <- c("All Butterfly Species", "Wider Countryside Species", "Habitat Specialists including sites with no species", "Habitat Specialists excluding sites with no species" )
+
 datasets2 <- c("all_species", "wc")
 datasets_names2 <- c("All Butterfly Species", "Wider Countryside Species")
+
+datasets3 <- c("all_species_Simpson", "wc_Simpson", "hs_no_zeros_Simpson", 
+               "all_species_Sorensen", "wc_Sorensen", "hs_no_zeros_Sorensen")
+datasets_names3 <- c("All Butterfly Species, Simpson", "Wider Countryside Species, Simpson", 
+                     "Habitat Specialists, Simpson", "All Butterfly Species, Sorensen", 
+                     "Wider Countryside Species, Sorensen", "Habitat Specialists, Sorensen")
+
 ```
+
+
+##### Note, quotes
 
 #### make chunks for zeta decline figs 1:10
 ```{r}
@@ -68,4 +79,43 @@ for (i in 1:length(datasets)) {
 }
 
 ```
+#### Make chunks for msgdm figures
+```{r}
+for (i in 1:length(datasets3)) {
+  cat(
+    paste0("#### ", datasets_names3[i],
+          "\n",
+          '```{r, ','out.width = ','"100%"}',
+          "\n",
+          'include_graphics(here("./Output/Spatial/msgdms/', datasets3[i],  '/figs_tables/forest_plot.png"))',
+          "\n",
+          "```",
+           "\n",
+          '```{r fig.cap = "Figure S',i+12, ". Effect sizes and p-values for splines of predictor variables and the intercept for ", datasets_names3[i], '", out.width = ','"100%"}',
+          "\n",
+          'include_graphics(here("./Output/Spatial/msgdms/', datasets3[i],  '/figs_tables/forest_plot_p_values.png"))',
+          "\n",
+          "```",
+          "\n\n"
+           )
+  )
+}
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 

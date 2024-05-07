@@ -28,29 +28,27 @@ conflicts_prefer(dplyr::rename)
 ```
 #### File Paths
 ```{r}
+# Path to data used for tje msgdm analysis (which is already done)
 data_path <- paste0("./Data/Processed_Data/Spatial/", params$dataset, ".rds")
 
-# msgdm output
+# Path to output of the msgdm analysis
 msgdm_path <-  paste0("./Output/Spatial/msgdms", "/", params$dataset, "_" , params$normalize_msgdm, "/", 
                       params$dataset, "_" , params$normalize_msgdm, "_zeta_msgdms.rds")
 
-# out_path
+# Path to folder to save output of this script
 out_path <- here(paste0("./Output/Spatial/msgdms", "/", params$dataset, "_" , params$normalize_msgdm, "/", 
                        "/figs_tables/"))
 
 if(!dir.exists(out_path)) dir.create(out_path, recursive = TRUE)
 ```
 
+#### an example paper with helpful code for generating figures
 ```{r}
-msgdm_path <-  "./Output/Spatial/msgdms/wc_Simpson/wc_Simpson_zeta_msgdms.rds"
-
-my_msgdms <- read_rds(here(msgdm_path))
-
-
+#https://onlinelibrary.wiley.com/doi/10.1111/mec.16860
 ```
 
 
-#https://onlinelibrary.wiley.com/doi/10.1111/mec.16860
+
 ```{r}
 my_data <- read_rds(here(data_path))
 
@@ -59,8 +57,6 @@ my_msgdms <- read_rds(here(msgdm_path))
 my_env_data <- my_data$site.by.env
 
 my_msgdms$orders <- c(2, 3, 4, 6, 10, 15, 20, 50)
-
-#to do later get quantiles of env vars
 
 
 #this will need to be made flexible later
@@ -233,18 +229,37 @@ table_base <-
 
 ```
 
-#### A table for effect names (to be improved for presentation)
+
+
+
+#### A table for effect names (to be improved for presentation) font size 10
 ```{r}
-t1 <- table_base + 
+effects_table <- table_base + 
   geom_text(aes(y = y_height, 
                 x = 0, 
                 colour = colours,
                 label = Effect), 
                 size = 3.1, hjust = 1, vjust = -0.5)  +
             xlim(-2,0) +
-            ggtitle('') 
+            ggtitle("Effect")  + 
+            theme(plot.title = element_text(size = 10, face = "bold"))
 
-#t1
+#effects_table
+```
+
+
+#### A table for effect names (to be improved for presentation), default font size
+```{r}
+effects_table2 <- table_base + 
+  geom_text(aes(y = y_height, 
+                x = 0, 
+                colour = colours,
+                label = Effect), 
+                size = 3.1, hjust = 1, vjust = -0.5)  +
+            xlim(-2,0) +
+            ggtitle("Effect")
+
+#effects_table
 ```
 
 #### A list of tables of p values to combine with forest plots
@@ -269,10 +284,34 @@ p_tables[[i]] <- p_table
 
 ```
 
+
+#### A list of tables of p values with headings to combine with forest plots
+```{r}
+
+p_tables2 <- list()
+
+for (i in 1:length(my_orders)){
+p_table <- table_base + 
+  geom_text(data = split_coef[[i]],
+    aes(y = y_height, 
+                x = 0, 
+                colour = colours,
+                label = paste0(format(round(p_value, digits = 3), nsmall = 3))), 
+                size = 3.1, hjust = 0, vjust = -0.5)  +
+            xlim(0,1) +
+            ggtitle(paste0("Zeta = ", my_orders[i])) + 
+            theme(plot.title = element_text(size = 10, face = "bold"))
+p_tables2[[i]] <- p_table
+
+
+}
+
+```
+
 ```{r}
 
 for (i in 1:length(my_orders)){
-grid.arrange(t1, p_tables[[i]], forest_plots[[i]], 
+grid.arrange(effects_table, p_tables[[i]], forest_plots[[i]], 
              nrow = 1, ncol = 3)
 }
 ```
@@ -280,42 +319,52 @@ grid.arrange(t1, p_tables[[i]], forest_plots[[i]],
 #### lists for plotting
 ```{r}
 # This has to be a list to be added to existing lists
-ispline_names <- list(t1)
+effects_table <- list(effects_table)
+effects_table2 <- list(effects_table2)
 
 # List for forest plot
-forest_plots <- c(ispline_names, forest_plots)
+forest_plots <- c(effects_table2, forest_plots)
 
 # List of p values corresponding to forest plots
-p_tables <- c(ispline_names, p_tables)
+p_tables <- c(effects_table, p_tables)
 
+p_tables2 <- c(effects_table, p_tables2)
 ```
 
 #### Forest plot. Need to get sizing right! text cut off in png
 ```{r}
 
 grid.arrange(grobs = forest_plots,
-              nrow = 1, ncol = 9)
+              nrow = 1, ncol = length(forest_plots))
 
 filepath <- paste0(out_path, "/forest_plot", ".png")
-png(file = filepath)
+unlink(filepath, recursive = FALSE, force = FALSE) #deletes previous version with the same name
+png(file = filepath, 
+   width = 55*length(forest_plots),
+   height = 210, 
+   units = "mm", 
+   res = 72)
 grid.arrange(grobs = forest_plots,
               nrow = 1, ncol = length(forest_plots))
+
 dev.off()
 
 ```
 
-
-
 #### Table of p values for all zeta orders
 ```{r}
 
-grid.arrange(grobs = p_tables,
-              nrow = 1, ncol = 9)
+grid.arrange(grobs = p_tables2,
+              nrow = 1, ncol = length(p_tables))
 
 filepath <- paste0(out_path, "/forest_plot_p_values", ".png")
-png(file = filepath)
-grid.arrange(grobs = p_tables,
-              nrow = 1, ncol = 9)
+png(file = filepath, 
+   width = 55*length(p_tables2),
+   height = 210, 
+   units = "mm", 
+   res = 72)
+grid.arrange(grobs = p_tables2,
+              nrow = 1, ncol = length(p_tables2))
 dev.off() 
 ```
 
