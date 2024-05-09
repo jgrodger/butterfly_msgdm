@@ -170,6 +170,91 @@ include_graphics(here("./Output/Spatial/zeta_declines_decays/hs_no_zeros/hs_no_z
 
 ## MSGDMS
 
+### Forest Plots
+
+#### All Butterfly Species, Simpson
+```{r, out.width = "100%"}
+include_graphics(here("./Output/Spatial/msgdms/all_species_Simpson/figs_tables/forest_plot.png"))
+```
+```{r fig.cap = "Figure S13. Effect sizes and p-values for splines of predictor variables and the intercept for All Butterfly Species, Simpson", out.width = "100%"}
+include_graphics(here("./Output/Spatial/msgdms/all_species_Simpson/figs_tables/forest_plot_p_values.png"))
+```
+
+#### Wider Countryside Species, Simpson
+```{r, out.width = "100%"}
+include_graphics(here("./Output/Spatial/msgdms/wc_Simpson/figs_tables/forest_plot.png"))
+```
+```{r fig.cap = "Figure S14. Effect sizes and p-values for splines of predictor variables and the intercept for Wider Countryside Species, Simpson", out.width = "100%"}
+include_graphics(here("./Output/Spatial/msgdms/wc_Simpson/figs_tables/forest_plot_p_values.png"))
+```
+
+#### Habitat Specialists, Simpson
+```{r, out.width = "100%"}
+include_graphics(here("./Output/Spatial/msgdms/hs_no_zeros_Simpson/figs_tables/forest_plot.png"))
+```
+```{r fig.cap = "Figure S15. Effect sizes and p-values for splines of predictor variables and the intercept for Habitat Specialists, Simpson", out.width = "100%"}
+include_graphics(here("./Output/Spatial/msgdms/hs_no_zeros_Simpson/figs_tables/forest_plot_p_values.png"))
+```
+
+#### All Butterfly Species, Sorensen
+```{r, out.width = "100%"}
+include_graphics(here("./Output/Spatial/msgdms/all_species_Sorensen/figs_tables/forest_plot.png"))
+```
+```{r fig.cap = "Figure S16. Effect sizes and p-values for splines of predictor variables and the intercept for All Butterfly Species, Sorensen", out.width = "100%"}
+include_graphics(here("./Output/Spatial/msgdms/all_species_Sorensen/figs_tables/forest_plot_p_values.png"))
+```
+
+#### Wider Countryside Species, Sorensen
+```{r, out.width = "100%"}
+include_graphics(here("./Output/Spatial/msgdms/wc_Sorensen/figs_tables/forest_plot.png"))
+```
+```{r fig.cap = "Figure S17. Effect sizes and p-values for splines of predictor variables and the intercept for Wider Countryside Species, Sorensen", out.width = "100%"}
+include_graphics(here("./Output/Spatial/msgdms/wc_Sorensen/figs_tables/forest_plot_p_values.png"))
+```
+
+#### Habitat Specialists, Sorensen
+```{r, out.width = "100%"}
+include_graphics(here("./Output/Spatial/msgdms/hs_no_zeros_Sorensen/figs_tables/forest_plot.png"))
+```
+```{r fig.cap = "Figure S18. Effect sizes and p-values for splines of predictor variables and the intercept for Habitat Specialists, Sorensen", out.width = "100%"}
+include_graphics(here("./Output/Spatial/msgdms/hs_no_zeros_Sorensen/figs_tables/forest_plot_p_values.png"))
+```
+
+Show in New Window
+#### All Butterfly Species
+```{r fig.cap = "Figure S3. Zeta diversity decline for All Butterfly Species, zeta orders 1 to 10", out.width = "100%"}
+include_graphics(here("./Output/Spatial/zeta_declines_decays/all_species/all_species_zeta_decline_to_10.png"))
+```
+
+#### Wider Countryside Species
+```{r fig.cap = "Figure S4. Zeta diversity decline for Wider Countryside Species, zeta orders 1 to 10", out.width = "100%"}
+include_graphics(here("./Output/Spatial/zeta_declines_decays/wc/wc_zeta_decline_to_10.png"))
+```
+
+#### Habitat Specialists including sites with no species
+```{r fig.cap = "Figure S5. Zeta diversity decline for Habitat Specialists including sites with no species, zeta orders 1 to 10", out.width = "100%"}
+include_graphics(here("./Output/Spatial/zeta_declines_decays/hs/hs_zeta_decline_to_10.png"))
+```
+
+#### Habitat Specialists excluding sites with no species
+```{r fig.cap = "Figure S6. Zeta diversity decline for Habitat Specialists excluding sites with no species, zeta orders 1 to 10", out.width = "100%"}
+include_graphics(here("./Output/Spatial/zeta_declines_decays/hs_no_zeros/hs_no_zeros_zeta_decline_to_10.png"))
+```
+
+Show in New Window
+#### All Butterfly Species
+```{r fig.cap = "Figure S7. Zeta diversity decline for All Butterfly Species, zeta orders 1 to 10", out.width = "100%"}
+include_graphics(here("./Output/Spatial/zeta_declines_decays/all_species/all_species_zeta_decline_to_250.png"))
+```
+
+#### Wider Countryside Species
+```{r fig.cap = "Figure S8. Zeta diversity decline for Wider Countryside Species, zeta orders 1 to 10", out.width = "100%"}
+include_graphics(here("./Output/Spatial/zeta_declines_decays/wc/wc_zeta_decline_to_250.png"))
+```
+
+Show in New Window
+
+Show in New Window
 #### All Butterfly Species, Simpson
 ```{r, out.width = "100%"}
 include_graphics(here("./Output/Spatial/msgdms/all_species_Simpson/figs_tables/forest_plot.png"))
@@ -219,5 +304,72 @@ include_graphics(here("./Output/Spatial/msgdms/hs_no_zeros_Sorensen/figs_tables/
 ```
 
 
+###Deviance explained
+
+#### All Butterfly Species, Simpson
+```{r, out.width = "100%"}
+devtab <- read_csv(here("./Output/Spatial/msgdms/all_species_Simpson/figs_tables/deviance_table.csv"))
+kable(devtab, digits = 3,
+caption = paste0("Table S", i + 9, ". Deviance explained by MSGDMs for All Butterfly Species, Simpson"))
+```
+
+```{r fig.cap = "Figure S19. Deviance partitioning in MSGDMS for All Butterfly Species, Simpson", out.width = "100%"}
+include_graphics(here("./Output/Spatial/msgdms/all_species_Simpson/figs_tables/msgdm_var_pie.png"))
+```
+
+#### Wider Countryside Species, Simpson
+```{r, out.width = "100%"}
+devtab <- read_csv(here("./Output/Spatial/msgdms/wc_Simpson/figs_tables/deviance_table.csv"))
+kable(devtab, digits = 3,
+caption = paste0("Table S", i + 9, ". Deviance explained by MSGDMs for Wider Countryside Species, Simpson"))
+```
+
+```{r fig.cap = "Figure S20. Deviance partitioning in MSGDMS for Wider Countryside Species, Simpson", out.width = "100%"}
+include_graphics(here("./Output/Spatial/msgdms/wc_Simpson/figs_tables/msgdm_var_pie.png"))
+```
+
+#### Habitat Specialists, Simpson
+```{r, out.width = "100%"}
+devtab <- read_csv(here("./Output/Spatial/msgdms/hs_no_zeros_Simpson/figs_tables/deviance_table.csv"))
+kable(devtab, digits = 3,
+caption = paste0("Table S", i + 9, ". Deviance explained by MSGDMs for Habitat Specialists, Simpson"))
+```
+
+```{r fig.cap = "Figure S21. Deviance partitioning in MSGDMS for Habitat Specialists, Simpson", out.width = "100%"}
+include_graphics(here("./Output/Spatial/msgdms/hs_no_zeros_Simpson/figs_tables/msgdm_var_pie.png"))
+```
+
+#### All Butterfly Species, Sorensen
+```{r, out.width = "100%"}
+devtab <- read_csv(here("./Output/Spatial/msgdms/all_species_Sorensen/figs_tables/deviance_table.csv"))
+kable(devtab, digits = 3,
+caption = paste0("Table S", i + 9, ". Deviance explained by MSGDMs for All Butterfly Species, Sorensen"))
+```
+
+```{r fig.cap = "Figure S22. Deviance partitioning in MSGDMS for All Butterfly Species, Sorensen", out.width = "100%"}
+include_graphics(here("./Output/Spatial/msgdms/all_species_Sorensen/figs_tables/msgdm_var_pie.png"))
+```
+
+#### Wider Countryside Species, Sorensen
+```{r, out.width = "100%"}
+devtab <- read_csv(here("./Output/Spatial/msgdms/wc_Sorensen/figs_tables/deviance_table.csv"))
+kable(devtab, digits = 3,
+caption = paste0("Table S", i + 9, ". Deviance explained by MSGDMs for Wider Countryside Species, Sorensen"))
+```
+
+```{r fig.cap = "Figure S23. Deviance partitioning in MSGDMS for Wider Countryside Species, Sorensen", out.width = "100%"}
+include_graphics(here("./Output/Spatial/msgdms/wc_Sorensen/figs_tables/msgdm_var_pie.png"))
+```
+
+#### Habitat Specialists, Sorensen
+```{r, out.width = "100%"}
+devtab <- read_csv(here("./Output/Spatial/msgdms/hs_no_zeros_Sorensen/figs_tables/deviance_table.csv"))
+kable(devtab, digits = 3,
+caption = paste0("Table S", i + 9, ". Deviance explained by MSGDMs for Habitat Specialists, Sorensen"))
+```
+
+```{r fig.cap = "Figure S24. Deviance partitioning in MSGDMS for Habitat Specialists, Sorensen", out.width = "100%"}
+include_graphics(here("./Output/Spatial/msgdms/hs_no_zeros_Sorensen/figs_tables/msgdm_var_pie.png"))
+```
 
 

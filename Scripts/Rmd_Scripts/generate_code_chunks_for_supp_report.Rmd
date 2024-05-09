@@ -19,6 +19,12 @@ datasets_names3 <- c("All Butterfly Species, Simpson", "Wider Countryside Specie
 
 ```
 
+```{r}
+library(tidyverse)
+library(knitr)
+library(conflicted)
+library(here)
+```
 
 ##### Note, quotes
 
@@ -79,7 +85,9 @@ for (i in 1:length(datasets)) {
 }
 
 ```
-#### Make chunks for msgdm figures
+
+
+#### Make chunks for msgdm forest plots
 ```{r}
 for (i in 1:length(datasets3)) {
   cat(
@@ -102,11 +110,47 @@ for (i in 1:length(datasets3)) {
 }
 ```
 
+#### Make chunks for msgdm figures
+```{r}
+
+
+for (i in 1:length(datasets3)) {
+  cat(
+    paste0('#### ', datasets_names3[i],
+          '\n',
+          '```{r, ','out.width = ','"100%"}',
+          '\n',
+          'devtab <- read_csv(here("./Output/Spatial/msgdms/', datasets3[i],  '/figs_tables/deviance_table.csv"))',               '\n',
+          'kable(devtab, digits = 3,',
+          '\n',  
+          'caption = paste0("Table S", i + 9, ". Deviance explained by MSGDMs for ', datasets_names3[i], '"))',
+          "\n",
+          "```",
+           "\n\n",
+          '```{r fig.cap = "Figure S',i+18, ". Deviance partitioning in MSGDMS for ", datasets_names3[i], '", out.width = ','"100%"}',
+          "\n",
+          'include_graphics(here("./Output/Spatial/msgdms/', datasets3[i],  '/figs_tables/msgdm_var_pie.png"))',
+          "\n",          
+          "```",
+          "\n\n"
+           ))
+}        
+          
+ 
+```
 
 
 
+#### Habitat Specialists, Sorensen
+```{r, out.width = "100%"}
+devtab <- read_csv(here("./Output/Spatial/msgdms/hs_no_zeros_Sorensen/figs_tables/deviance_table.csv"))
+kable(devtab, digits = 3,
+caption = paste0("Table S", i + 9, ". Deviance explained by MSGDMs for Habitat Specialists, Sorensen"))
+```
 
-
+```{r fig.cap = "Figure S24. Deviance partitioning in MSGDMS for Habitat Specialists, Sorensen", out.width = "100%"}
+include_graphics(here("./Output/Spatial/msgdms/hs_no_zeros_Sorensen/figs_tables/msgdm_var_pie.png"))
+```
 
 
 

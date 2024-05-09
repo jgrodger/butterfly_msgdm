@@ -61,7 +61,7 @@ my_msgdms <- read_rds(here(msgdm_path))
 my_env_data <- my_data$site.by.env
 
 # A vector of the orders for msgdms included
-my_orders <- params$orders
+my_orders <- params$orders_msgdm
 ```
 
 #### Extract processed ispline and environmental variable data into a dataframe.
@@ -360,13 +360,15 @@ isp_env <- my_isplines$env
 
 head(my_isplines$Ispline)
 ```
+
+
 #### Deviance explained (rough as this is a non-linear model)
 
 ```{r}
 dev_table <- data.frame()
 
 for (i in 1:length(params$orders_msgdm)) {
-dev_table[i, 1] <- paste0("Zeta = ", i)
+dev_table[i, 1] <- paste0("Zeta = ", my_orders[[i]])
 dev_table[i, 2] <- with(summary(my_msgdms[[i]]$model), 1 - deviance/null.deviance)
 }
 names(dev_table) <- c("Zeta order", "Deviance Explained")
@@ -395,8 +397,7 @@ for (i in 1:length(params$orders_msgdm)) {
 }
 
 
-filepath <- paste0(out_path, "/msgdm_var_pie",".png")
-
+filepath <- paste0(out_path, "/msgdm_var_pie.png")
 #For unknown reasons, over writing is not happening  
 unlink(filepath, recursive = FALSE, force = FALSE) #deletes previous version with the same name  
 png(file = filepath,
@@ -411,7 +412,6 @@ for (i in 1:length(params$orders_msgdm)) {
           radius = 0.9, main = paste0("Zeta = ", params$orders_msgdm[i])))
 }
 dev.off()
-
 ```
 
 
