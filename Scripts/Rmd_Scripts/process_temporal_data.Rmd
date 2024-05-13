@@ -218,11 +218,25 @@ any(rowSums(site.year.counts)==0)
 print("sites and species in matrix")
 dim(site.year.counts)
 ```
+#### move info out of column and row names into the dataframe to save as csv
+
+```{r}
+site.year.counts <- site.year.counts %>%
+  rownames_to_column(var = "site_year") %>%
+  mutate(site = str_sub(site_year, end = -6),
+         year = str_sub(site_year, -4)) %>%
+  relocate(site, year, .after = site_year)
+
+```
+
+
+
 #### write csv to processed data file
 
 ```{r}
-write_csv(site.year.counts, file = paste0(out_path, "/", "three_sites_site_year_counts.csv"))
-
+write_csv(site.year.counts,
+          col_names = TRUE,
+          file = paste0(out_path, "/", "three_sites_site_year_counts.csv"))
 ```
 
 
