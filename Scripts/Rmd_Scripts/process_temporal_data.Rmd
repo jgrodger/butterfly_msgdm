@@ -226,7 +226,6 @@ site.year.counts <- site.year.counts %>%
   mutate(site = str_sub(site_year, end = -6),
          year = str_sub(site_year, -4)) %>%
   relocate(site, year, .after = site_year)
-
 ```
 
 
