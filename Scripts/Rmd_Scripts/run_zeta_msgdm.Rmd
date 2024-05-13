@@ -42,8 +42,10 @@ render_report = function(analysis_script, params_list) {
                     paste0(here("Output/Spatial/zeta_declines_decays"), "/", params_list$dataset,  "/")
                 } else if(analysis_script == "Zeta_msgdm_analyses.Rmd") {
                     paste0(here("Output/Spatial/msgdms/"), "/", params_list$dataset, "_" , params_list$normalize_msgdm)
-                } else if(analysis_script == "GAM_analyses.Rmd") {
+                } else if(analysis_script == "GAM_compare_family_analyses.Rmd") {
                       paste0(here("Output/Spatial/GAM"), "/","GAM", "_" , params_list$dataset,  "/")  
+                } else if(analysis_script == "GAM_compare_spline_analyses.Rmd") {
+                      paste0(here("Output/Spatial/GAM"), "/","GAM", "_" , params_list$dataset,  "/") 
                 } else if(analysis_script == "GAMM_analyses.Rmd"){  
                       paste0(here("Output/Spatial/GAM"), "/","GAMM", "_" , params_list$dataset,  "/")
                 } else if(analysis_script == "process_msgdm_results.Rmd"){  
@@ -78,18 +80,34 @@ render_report(analysis_script = "Zeta_declines_decays_analyses.Rmd", list(datase
 toc()
 ```
 
-```{r}
-render_report(analysis_script = "GAM_analyses.Rmd", list(dataset = "all_species"))
-```
-
+#### GAMS comparing different distribution families
 
 ```{r}
-render_report(analysis_script = "GAM_analyses.Rmd", list(dataset = "wc"))
+render_report(analysis_script = "GAM_compare_family_analyses.Rmd", list(dataset = "all_species"))
 ```
 
 ```{r}
-render_report(analysis_script = "GAM_analyses.Rmd", list(dataset = "hs_no_zeros"))
+render_report(analysis_script = "GAM_compare_family_analyses.Rmd", list(dataset = "wc"))
 ```
+
+```{r}
+render_report(analysis_script = "GAM_compare_family_analyses.Rmd", list(dataset = "hs_no_zeros"))
+```
+
+#### GAMS comparing different spline methods
+
+```{r}
+render_report(analysis_script = "GAM_compare_spline_analyses.Rmd", list(dataset = "all_species"))
+```
+
+```{r}
+render_report(analysis_script = "GAM_compare_spline_analyses.Rmd", list(dataset = "wc"))
+```
+
+```{r}
+render_report(analysis_script = "GAM_compare_spline_analyses.Rmd", list(dataset = "hs_no_zeros", family = "Tweedie(p = 1.01)"))
+```
+
 
 #### GAMMs
 
