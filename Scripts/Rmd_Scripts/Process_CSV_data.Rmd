@@ -335,6 +335,17 @@ tm_shape(plot.points) +
 print(pointsmap)
 print(pointsmap2)
 ```
+#### Save dataset to process for temporal analyses
+
+```{r}
+for_temporal_ukbms <- list(records, species, sites)
+names(for_temporal_ukbms) <- c("records", "species", "sites")
+
+write_rds(for_temporal_ukbms, file = here("./Data/Processed_Data/Temporal/for_temporal_ukbms.rds"))
+```
+
+
+
 
 #### Filter records to 2015-2019 
 ```{r}

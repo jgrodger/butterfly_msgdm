@@ -1,0 +1,237 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+Previous version of code in filter_timeseries.Rmd
+
+This is abbreviated 
+
+so far I have only used this to choose three sites for Cang to play with
+
+#### Load packages.
+```{r}
+here::i_am("Scripts//Rmd_Scripts//process_temporal_data.Rmd")
+
+library(conflicted)
+
+library(tidyverse)
+
+library(here)
+
+library(iNEXT)
+
+library(tictoc)
+
+conflicts_prefer(dplyr::filter)
+conflicts_prefer(dplyr::mutate)
+conflicts_prefer(dplyr::select)
+```
+
+
+#### Functions
+```{r}
+# A function to add numbers of records, species and sites at each step to a table
+add_prisma <- function(tibble = prisma, recs = records, step_name = "?"){
+  records <- recs
+  prisma_temp <- tibble(
+    "Step" = step_name,
+    "Records" = nrow(records),
+    "Sites in records" = length(unique(records$site)),
+    "Species in records" = length(unique(records$species.no)),
+    "Sites in sites" = nrow(sites),
+    "Species in species" = nrow(species)) 
+  new_prisma <- rbind(prisma, prisma_temp)
+}
+
+# A function for filtering data: this assumes that the environment contains objects 
+# called records, sites, species as prepared above. The argument is the dataset that 
+# will already have been filtered by another criterion. The other 
+# two are then filtered to contain records still relevant
+filter_ukbms <- function(filter_by){
+  
+  if(filter_by == "records") {
+  species <- filter (species, species.no %in% records$species.no)   
+  sites <-  filter(sites, site %in% records$site)  
+  
+  } else if  ((filter_by == "sites")) {
+  records <- filter(records, site %in% sites$site)
+  species <- filter (species, species.no %in% records$species.no) 
+  
+  } else if (filter_by == "species"){
+  records <- filter(records, species.no %in% species$species.no)
+  sites <-  filter(sites, site %in% records$site)
+  }
+  
+  filtered_data <- list(records, sites, species)
+  names(filtered_data) <- c("records", "sites", "species")
+  return(filtered_data)
+}
+```
+
+#### File Paths
+```{r}
+# Path to data used for tje msgdm analysis (which is already done)
+data_path <- paste0("./Data/Processed_Data/Temporal/for_temporal_ukbms.rds")
+
+
+# Path to folder to save output of this script
+out_path <- here(paste0("./Data/Processed_Data/Temporal/"))
+
+#if(!dir.exists(out_path)) dir.create(out_path, recursive = TRUE)
+```
+
+#### Load Data
+```{r}
+my_data <- read_rds(here(data_path))
+
+records <- my_data$records
+
+species <- my_data$species
+
+sites <- my_data$sites
+
+```
+
+#### define sampling periods over year
+```{r}
+# Create a variable to group surveys by sampling period. Divide the prescribed survey period into 4 quarters. To have equal length quarters, the last week of March (week 0) is included in the first period and first week of October (week 40) in 4th period, although they are outside the survey period
+
+# Create columns to identify survey events, site-year-month, and site-year combinations.
+records <- records %>%
+  mutate(survey.info = paste(site, year, month, day, week.no, sep = "_"),
+         site.year.month = paste(site, year, month, sep = "_"),
+         site.year = paste(site, year, sep = "_"))
+# Check variation in sampling effort by week
+
+# Create sampling period variable
+records <- mutate(records, 
+                  sampling.period = case_match(week.no,
+                    -7:-1 ~ "pre-april",
+                    0:6   ~ "per1",
+                    7:13  ~ "per2",
+                    14:20 ~ "per3",
+                    21:27 ~ "per4",
+                    28:40 ~ "post-september"))
+
+table(records$sampling.period)
+
+```
+
+
+
+
+#### get suryeys for each site in each year in each of sampling periods that I define
+
+```{r}
+#surveys per site per year
+surveys.site.year <-   records %>% 
+  distinct(survey.info, .keep_all = TRUE) %>%
+  group_by (site, year, sampling.period)  %>% 
+  summarise(n = n())  %>% 
+  ungroup() %>%
+  mutate(site.year = paste(site, year, sep = "_")) %>%
+  pivot_wider(
+    names_from = sampling.period,
+    values_from = n,
+    values_fill = 0) %>%
+  mutate(surveys.per.year = (per1 + per2 + per3 + per4))
+
+#inspect frequency distribution of surveys per site per year
+print("surveys per site per year")
+summary(surveys.site.year$surveys.per.year)
+hist(surveys.site.year$surveys.per.year, main = "Surveys per site per year")
+
+```
+#### Obtain dataframe with number of years per site, and minimym surveys for each site per year and  in each sampling period in each year
+```{r}
+
+
+
+#years per site summary and histogram
+years.per.site <- surveys.site.year %>% 
+  group_by(site)%>% 
+summarise(years.surveyed = n(),
+          first.year = min(year),
+          last.year = max(year),
+          minimum.surveys.per.per1 = min(per1),
+          minimum.surveys.per.per2 = min(per2),
+          minimum.surveys.per.per3 = min(per3),
+          minimum.surveys.per.per4 = min(per4),
+          minimum.surveys.per.year = min(surveys.per.year))
+
+
+
+```
+
+
+#### Filter to include three sites as requested by Cang
+```{r}
+records <- records %>%
+  filter(site %in% c(1, 4, 86))
+
+three_series <- filter_ukbms("records")
+
+```
+
+#### Get site by species matrix for those three years
+```{r}
+aggregated.records <- records %>%
+  group_by(site, year, species.no)%>%
+    summarise(annual.records = sum(count))
+  
+
+#get a site.year by species dataframe with counts of observations
+site.year.counts <- aggregated.records %>%
+  pivot_wider(names_from = species.no,
+              values_from = annual.records,
+              values_fill = 0) %>% # for cases when there wasn't a zero count record for a species that wasn't recorded in a survey, should still be zero
+  mutate (site.year = paste("site", site, year, sep = "_")) %>% 
+    column_to_rownames(var = "site.year")%>%
+      dplyr::select(-c(site, year))
+
+names(site.year.counts) <- paste("species", names(site.year.counts), sep = "_")
+```
+
+
+#### Inspect coverage
+```{r}
+coverage.multi <- DataInfo(t(site.year.counts),  datatype="abundance")
+
+hist(coverage.multi$SC)
+
+hist(coverage.multi$SC, ylim = c(0, 200))
+
+
+hist(coverage.multi$SC, xlim = c(0.95, 1), breaks = 1000)
+
+quantile(coverage.multi$SC, seq(from = 0, to = 1, by = 0.01), na.rm = TRUE)
+```
+#### Check all sites and species have occurrence data
+```{r}
+print("are there any species with no records")
+any(colSums(site.year.counts)==0)
+
+print("are there any sites with no records")
+any(rowSums(site.year.counts)==0)
+
+print("sites and species in matrix")
+dim(site.year.counts)
+```
+#### write csv to processed data file
+
+```{r}
+write_csv(site.year.counts, file = paste0(out_path, "/", "three_sites_site_year_counts.csv"))
+
+```
+
+
+
+
+
+
+
+
+
+
+
