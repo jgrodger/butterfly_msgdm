@@ -1,0 +1,68 @@
+---
+title: "Process GAMM analyses"
+output: html_document
+date: "2024-05-13"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+#### Find best correlation structure
+```{r}
+#gamm_cor_struct_list <- readRDS(here("Output/Spatial/GAM/GAMM_all_species/all_species_gamm_cor_struct_compare.rds"))
+
+gamm_corGaus <- gamm_cor_struct_list[[1]]
+gamm_corExp <- gamm_cor_struct_list[[2]]
+gamm_corLin <- gamm_cor_struct_list[[3]]
+gamm_corRatio <- gamm_cor_struct_list[[4]]
+gamm_corSpher <- gamm_cor_struct_list[[5]]
+
+
+aic_table <- AIC(gamm_corGaus$lme, gamm_corExp$lme, gamm_corLin$lme, gamm_corRatio$lme, gamm_corSpher$lme) %>%
+  rownames_to_column(var = "Correlation_Structure") 
+
+aic_table$Correlation_Structure <- c("corGaus", "corExp", "corLin", "corRatio",  "corSpher") # recode corr struct names
+
+aic_table <- aic_table %>%
+  arrange(AIC) %>%
+  mutate(delta_AIC = AIC - min(AIC))
+
+kable(aic_table)
+
+
+write_csv(aic_table, file = paste0(out_path, "/", "correlation_structure_aic_table.csv"))
+
+index_best <- which(aic_table$AIC == min(aic_table$AIC))
+
+best_gamm <- gamm_cor_struct_list[[index_best]]
+```
+#### There is a need to do additional custom residual plots: From gam.check()
+
+Take care when interpreting results from applying this function to a model fitted using gamm. In this case the returned gam object is based on the working model used for estimation, and will treat all the random effects as part of the error. This means that the residuals extracted from the gam object are not standardized for the family used or for the random effects or correlation structure. Usually it is necessary to produce your own residual checks based on consideration of the model structure you have used.
+
+#### View output for best correlation structure
+```{r}
+
+(summary(best_gamm$gam))
+
+par(mfrow = c(2, 2))
+plot(best_gamm$gam, residuals = TRUE, seWithMean = TRUE, shade = TRUE, shift = coef(best_gamm$gam)[1])
+
+par(mfrow = c(2, 2))
+(gam.check(best_gamm$gam))
+
+acf(residuals(best_gamm$lme,type="normalized"),main="standardized residual ACF")
+
+print("Overall concurvity")
+kable(concurvity(best_gamm$gam, full = TRUE), digits = 2)
+print("worst")
+kable(concurvity(best_gamm$gam, full = FALSE)$worst, digits = 2)
+print("observed")
+kable(concurvity(best_gamm$gam, full = FALSE)$observed, digits = 2)
+print("estimate")
+kable(concurvity(best_gamm$gam, full = FALSE)$estimate, digits = 2)
+
+```
+
+

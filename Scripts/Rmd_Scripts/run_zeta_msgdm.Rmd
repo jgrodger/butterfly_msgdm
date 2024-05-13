@@ -111,22 +111,27 @@ render_report(analysis_script = "GAM_compare_spline_analyses.Rmd", list(dataset 
 
 #### GAMMs
 
-using tp splines although AIC values slightly lower for cr for all species and wc
 
 ```{r}
 #run again
-render_report(analysis_script = "GAMM_analyses.Rmd", list(dataset = "all_species"))
+render_report(analysis_script = "GAMM_analyses.Rmd", list(dataset = "all_species", spline = "cr"))
 ```
 
 ```{r}
-render_report(analysis_script = "GAMM_analyses.Rmd", list(dataset = "wc"))
+render_report(analysis_script = "GAMM_analyses.Rmd", list(dataset = "wc", spline = "tp"))
 ```
 
 
 ```{r}
 #For this, I should check poisson versus gaussian in a GAM first
-render_report(analysis_script = "GAMM_analyses.Rmd", list(dataset = "hs_no_Zeros", family = "Tweedie(p = 1.01)"))
+render_report(analysis_script = "GAMM_analyses.Rmd", list(dataset = "hs_no_Zeros", family = "Tweedie(p = 1.01)", spline = "tp"))
 ```
+
+##### Also doing all species with the same spline as the others
+```{r}
+render_report(analysis_script = "GAMM_analyses.Rmd", list(dataset = "all_species", spline = "tp"))
+```
+
 
 ## MSGDMs
 ```{r}
