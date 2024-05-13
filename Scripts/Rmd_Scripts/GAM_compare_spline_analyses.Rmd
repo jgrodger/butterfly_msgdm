@@ -1,28 +1,149 @@
 ---
 title: "Gam compare splines"
 output: html_document
-date: "2024-05-13"
+
+params:
+  dataset: "all_species"
+  family: "gaussian"
 ---
+
+## In this code, we look at best spline type in GAM, and check 
+## variogram for use in GAMM
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
+#### Packages
+```{r, include=FALSE}
+here::i_am("Scripts/Rmd_Scripts/GAM_compare_spline_analyses.Rmd")
 
-#### Get gam with best AIC. This is gam_tp for thin plate spline that is used with all family options
+library(tidyverse)
+library(sf)
+library(sp)
+library(terra)
+library(mgcv)
+library(knitr)
+library(knitrProgressBar)
+library(tmap)
+library(mgcViz)
+library(gstat)
+library(here)
+library(conflicted)
+conflicts_prefer(dplyr::filter)
+conflicts_prefer(dplyr::select)
+conflicts_prefer(knitrProgressBar::progress_estimated)
+
+# there is a same-named function in dplyr, check it out
+```
+
+
+#### Functions
+```{r, include=FALSE}
+# A function for plotting gam relationships with my preferences
+
+
+my.plot.gam <- function(gam_object){
+plot(gam_object, residuals = TRUE, seWithMean = TRUE, shade = TRUE, shift = coef(gam_object)[1], pages = 2) 
+}
+
+
+# a function to make a table for checking if smooths might be zero
+check_smooths <- function(gam_obj, capt){
+vars <- c("mean.ann.temp", "log10.mean.ann.rain", "topographic.wetness", "ph", 
+          "total.n",  "tree.density", "log10.pesticide.risk",  "log10.humans") 
+  
+gam_obj <- data.frame(cbind(vars, summary(gam_tp)$s.pv))
+names(gam_obj) <- c("Var", "p")
+gam_obj$p <- as.numeric(gam_obj$p)
+gam_obj<- kable(gam_obj, digits = 3, align = "l", caption = capt)
+}
+
+# From https://stackoverflow.com/questions/71252509/is-there-a-way-to-get-progress-information-whan-a-chunk-is-running-in-rmarkdown
+
+slow_function <- function(i, .pb=NULL) {  
+  update_progress(.pb)  
+  Sys.sleep(0.5)  
+  i  
+}
+
+# create an R6 progress object for
+# the number of loops/iterations in the target chunk
+```
+
+
+#### File Paths
+```{r, include=FALSE}
+data_path <- paste0("./Data/Processed_Data/Spatial/", params$dataset, ".rds")
+
+out_path <-  paste0(here("Output/Spatial/GAM"), "/","GAM", "_" , 
+                    params$dataset,  "/")
+
+if(!dir.exists(out_path)) dir.create(out_path)
+```
+
+#### Data
 ```{r}
-gam_fam_list <-list (gam_gaussian, gam_poisson, gam_tweedie1, gam_tweedie2)
+data <- readRDS(here(data_path))
 
-aic_table <- AIC(gam_gaussian, gam_poisson, gam_tweedie1, gam_tweedie2)
+site.by.species <- data$site.by.species
+  
+site.by.env <- data$site.by.env
+
+site.by.xy <- data$site.by.xy
+
+# gb polygon
+
+gb <- readRDS(here("./Data/Maps/gb_multipolygon_simplified.rds"))
+```
+
+```{r}
+print(params)
+```
+#### Prepare data for analysis
+```{r}
+site.by.env.and.richness <- cbind(site.by.xy) %>%
+  cbind(site.by.env, rowSums(site.by.species)) %>% 
+  rename(species.richness = 'rowSums(site.by.species)')
+```
+
+## Run GAMs
+
+#### Thin plate splines
+```{r}
+gam_tp <-  gam(species.richness ~ s(mean.ann.temp) + s(log10.mean.ann.rain) + 
+                s(topographic.wetness) + s(ph) + s(total.n) + s(tree.density) + 
+                s(log10.pesticide.risk) + s(log10.humans),  
+                data = site.by.env.and.richness, family = params$family, method= "REML")
+```
+
+#### Cubic regression splines
+```{r}
+gam_cr <- update(gam_tp, formula = species.richness ~ s(mean.ann.temp, bs="cr") + 
+            s(log10.mean.ann.rain, bs="cr") + s(topographic.wetness, bs="cr") + 
+            s(ph, bs="cr") + s(total.n, bs="cr") + s(tree.density, bs="cr") + 
+            s(log10.pesticide.risk, bs="cr") + s(log10.humans, bs="cr"))
+```
+
+#### compare AIC 
+```{r}
+gam_bs_list <-list (gam_tp,  gam_cr)
+aic_table <- AIC(gam_tp,  gam_cr) %>%
+  arrange(AIC) %>%
+  mutate(delta_AIC = AIC - min(AIC)) %>%
+  rownames_to_column(var = "Splines")
 
 kable(aic_table, digits = 2, align = "l")
 
-index_best <- which(aic_table$AIC == min(aic_table$AIC))
 
-# Out of GAMS with different family arguments, the best is...
-row.names(aic_table[index_best , ])
-gam_tp <- gam_fam_list[[index_best]] 
+write_csv(aic_table, file = paste0(out_path, "/", "spline_aic_table.csv"))
+
 ```
+
+## Thin plate output
+
+
+#### Standard output 
 ```{r}
 summary(gam_tp)
 par(mfrow = c(2, 2))
@@ -30,63 +151,9 @@ gam.check(gam_tp)
 my.plot.gam(gam_tp)
 ```
 
-
-#### Check spline method
+#### Residual against predictors 
 ```{r}
-# cubic regression spline
-gam_cr <- update(gam_tp, formula = species.richness ~ s(mean.ann.temp, bs="cr") + 
-            s(log10.mean.ann.rain, bs="cr") + s(topographic.wetness, bs="cr") + 
-            s(ph, bs="cr") + s(total.n, bs="cr") + s(tree.density, bs="cr") + 
-            s(log10.pesticide.risk, bs="cr") + s(log10.humans, bs="cr"))
-```
-
-
-
-
-
-#### Thin plate spline (one with the best family from previous round)
-```{r}
-summary(gam_tp)
-par(mfrow = c(2, 2))
-gam.check(gam_tp)
-```
-
-#### Cubic regression spline
-```{r}
-summary(gam_cr)
-par(mfrow = c(2, 2))
-gam.check(gam_cr)
-```
-
-
-
-#### Choose the best gam 
-```{r}
-gam_bs_list <-list (gam_tp,  gam_cr)
-aic_table <- AIC(gam_tp,  gam_cr)
-
-kable(aic_table, digits = 2, align = "l")
-index_best <- which(aic_table$AIC == min(aic_table$AIC))
-
-gam_best <- gam_bs_list[[index_best]] 
-```
-
-
-
-
-
-```{r}
-summary(gam_best)
-par(mfrow = c(2, 2))
-gam.check(gam_best)
-my.plot.gam(gam_best)
-```
-
-
-
-#### Residual plots 
-```{r}
-residuals <- resid(gam_best)
+residuals <- resid(gam_tp)
 xy.res <- cbind(site.by.xy, residuals)
 
 site.by.env.and.richness <- cbind(site.by.xy) %>%
@@ -94,16 +161,14 @@ site.by.env.and.richness <- cbind(site.by.xy) %>%
   rename(species.richness = 'rowSums(site.by.species)')
 
 env.and.res <- cbind(site.by.env.and.richness, residuals)
+
+pairs(env.and.res[,c(1, 2, 3, 12)]) #just look at bottom row
+pairs(env.and.res[, c(4, 5, 6, 12)]) #just look at bottom row
+pairs(env.and.res[, c(7, 8, 9, 12)]) #just look at bottom row
+pairs(env.and.res[, c(10, 11, 12)]) #just look at bottom row
 ```
 
-```{r}
-pairs(env.and.res[,c(1, 2, 3, 12)])
-pairs(env.and.res[, c(4, 5, 6, 12)])
-pairs(env.and.res[, c(7, 8, 9, 12)])
-pairs(env.and.res[, c(10, 11, 12)])
-```
-
-#### Look at geographic pattern in residuals
+#### Geographic pattern in residuals
 ```{r}
 coordinates(env.and.res) <- c("x","y")
 
@@ -123,38 +188,139 @@ tm_shape(env.and.res) +
 print(pointsmap)
 ```
 
-
-#### Concurvity tells us about relationships between smoothed terms
-
-#full = TRUE gives overall estimates of relationship of each smoothed term with all others, 
-#full = FALSE gives pairwise relationship according to three different methods.
-
+#### Variogram
 ```{r}
-concurvity(gam_best, full = TRUE)
-print("worst")
-round(concurvity(gam_best, full = FALSE)$worst, 2)
-print("observed")
-round(concurvity(gam_best, full = FALSE)$observed, 2)
-print("estimate")
-round(concurvity(gam_best, full = FALSE)$estimate, 2)
+v1 <-   variogram(residuals ~ 1, loc= ~ x+y, data = xy.res)
+fit1 <- fit.variogram(v1, vgm(c("Sph", "Exp"))); 
+plot(v1, fit1)
+
+filepath <- paste0(out_path, "/variogram_tp", ".png")
+unlink(filepath, recursive = FALSE, force = FALSE) #deletes previous version with the same name
+
+png(file = filepath)
+plot(v1, fit1)
+dev.off()
 ```
 
-# check p values that (APPROXIMATELY) test null hypothesis that smooth is actually zero
+
+## Cubic regression spline
+
+#### Standard output
+```{r}
+summary(gam_cr)
+par(mfrow = c(2, 2))
+gam.check(gam_cr)
+my.plot.gam(gam_cr)
+```
+
+#### Residual against predictors 
+```{r}
+residuals <- resid(gam_cr)
+xy.res <- cbind(site.by.xy, residuals)
+
+site.by.env.and.richness <- cbind(site.by.xy) %>%
+  cbind(site.by.env, rowSums(site.by.species)) %>% 
+  rename(species.richness = 'rowSums(site.by.species)')
+
+env.and.res <- cbind(site.by.env.and.richness, residuals)
+
+pairs(env.and.res[,c(1, 2, 3, 12)]) #just look at bottom row
+pairs(env.and.res[, c(4, 5, 6, 12)]) #just look at bottom row
+pairs(env.and.res[, c(7, 8, 9, 12)]) #just look at bottom row
+pairs(env.and.res[, c(10, 11, 12)]) #just look at bottom row
+```
+
+#### Geographic pattern in residuals
+```{r}
+coordinates(env.and.res) <- c("x","y")
+
+crs.geo <- CRS("+init=epsg:27700")  # looks up BNG crs
+proj4string(env.and.res) <- crs.geo  # define projection system of our data
+
+bubble(env.and.res, "residuals", col = c("black","grey"),
+       main = "Residuals", xlab = "X-coordinates", ylab = "Y-coordinates")
+
+basemap <-tm_shape(gb) +
+  tm_borders()
+
+pointsmap <- basemap +
+tm_shape(env.and.res) +
+  tm_symbols(size = 0.25, col = "residuals", midpoint = NA)
+
+print(pointsmap)
+```
+
+#### Variogram
+```{r}
+v1 <-   variogram(residuals ~ 1, loc= ~ x+y, data = xy.res)
+fit1 <- fit.variogram(v1, vgm(c("Sph", "Exp"))); 
+plot(v1, fit1)
+
+filepath <- paste0(out_path, "/variogram_cr", ".png")
+unlink(filepath, recursive = FALSE, force = FALSE) #deletes previous version with the same name
+
+png(file = filepath)
+plot(v1, fit1)
+dev.off()
+```
+
+
+
+## Concurvity
+
+#### Thin plate
+```{r}
+# Concurvity tells us about relationships between smoothed terms
+# full = TRUE gives overall estimates of relationship of each smoothed term with all others, 
+# full = FALSE gives pairwise relationship according to three different methods.
+
+print("Overall concurvity")
+kable(concurvity(gam_tp, full = TRUE), digits = 2)
+print("worst")
+kable(concurvity(gam_tp, full = FALSE)$worst, digits = 2)
+print("observed")
+kable(concurvity(gam_tp, full = FALSE)$observed, digits = 2)
+print("estimate")
+kable(concurvity(gam_tp, full = FALSE)$estimate, digits = 2)
+```
+
+## Concurvity
+
+#### cubic regression
 ```{r}
 
+print("Overall concurvity")
+kable(concurvity(gam_cr, full = TRUE), digits = 2)
+print("worst")
+kable(concurvity(gam_cr, full = FALSE)$worst, digits = 2)
+print("observed")
+kable(concurvity(gam_cr, full = FALSE)$observed, digits = 2)
+print("estimate")
+kable(concurvity(gam_cr, full = FALSE)$estimate, digits = 2)
+```
 
 
+
+#### Check p values that (APPROXIMATELY) test null hypothesis that smooth is actually zero
+#### if theses seem likely zero (large p), can try and additional penalty on smooths
+```{r}
 check_tp <- check_smooths(gam_tp, "tp smooths")
 check_tp
 
 check_cr <- check_smooths(gam_cr, "cr smooths")
 check_cr
-
 ```
 
 
-#### if theses seem likely zero (large p), can try and additional penalty on smooths
-```{r}
+
+
+```{r, include = FALSE}
+#write_rds(gam_best, file = paste0(here(out_path), "/", params$dataset, "_best_gam.rds"))
+```
+
+
+
+```{r, include = FALSE}
 
 
 #Following gam.selection {mgcv}, we use automatic smoothness selection.
@@ -164,20 +330,14 @@ check_cr
 # thin plate spline with automatic smoothness selection
 #gam_tp_select <- update(gam_tp, select = TRUE)
 
-# cuic regression spline with automatic smoothness selection
+# cubic regression spline with automatic smoothness selection
 #gam_cr_select <- update(gam_cr, select = TRUE)
 ```
 
 
 
-#### Write to disc
-```{r}
-write_rds(gam_best, file = paste0(here(out_path), "/", params$dataset, "_best_gam.rds"))
-```
-
-
 #### Play with mgcVis
-```{r}
+```{r, include = FALSE}
 # vis6 <- getViz(gam_best)
 # 
 # #adapted from https://cran.r-project.org/web/packages/mgcViz/vignettes/mgcviz.html
@@ -225,13 +385,3 @@ write_rds(gam_best, file = paste0(here(out_path), "/", params$dataset, "_best_ga
 #     l_points(shape = 19, size = 1, alpha = 0.1) + theme_classic()
 
 ```
-
-## Check Variogram
-```{r}
-v1 <-   variogram(residuals ~ 1, loc= ~ x+y, data = xy.res)
-fit1 <- fit.variogram(v1, vgm(c("Sph", "Exp"))); 
-plot(v1, fit1)
-```
-
-
-

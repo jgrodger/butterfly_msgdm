@@ -5,7 +5,7 @@ output: html_document
 params:
   dataset: "all_species"
   family: "gaussian"
-  
+  spline: "cr"  
 ---
 
 ```{r setup, include=FALSE}
@@ -98,7 +98,18 @@ dup_ngr <- sites %>%
 ```{r}
 hist(site.by.env.xy.richness.distinct$species.richness)
 ```
-
+#### Specify formula
+```{r}
+my_formula <- if(params$spline == "tp"){
+  "species.richness ~ s(mean.ann.temp) + s(log10.mean.ann.rain) + s(topographic.wetness) + s(ph) + s(total.n) + s(tree.density) + s(log10.pesticide.risk) + s(log10.humans)"
+  } else  if(params$spline == "cr") {species.richness ~ s(mean.ann.temp, bs="cr") + 
+            s(log10.mean.ann.rain, bs="cr") + s(topographic.wetness, bs="cr") + 
+            s(ph, bs="cr") + s(total.n, bs="cr") + s(tree.density, bs="cr") + 
+            s(log10.pesticide.risk, bs="cr") + s(log10.humans, bs="cr")
+  } else {
+    stop("There are only formulate for cr and tp splines here")
+  }
+```
 
 
 #### GAMMs for different correlation structures 
@@ -114,7 +125,7 @@ gamm_cor_struct_list <- list()
 # Nugget allows non-zero autocorrelation at 0 distance
 for (i in 1:length(corStructs)) {
 slow_function(i, .pb=pb)
-my.gamm <- gamm(species.richness ~ s(mean.ann.temp) + s(log10.mean.ann.rain) + s(topographic.wetness) + s(ph) + s(total.n) + s(tree.density) + s(log10.pesticide.risk) + s(log10.humans),  data = site.by.env.xy.richness.distinct, method = "REML", family = params$family, correlation = corStructs[[i]])
+my.gamm <- gamm(my_formula,  data = site.by.env.xy.richness.distinct, method = "REML", family = params$family, correlation = corStructs[[i]])
 
 print(paste0("gamm", corStructs[i]))
 print(Sys.time())
@@ -131,52 +142,7 @@ toc()
 
 #### Write output
 ```{r}
-write_rds(gamm_cor_struct_list, file = paste0(here(out_path), "/", params$dataset, "_gamm_cor_struct_compare.rds"))
-```
-
-#### Find best correlation structure
-```{r}
-#gamm_cor_struct_list <- readRDS(here("Output/Spatial/GAM/GAMM_all_species/all_species_gamm_cor_struct_compare.rds"))
-
-gamm_corGaus <- gamm_cor_struct_list[[1]]
-gamm_corExp <- gamm_cor_struct_list[[2]]
-gamm_corLin <- gamm_cor_struct_list[[3]]
-gamm_corRatio <- gamm_cor_struct_list[[4]]
-gamm_corSpher <- gamm_cor_struct_list[[5]]
-
-
-aic_table <- AIC(gamm_corGaus$lme, gamm_corExp$lme, gamm_corLin$lme, gamm_corRatio$lme, gamm_corSpher$lme)
-kable(aic_table)
-
-index_best <- which(aic_table$AIC == min(aic_table$AIC))
-
-best_gamm <- gamm_cor_struct_list[[index_best]]
-```
-#### There is a need to do additional custom residual plots: From gam.check()
-
-Take care when interpreting results from applying this function to a model fitted using gamm. In this case the returned gam object is based on the working model used for estimation, and will treat all the random effects as part of the error. This means that the residuals extracted from the gam object are not standardized for the family used or for the random effects or correlation structure. Usually it is necessary to produce your own residual checks based on consideration of the model structure you have used.
-
-#### View output for best correlation structure
-```{r}
-
-(summary(best_gamm$gam))
-
-par(mfrow = c(2, 2))
-plot(best_gamm$gam, residuals = TRUE, seWithMean = TRUE, shade = TRUE, shift = coef(best_gamm$gam)[1])
-
-par(mfrow = c(2, 2))
-(gam.check(best_gamm$gam))
-
-acf(residuals(best_gamm$lme,type="normalized"),main="standardized residual ACF")
-
-concurvity(best_gamm$gam, full = TRUE)
-print("worst")
-round(concurvity(best_gamm$gam, full = FALSE)$worst, 2)
-print("observed")
-round(concurvity(best_gamm$gam, full = FALSE)$observed, 2)
-print("estimate")
-round(concurvity(best_gamm$gam, full = FALSE)$estimate, 2)
-
+write_rds(gamm_cor_struct_list, file = paste0(here(out_path), "/", params$dataset,"_", params$spline, "_gamm_cor_struct_compare.rds"))
 ```
 
 
