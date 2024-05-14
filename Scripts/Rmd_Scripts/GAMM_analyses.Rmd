@@ -2,10 +2,6 @@
 title: "GAMMs"
 output: html_document
 
-params:
-  dataset: "all_species"
-  family: "gaussian"
-  spline: "cr"  
 ---
 
 ```{r setup, include=FALSE}
@@ -45,104 +41,239 @@ slow_function <- function(i, .pb=NULL) {
 
 #### File Paths
 ```{r}
-data_path <- paste0("./Data/Processed_Data/Spatial/", params$dataset, ".rds")
-
-out_path <-  paste0(here("Output/Spatial/GAM"), "/","GAMM", "_" , params$dataset,  "/")
-
+out_path <-  here("Output/Spatial/GAM")
 if(!dir.exists(out_path)) dir.create(out_path)
 ```
 
-#### Data
+#### Datasets for gamms
 ```{r}
-data <- readRDS(here(data_path))
+
+all_species <- readRDS(here("./Data/Processed_Data/Spatial/all_species.rds"))
+wc <- readRDS(here("./Data/Processed_Data/Spatial/wc.rds"))
+hs <- readRDS(here("./Data/Processed_Data/Spatial/hs.rds"))
+hs_no_zeros <- readRDS(here("./Data/Processed_Data/Spatial/hs_no_zeros.rds"))
+
+# get all datasets in a list
+datasets <- list(all_species, wc, hs, hs_no_zeros)
+names(datasets) <- c("all_species", "wc", "hs", "hs_no_zeros")
+```
+
+
+
+#### for each dataset, prepare data for gamm input, remove transects that are duplicates for x and y coordinates (keep first one)
+```{r}
+for (i in 1: length(datasets)){ 
+print(names(datasets[i]))
+  
+data <- datasets[[i]]
 
 site.by.species <- data$site.by.species
-  
 site.by.env <- data$site.by.env
-
 site.by.xy <- data$site.by.xy
+sites <- data$sites
 
-sites<- data$sites
-
-
-# combine data for analysis
+# assemble xy, environmental vars and richness for analysis
 site.by.env.xy.richness <- cbind(site.by.env, rowSums(site.by.species)) %>%
   cbind(site.by.xy) %>%
 rename(species.richness = 'rowSums(site.by.species)')
 
-
-#inspect 
+#inspect duplicates to see how they arise
 dup_xy <- sites %>%
   mutate(xy = paste(x,y)) %>%
 group_by(xy) %>% 
   filter(n() > 1)
 
-kable(dup_xy)  
+print(kable(dup_xy, caption = names(datasets[i])))
   
 #remove duplicates for rows with the same x and y coordinates
-site.by.env.xy.richness.distinct <- site.by.env.xy.richness %>%
+gamm_input <- site.by.env.xy.richness %>%
   mutate(xy = paste(x,y)) %>%
   distinct(xy, .keep_all = TRUE)
 
-dup_xy2 <- site.by.xy %>%
-  mutate(xy = paste(x,y)) %>%
-group_by(xy) %>% 
-  filter(n() > 1)
+hist(gamm_input$species.richness, main = names(datasets[i]))
 
-dup_ngr <- sites %>%
-  group_by(ngr.1km) %>% 
-  filter(n() > 1)
-
+# add the input for the gamm to each dataset
+gamm_input <- list(gamm_input)
+names(gamm_input) <- "gamm_input"
+datasets[[i]] <- c(datasets[[i]], gamm_input)
+}
 ```
-
+#### Specify formulas (different ones needed for different splines) and correlation structures
 ```{r}
-hist(site.by.env.xy.richness.distinct$species.richness)
-```
-#### Specify formula
-```{r}
-my_formula <- if(params$spline == "tp"){
-  "species.richness ~ s(mean.ann.temp) + s(log10.mean.ann.rain) + s(topographic.wetness) + s(ph) + s(total.n) + s(tree.density) + s(log10.pesticide.risk) + s(log10.humans)"
-  } else  if(params$spline == "cr") {species.richness ~ s(mean.ann.temp, bs="cr") + 
-            s(log10.mean.ann.rain, bs="cr") + s(topographic.wetness, bs="cr") + 
-            s(ph, bs="cr") + s(total.n, bs="cr") + s(tree.density, bs="cr") + 
-            s(log10.pesticide.risk, bs="cr") + s(log10.humans, bs="cr")
-  } else {
-    stop("There are only formulate for cr and tp splines here")
-  }
-```
+tp_formula <- as.formula(species.richness ~ s(mean.ann.temp) + s(log10.mean.ann.rain) + 
+  s(topographic.wetness) + s(ph) + s(total.n) + s(tree.density) + 
+  s(log10.pesticide.risk) + s(log10.humans))
+  
+cr_formula <- as.formula(
+  species.richness ~ s(mean.ann.temp, bs="cr") + 
+    s(log10.mean.ann.rain, bs="cr") + s(topographic.wetness, bs="cr") + 
+    s(ph, bs="cr") + s(total.n, bs="cr") + s(tree.density, bs="cr") + 
+    s(log10.pesticide.risk, bs="cr") + s(log10.humans, bs="cr")
+)
 
-
-#### GAMMs for different correlation structures 
-```{r}
-tic()
 corStructs <- list(corGaus(form = ~x+y, nugget = TRUE), corExp(form = ~x+y, nugget = TRUE), corLin(form = ~x+y, nugget = TRUE), corRatio(form = ~x+y, nugget = TRUE), corSpher(form = ~x+y, nugget = TRUE) )
 
-pb <- progress_estimated(length(corStructs))
+pb <- progress_estimated(length(corStructs)) # parameter for tracking progress
+```
 
-gamm_cor_struct_list <- list()
 
+## run GAMMs and save
+
+
+### Annoyingly, I did not succeed in a wrapper function and in the Markdown version, it was hanging
+### Therefore, I have copied and pasted and checked carefully
+
+#### All species, thin plate splines, gaussian family
+```{r}
+
+#check list to modify after copy past
+
+#formula
+#family
+#data
+#filedir
+
+gamm_list <- list()
 # Loop through the gamms saving output in list
 # Nugget allows non-zero autocorrelation at 0 distance
 for (i in 1:length(corStructs)) {
-slow_function(i, .pb=pb)
-my.gamm <- gamm(my_formula,  data = site.by.env.xy.richness.distinct, method = "REML", family = params$family, correlation = corStructs[[i]])
+my_gamm <- gamm(
+  species.richness ~ s(mean.ann.temp) + s(log10.mean.ann.rain) + 
+  s(topographic.wetness) + s(ph) + s(total.n) + s(tree.density) + 
+  s(log10.pesticide.risk) + s(log10.humans), 
+  method = "REML", 
+  family = "gaussian", 
+  correlation = corStructs[[i]], 
+  data = datasets$all_species$gamm_input)
 
-print(paste0("gamm", corStructs[i]))
+print(i)
 print(Sys.time())
 
-gamm_cor_struct_list[[i]] <- my.gamm
+gamm_list[[i]] <- my_gamm
 
 }
 
-names(gamm_cor_struct_list) <- c("gamm_corGaus", "gamm_corExp", "gamm_corLin", "gamm_corRatio", "gamm_corSpher")
-
-toc()
+filedir <- paste0(here(out_path), "/GAMM_all_species")
+if(!dir.exists(filedir)) dir.create(filedir)
+filepath <- paste0(filedir, "/gamm_cor_struct_compare.rds")
+filepath
+write_rds(gamm_list , 
+          file = filepath)
 ```
 
-
-#### Write output
+#### Wider countryside, thin plate splines, gaussian family
 ```{r}
-write_rds(gamm_cor_struct_list, file = paste0(here(out_path), "/", params$dataset,"_", params$spline, "_gamm_cor_struct_compare.rds"))
+
+#checklist to modify after copy past
+
+#formula
+#family
+#data
+#filedir
+
+gamm_list <- list()
+# Loop through the gamms saving output in list
+# Nugget allows non-zero autocorrelation at 0 distance
+for (i in 1:length(corStructs)) {
+my_gamm <- gamm(
+  species.richness ~ s(mean.ann.temp) + s(log10.mean.ann.rain) + 
+  s(topographic.wetness) + s(ph) + s(total.n) + s(tree.density) + 
+  s(log10.pesticide.risk) + s(log10.humans), 
+  method = "REML", 
+  family = "gaussian", 
+  correlation = corStructs[[i]], 
+  data = datasets$wc$gamm_input)
+
+print(i)
+print(Sys.time())
+
+gamm_list[[i]] <- my_gamm
+
+}
+
+filedir <- paste0(here(out_path), "/GAMM_wc_tp")
+if(!dir.exists(filedir)) dir.create(filedir)
+filepath <- paste0(filedir, "/gamm_cor_struct_compare.rds")
+filepath
+write_rds(gamm_list , 
+          file = filepath)
+```
+## Try gams and gamms with hs with zeros
+
+#### Habitat specialist, thin plate splines, Tweedie close to Poisson
+```{r}
+#checklist to modify after copy past
+
+#formula
+#family
+#data
+#filedir
+#write_rds
+
+gamm_list <- list()
+# Loop through the gamms saving output in list
+# Nugget allows non-zero autocorrelation at 0 distance
+for (i in 1:length(corStructs)) {
+my_gamm <- gamm(
+  species.richness ~ s(mean.ann.temp) + s(log10.mean.ann.rain) + 
+  s(topographic.wetness) + s(ph) + s(total.n) + s(tree.density) + 
+  s(log10.pesticide.risk) + s(log10.humans), 
+  method = "REML", 
+  family = "Tweedie(p = 1.01)", 
+  correlation = corStructs[[i]], 
+  data = datasets$hs_no_zeros$gamm_input)
+
+print(i)
+print(Sys.time())
+
+gamm_list[[i]] <- my_gamm
+
+}
+
+filedir <- paste0(here(out_path), "/GAMM_hs")
+if(!dir.exists(filedir)) dir.create(filedir)
+filepath <- paste0(filedir, "/gamm_cor_struct_compare.rds")
+filepath
+write_rds(gamm_list , 
+          file = filepath)
 ```
 
+#### Wider countryside, cubic regression splines, gaussian family
+```{r}
 
+#checklist to modify after copy past
+
+#formula
+#family
+#data
+#filedir
+#write_rds
+
+gamm_list <- list()
+# Loop through the gamms saving output in list
+# Nugget allows non-zero autocorrelation at 0 distance
+for (i in 1:length(corStructs)) {
+my_gamm <- gamm(
+   species.richness ~ s(mean.ann.temp, bs="cr") + 
+    s(log10.mean.ann.rain, bs="cr") + s(topographic.wetness, bs="cr") + 
+    s(ph, bs="cr") + s(total.n, bs="cr") + s(tree.density, bs="cr") + 
+    s(log10.pesticide.risk, bs="cr") + s(log10.humans, bs="cr")
+  method = "REML", 
+  family = "gaussian", 
+  correlation = corStructs[[i]], 
+  data = datasets$wc$gamm_input)
+
+print(i)
+print(Sys.time())
+
+gamm_list[[i]] <- my_gamm
+
+}
+
+filedir <- paste0(here(out_path), "/GAMM_wc_cr")
+if(!dir.exists(filedir)) dir.create(filedir)
+filepath <- paste0(filedir, "/gamm_cor_struct_compare.rds")
+filepath
+write_rds(gamm_list , 
+          file = filepath)
+```
