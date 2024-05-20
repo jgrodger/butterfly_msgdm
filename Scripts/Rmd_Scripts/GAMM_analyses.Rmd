@@ -1,7 +1,6 @@
 ---
 title: "GAMMs"
 output: html_document
-
 ---
 
 ```{r setup, include=FALSE}
@@ -257,7 +256,7 @@ my_gamm <- gamm(
    species.richness ~ s(mean.ann.temp, bs="cr") + 
     s(log10.mean.ann.rain, bs="cr") + s(topographic.wetness, bs="cr") + 
     s(ph, bs="cr") + s(total.n, bs="cr") + s(tree.density, bs="cr") + 
-    s(log10.pesticide.risk, bs="cr") + s(log10.humans, bs="cr")
+    s(log10.pesticide.risk, bs="cr") + s(log10.humans, bs="cr"),
   method = "REML", 
   family = "gaussian", 
   correlation = corStructs[[i]], 

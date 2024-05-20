@@ -94,6 +94,11 @@ render_report(analysis_script = "GAM_compare_family_analyses.Rmd", list(dataset 
 render_report(analysis_script = "GAM_compare_family_analyses.Rmd", list(dataset = "hs_no_zeros"))
 ```
 
+
+```{r}
+render_report(analysis_script = "GAM_compare_family_analyses.Rmd", list(dataset = "hs"))
+```
+
 #### GAMS comparing different spline methods
 
 ```{r}
@@ -111,10 +116,10 @@ render_report(analysis_script = "GAM_compare_spline_analyses.Rmd", list(dataset 
 
 #### GAMMs
 
+#GAMMs run in notebook 
 
 ```{r}
-#run again
-render_report(analysis_script = "GAMM_analyses.Rmd", list(dataset = "all_species", spline = "cr"))
+render_report(analysis_script = "process_GAMM_analyses.Rmd", list(dataset = "all_species", spline = "cr"))
 ```
 
 ```{r}
@@ -123,7 +128,6 @@ render_report(analysis_script = "GAMM_analyses.Rmd", list(dataset = "wc", spline
 
 
 ```{r}
-#For this, I should check poisson versus gaussian in a GAM first
 render_report(analysis_script = "GAMM_analyses.Rmd", list(dataset = "hs_no_Zeros", family = "Tweedie(p = 1.01)", spline = "tp"))
 ```
 
@@ -131,6 +135,9 @@ render_report(analysis_script = "GAMM_analyses.Rmd", list(dataset = "hs_no_Zeros
 ```{r}
 render_report(analysis_script = "GAMM_analyses.Rmd", list(dataset = "all_species", spline = "tp"))
 ```
+
+
+
 
 
 ## MSGDMs

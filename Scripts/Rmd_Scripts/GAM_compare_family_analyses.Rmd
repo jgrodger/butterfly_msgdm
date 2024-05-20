@@ -140,17 +140,16 @@ hist(site.by.env.and.richness$species.richness)
 gam_gaussian <- gam(species.richness ~ s(mean.ann.temp) + s(log10.mean.ann.rain) + 
                 s(topographic.wetness) + s(ph) + s(total.n) + s(tree.density) + 
                 s(log10.pesticide.risk) + s(log10.humans),  
-                data = site.by.env.and.richness, method= "REML")
+                data = site.by.env.and.richness, method= "ML")
 
 gam_poisson <- update(gam_gaussian, family = "poisson", link = "log")
+
+gam_nb <- update(gam_gaussian, family = nb(), link = "log")
 
 #"When = = 0, the Tweedie distribution degenerates to the normal distribution; when p = 1, it becomes a Poisson distribution; when p = 2, it becomes a gamma distribution; when p = 3, it is an inverse Gaussian distribution. "
 #https://documentation.sas.com/doc/en/pgmsascdc/9.4_3.4/statug/statug_genmod_details28.htm
 
-gam_tweedie1 <- update(gam_poisson, family = Tweedie(p = 1.01))# p = 1 does not work
-
-gam_tweedie2 <- update(gam_poisson, family = Tweedie(p = 2))
-
+gam_tweedie <- update(gam_poisson, family = tw())# tweedie distribution with p parameter estimated
 
 
 ```
@@ -170,27 +169,27 @@ gam.check(gam_poisson)
 my.plot.gam(gam_poisson)
 ```
 
-##### Tweedie = 1.01
+##### Negative Binomial
 ```{r}
 par(mfrow = c(2, 2))
-gam.check(gam_tweedie1)
-my.plot.gam(gam_tweedie1)
+gam.check(gam_nb)
+my.plot.gam(gam_nb)
 ```
 
-##### Tweedie = 2
+##### Tweedie 
 ```{r}
 par(mfrow = c(2, 2))
-gam.check(gam_tweedie2)
-my.plot.gam(gam_tweedie2)
+gam.check(gam_tweedie)
+my.plot.gam(gam_tweedie)
 ```
 
 
 
 #### Compare GAMs in terms of AIC
 ```{r}
-gam_fam_list <-list (gam_gaussian, gam_poisson, gam_tweedie1, gam_tweedie2)
+gam_fam_list <-list (gam_gaussian, gam_poisson, gam_nb, gam_tweedie)
 
-aic_table <- AIC(gam_gaussian, gam_poisson, gam_tweedie1, gam_tweedie2) %>%
+aic_table <- AIC(gam_gaussian, gam_poisson, gam_nb, gam_tweedie) %>%
   arrange(AIC) %>%
   mutate(delta_AIC = AIC - min(AIC)) %>%
   rownames_to_column(var = "Family")

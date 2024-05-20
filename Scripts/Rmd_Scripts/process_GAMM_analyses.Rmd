@@ -1,7 +1,10 @@
 ---
 title: "Process GAMM analyses"
 output: html_document
-date: "2024-05-13"
+
+params:
+  dataset: "all_species"
+  spline: "tp"
 ---
 
 ```{r setup, include=FALSE}
@@ -10,7 +13,7 @@ knitr::opts_chunk$set(echo = TRUE)
 
 #### Find best correlation structure
 ```{r}
-#gamm_cor_struct_list <- readRDS(here("Output/Spatial/GAM/GAMM_all_species/all_species_gamm_cor_struct_compare.rds"))
+gamm_cor_struct_list <- readRDS(here("Output/Spatial/GAM/GAMM_all_species/all_species_gamm_cor_struct_compare.rds"))
 
 gamm_corGaus <- gamm_cor_struct_list[[1]]
 gamm_corExp <- gamm_cor_struct_list[[2]]
