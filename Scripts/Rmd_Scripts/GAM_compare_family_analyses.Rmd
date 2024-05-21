@@ -180,7 +180,7 @@ my.plot.gam(gam_nb)
 ```{r}
 par(mfrow = c(2, 2))
 gam.check(gam_tweedie)
-my.plot.gam(gam_tweedie)
+my.plot.gam(gam_tweedie) #Tweedie is over-fitting on pH at least 
 ```
 
 

@@ -1,0 +1,453 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+```{r}
+here::i_am("Scripts/Rmd_Scripts/GAMM_analyses.Rmd")
+library(tidyverse)
+library(tmap)
+library(mgcv)
+library(gstat)
+library(sf)
+library(sp)
+library(terra)
+library(knitr)
+library(knitrProgressBar)
+library(tictoc)
+library(here)
+library(conflicted)
+conflicts_prefer(dplyr::filter)
+conflicts_prefer(dplyr::select)
+conflicts_prefer(knitrProgressBar::progress_estimated)
+# there is a same-named function in dplyr, check it out
+```
+
+
+
+
+#### Functions
+```{r}
+# A function for plotting gam relationships with my preferences
+
+
+my.plot.gam <- function(gam_object){
+plot(gam_object, residuals = TRUE, seWithMean = TRUE, shade = TRUE, shift = coef(gam_object)[1], pages = 2) 
+}
+
+
+# a function to make a table for checking if smooths might be zero
+check_smooths <- function(gam_obj, capt){
+vars <- c("mean.ann.temp", "log10.mean.ann.rain", "topographic.wetness", "ph", 
+          "total.n",  "tree.density", "log10.pesticide.risk",  "log10.humans") 
+  
+gam_obj <- data.frame(cbind(vars, summary(gam_tp)$s.pv))
+names(gam_obj) <- c("Var", "p")
+gam_obj$p <- as.numeric(gam_obj$p)
+gam_obj<- kable(gam_obj, digits = 3, align = "l", caption = capt)
+}
+
+# From https://stackoverflow.com/questions/71252509/is-there-a-way-to-get-progress-information-whan-a-chunk-is-running-in-rmarkdown
+
+slow_function <- function(i, .pb=NULL) {  
+  update_progress(.pb)  
+  Sys.sleep(0.5)  
+  i  
+}
+
+# create an R6 progress object for
+# the number of loops/iterations in the target chunk
+```
+
+
+#### Datasets for gamms
+```{r}
+
+all_species <- readRDS(here("./Data/Processed_Data/Spatial/all_species.rds"))
+wc <- readRDS(here("./Data/Processed_Data/Spatial/wc.rds"))
+hs <- readRDS(here("./Data/Processed_Data/Spatial/hs.rds"))
+hs_no_zeros <- readRDS(here("./Data/Processed_Data/Spatial/hs_no_zeros.rds"))
+
+# get all datasets in a list
+datasets <- list(all_species, wc, hs, hs_no_zeros)
+names(datasets) <- c("all_species", "wc", "hs", "hs_no_zeros")
+
+
+
+  
+```
+
+
+
+## All Species
+
+
+```{r}
+
+gb <- readRDS(here("./Data/Maps/gb_multipolygon_simplified.rds"))
+
+data <- all_species
+
+site.by.species <- data$site.by.species
+  
+site.by.env <- data$site.by.env
+
+site.by.xy <- data$site.by.xy
+
+
+site.by.env.and.richness <- cbind(site.by.xy) %>%
+  cbind(site.by.env, rowSums(site.by.species)) %>% 
+  rename(species.richness = 'rowSums(site.by.species)')
+```
+
+
+```{r}
+gam_as1 <- gam(species.richness ~ s(mean.ann.temp) + s(log10.mean.ann.rain) + 
+                s(topographic.wetness) + s(ph) + s(total.n) + s(tree.density) + 
+                s(log10.pesticide.risk) + s(log10.humans),  
+                data = site.by.env.and.richness, method= "REML")
+
+
+gam_as2 <- update(gam_as1, formula = species.richness ~ s(mean.ann.temp) + s(log10.mean.ann.rain) + 
+                s(topographic.wetness) + s(ph) + s(total.n) + tree.density + 
+                s(log10.pesticide.risk) + s(log10.humans)) 
+
+gam_as3 <- update(gam_as1, formula = species.richness ~ s(mean.ann.temp, k = 15) + s(log10.mean.ann.rain, k = 15) + 
+                s(topographic.wetness, k = 15) + s(ph, k = 15) + s(total.n, k = 15) + s(tree.density, k = 15) + 
+                s(log10.pesticide.risk, k = 15) + s(log10.humans, k = 15))
+
+```
+
+```{r}
+aic_table <- AIC(gam_as1, gam_as2, gam_as3) %>%
+  arrange(AIC) %>%
+  mutate(delta_AIC = AIC - min(AIC)) %>%
+  rownames_to_column(var = "Family")
+
+
+kable(aic_table, digits = 2, align = "l")
+```
+
+
+```{r}
+par(mfrow = c(2, 2))
+gam.check(gam_as1)
+gam.check(gam_as2)
+gam.check(gam_as3)
+```
+
+```{r}
+par(mfrow = c(2, 2))
+my.plot.gam(gam_as1)
+my.plot.gam(gam_as2)
+my.plot.gam(gam_as3)# increasing knots leads to over-fitting
+```
+```{r}
+summary(gam_as1)
+```
+
+```{r}
+summary(gam_as2)
+```
+
+
+```{r}
+summary(gam_as3)
+```
+#### Plot residuals against predictors 
+```{r}
+residuals <- resid(gam_as1)
+(mfrow = c(2, 2))
+
+#Use mapply to plot residuals against each environmental variable in turn
+mapply(function(data, title){
+  plot(residuals ~ data,  xlab= title  )
+}, site.by.env, names(site.by.env))
+```
+
+#### Plot residuals on the map
+```{r}
+#dataframe for mapping
+site.by.env.and.richness <- site.by.env.and.richness %>%
+    cbind(residuals)
+
+#make it into a spatial object
+coordinates(site.by.env.and.richness) <- c("x","y")
+
+crs.geo <- CRS("+init=epsg:27700")  # looks up BNG crs
+proj4string(site.by.env.and.richness) <- crs.geo  # define projection system of our data
+
+bubble(site.by.env.and.richness, "residuals", col = c("black","grey"),
+       main = "Residuals", xlab = "X-coordinates", ylab = "Y-coordinates")
+
+basemap <-tm_shape(gb) +
+  tm_borders()
+
+resmap <- basemap +
+tm_shape(site.by.env.and.richness) +
+  tm_symbols(size = 0.25, col = "residuals", midpoint = NA)
+
+print(resmap)
+```
+#Plot richness on the map
+```{r}
+
+basemap <-tm_shape(gb) +
+  tm_borders()
+
+richmap <- basemap +
+tm_shape(site.by.env.and.richness) +
+  tm_symbols(size = 0.25, col = "species.richness", midpoint = NA)
+
+print(richmap)
+```
+
+#### Check autocorrelation with the variogram
+```{r}
+
+xy.res <- cbind(site.by.xy, residuals)
+
+v1 <-   variogram(residuals ~ 1, loc= ~ x+y, data = xy.res)
+fit1 <- fit.variogram(v1, vgm(c("Sph", "Exp"))); 
+plot(v1, fit1)
+
+# filepath <- paste0(out_path, "/variogram_tp", ".png")
+# unlink(filepath, recursive = FALSE, force = FALSE) #deletes previous version with the same name
+# 
+# png(file = filepath)
+# plot(v1, fit1)
+# dev.off()
+```
+
+
+## Wider Countryside Species
+```{r}
+
+data <- wc
+
+site.by.species <- data$site.by.species
+  
+site.by.env <- data$site.by.env
+
+site.by.xy <- data$site.by.xy
+
+
+site.by.env.and.richness <- cbind(site.by.xy) %>%
+  cbind(site.by.env, rowSums(site.by.species)) %>% 
+  rename(species.richness = 'rowSums(site.by.species)')
+```
+
+
+```{r}
+gam_wc1 <- gam(species.richness ~ s(mean.ann.temp) + s(log10.mean.ann.rain) + 
+                s(topographic.wetness) + s(ph) + s(total.n) + s(tree.density) + 
+                s(log10.pesticide.risk) + s(log10.humans),  
+                data = site.by.env.and.richness, method= "REML")
+
+```
+
+
+
+```{r}
+par(mfrow = c(2, 2))
+gam.check(gam_wc1)
+```
+
+
+#### Plot residuals against predictors 
+```{r}
+residuals <- resid(gam_wc1)
+(mfrow = c(2, 2))
+
+#Use mapply to plot residuals against each environmental variable in turn
+mapply(function(data, title){
+  plot(residuals ~ data,  xlab= title  )
+}, site.by.env, names(site.by.env))
+```
+
+#### Plot residuals on the map
+```{r}
+#dataframe for mapping
+site.by.env.and.richness <- site.by.env.and.richness %>%
+    cbind(residuals)
+
+#make it into a spatial object
+coordinates(site.by.env.and.richness) <- c("x","y")
+
+crs.geo <- CRS("+init=epsg:27700")  # looks up BNG crs
+proj4string(site.by.env.and.richness) <- crs.geo  # define projection system of our data
+
+bubble(site.by.env.and.richness, "residuals", col = c("black","grey"),
+       main = "Residuals", xlab = "X-coordinates", ylab = "Y-coordinates")
+
+basemap <-tm_shape(gb) +
+  tm_borders()
+
+resmap <- basemap +
+tm_shape(site.by.env.and.richness) +
+  tm_symbols(size = 0.25, col = "residuals", midpoint = NA)
+
+print(resmap)
+```
+#Plot richness on the map
+```{r}
+
+basemap <-tm_shape(gb) +
+  tm_borders()
+
+richmap <- basemap +
+tm_shape(site.by.env.and.richness) +
+  tm_symbols(size = 0.25, col = "species.richness", midpoint = NA)
+
+print(richmap)
+```
+
+#### Check autocorrelation with the variogram
+```{r}
+
+
+xy.res <- cbind(site.by.xy, residuals)
+
+v1 <-   variogram(residuals ~ 1, loc= ~ x+y, data = xy.res)
+fit1 <- fit.variogram(v1, vgm(c("Sph", "Exp"))); 
+plot(v1, fit1)
+
+# filepath <- paste0(out_path, "/variogram_tp", ".png")
+# unlink(filepath, recursive = FALSE, force = FALSE) #deletes previous version with the same name
+# 
+# png(file = filepath)
+# plot(v1, fit1)
+# dev.off()
+```
+
+## Habitat Specialists
+```{r}
+
+data <- hs
+
+site.by.species <- data$site.by.species
+  
+site.by.env <- data$site.by.env
+
+site.by.xy <- data$site.by.xy
+
+
+site.by.env.and.richness <- cbind(site.by.xy) %>%
+  cbind(site.by.env, rowSums(site.by.species)) %>% 
+  rename(species.richness = 'rowSums(site.by.species)')
+```
+
+
+```{r}
+gam_hs1 <- gam(species.richness ~ s(mean.ann.temp) + s(log10.mean.ann.rain) + 
+                s(topographic.wetness) + s(ph) + s(total.n) + s(tree.density) + 
+                s(log10.pesticide.risk) + s(log10.humans), family = nb(), 
+                data = site.by.env.and.richness, method= "REML")
+
+gam_hs2 <- update(gam_hs1, formula = species.richness ~ s(mean.ann.temp) + s(log10.mean.ann.rain) + 
+                topographic.wetness + s(ph) + s(total.n) + s(tree.density) + 
+                s(log10.pesticide.risk) + s(log10.humans))
+
+
+```
+
+```{r}
+aic_table <- AIC(gam_hs1, gam_hs2) %>%
+  arrange(AIC) %>%
+  mutate(delta_AIC = AIC - min(AIC)) %>%
+  rownames_to_column(var = "Family")
+
+
+kable(aic_table, digits = 2, align = "l")
+```
+
+```{r}
+par(mfrow = c(2, 2))
+gam.check(gam_hs1)
+gam.check(gam_hs2)
+```
+```{r}
+par(mfrow = c(2, 2))
+my.plot.gam(gam_hs1)
+my.plot.gam(gam_hs2)
+
+```
+
+```{r}
+summary(gam_hs1)
+summary(gam_hs2)
+```
+
+#### Plot residuals against predictors 
+```{r}
+residuals <- resid(gam_hs1)
+
+#Use mapply to plot residuals against each environmental variable in turn
+(mfrow = c(2, 2))
+mapply(function(data, title){
+  plot(residuals ~ data,  xlab= title  )
+}, site.by.env, names(site.by.env))
+```
+
+#### Plot residuals on the map
+```{r}
+#dataframe for mapping
+site.by.env.and.richness <- site.by.env.and.richness %>%
+    cbind(residuals)
+
+#make it into a spatial object
+coordinates(site.by.env.and.richness) <- c("x","y")
+
+crs.geo <- CRS("+init=epsg:27700")  # looks up BNG crs
+proj4string(site.by.env.and.richness) <- crs.geo  # define projection system of our data
+
+bubble(site.by.env.and.richness, "residuals", col = c("black","grey"),
+       main = "Residuals", xlab = "X-coordinates", ylab = "Y-coordinates")
+
+basemap <-tm_shape(gb) +
+  tm_borders()
+
+resmap <- basemap +
+tm_shape(site.by.env.and.richness) +
+  tm_symbols(size = 0.25, col = "residuals", midpoint = NA)
+
+print(resmap)
+```
+#Plot richness on the map
+```{r}
+
+basemap <-tm_shape(gb) +
+  tm_borders()
+
+richmap <- basemap +
+tm_shape(site.by.env.and.richness) +
+  tm_symbols(size = 0.25, col = "species.richness", midpoint = NA)
+
+print(richmap)
+```
+
+#### Check autocorrelation with the variogram
+```{r}
+
+
+xy.res <- cbind(site.by.xy, residuals)
+
+v1 <-   variogram(residuals ~ 1, loc= ~ x+y, data = xy.res)
+fit1 <- fit.variogram(v1, vgm(c("Sph", "Exp"))); 
+plot(v1, fit1)
+
+# filepath <- paste0(out_path, "/variogram_tp", ".png")
+# unlink(filepath, recursive = FALSE, force = FALSE) #deletes previous version with the same name
+# 
+# png(file = filepath)
+# plot(v1, fit1)
+# dev.off()
+```
+
+
+
+
+
+
+
+
