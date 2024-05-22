@@ -91,7 +91,7 @@ render_report(analysis_script = "GAM_compare_family_analyses.Rmd", list(dataset 
 ```
 
 ```{r}
-render_report(analysis_script = "GAM_compare_family_analyses.Rmd", list(dataset = "hs_no_zeros"))
+#render_report(analysis_script = "GAM_compare_family_analyses.Rmd", list(dataset = "hs_no_zeros"))
 ```
 
 

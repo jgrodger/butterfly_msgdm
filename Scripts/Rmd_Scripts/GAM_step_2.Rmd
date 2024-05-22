@@ -4,7 +4,7 @@ output: html_notebook
 ---
 
 ```{r}
-here::i_am("Scripts/Rmd_Scripts/GAMM_analyses.Rmd")
+here::i_am("Scripts/Rmd_Scripts/GAM_step_2.Rmd")
 library(tidyverse)
 library(tmap)
 library(mgcv)
@@ -29,8 +29,6 @@ conflicts_prefer(knitrProgressBar::progress_estimated)
 #### Functions
 ```{r}
 # A function for plotting gam relationships with my preferences
-
-
 my.plot.gam <- function(gam_object){
 plot(gam_object, residuals = TRUE, seWithMean = TRUE, shade = TRUE, shift = coef(gam_object)[1], pages = 2) 
 }
@@ -62,7 +60,6 @@ slow_function <- function(i, .pb=NULL) {
 
 #### Datasets for gamms
 ```{r}
-
 all_species <- readRDS(here("./Data/Processed_Data/Spatial/all_species.rds"))
 wc <- readRDS(here("./Data/Processed_Data/Spatial/wc.rds"))
 hs <- readRDS(here("./Data/Processed_Data/Spatial/hs.rds"))
@@ -71,17 +68,11 @@ hs_no_zeros <- readRDS(here("./Data/Processed_Data/Spatial/hs_no_zeros.rds"))
 # get all datasets in a list
 datasets <- list(all_species, wc, hs, hs_no_zeros)
 names(datasets) <- c("all_species", "wc", "hs", "hs_no_zeros")
-
-
-
-  
 ```
 
 
 
 ## All Species
-
-
 ```{r}
 
 gb <- readRDS(here("./Data/Maps/gb_multipolygon_simplified.rds"))
@@ -157,7 +148,7 @@ summary(gam_as3)
 #### Plot residuals against predictors 
 ```{r}
 residuals <- resid(gam_as1)
-(mfrow = c(2, 2))
+par(mfrow = c(2, 2))
 
 #Use mapply to plot residuals against each environmental variable in turn
 mapply(function(data, title){
@@ -204,19 +195,18 @@ print(richmap)
 
 #### Check autocorrelation with the variogram
 ```{r}
-
 xy.res <- cbind(site.by.xy, residuals)
 
 v1 <-   variogram(residuals ~ 1, loc= ~ x+y, data = xy.res)
 fit1 <- fit.variogram(v1, vgm(c("Sph", "Exp"))); 
 plot(v1, fit1)
 
-# filepath <- paste0(out_path, "/variogram_tp", ".png")
-# unlink(filepath, recursive = FALSE, force = FALSE) #deletes previous version with the same name
-# 
-# png(file = filepath)
-# plot(v1, fit1)
-# dev.off()
+filepath <- here("Output/Spatial/GAM/GAM_all_species/semivariogram.png")
+unlink(filepath, recursive = FALSE, force = FALSE) #deletes previous version with the same name
+
+png(file = filepath)
+plot(v1, fit1)
+dev.off()
 ```
 
 
@@ -251,13 +241,14 @@ gam_wc1 <- gam(species.richness ~ s(mean.ann.temp) + s(log10.mean.ann.rain) +
 ```{r}
 par(mfrow = c(2, 2))
 gam.check(gam_wc1)
+summary(gam_wc1)
 ```
 
 
 #### Plot residuals against predictors 
 ```{r}
 residuals <- resid(gam_wc1)
-(mfrow = c(2, 2))
+par(mfrow = c(2, 2))
 
 #Use mapply to plot residuals against each environmental variable in turn
 mapply(function(data, title){
@@ -304,20 +295,18 @@ print(richmap)
 
 #### Check autocorrelation with the variogram
 ```{r}
-
-
 xy.res <- cbind(site.by.xy, residuals)
 
 v1 <-   variogram(residuals ~ 1, loc= ~ x+y, data = xy.res)
 fit1 <- fit.variogram(v1, vgm(c("Sph", "Exp"))); 
 plot(v1, fit1)
 
-# filepath <- paste0(out_path, "/variogram_tp", ".png")
-# unlink(filepath, recursive = FALSE, force = FALSE) #deletes previous version with the same name
-# 
-# png(file = filepath)
-# plot(v1, fit1)
-# dev.off()
+filepath <- here("Output/Spatial/GAM/GAM_wc/semivariogram.png")
+unlink(filepath, recursive = FALSE, force = FALSE) #deletes previous version with the same name
+
+png(file = filepath)
+plot(v1, fit1)
+dev.off()
 ```
 
 ## Habitat Specialists
@@ -344,15 +333,17 @@ gam_hs1 <- gam(species.richness ~ s(mean.ann.temp) + s(log10.mean.ann.rain) +
                 s(log10.pesticide.risk) + s(log10.humans), family = nb(), 
                 data = site.by.env.and.richness, method= "REML")
 
+
+# without the smooth for topographic wetness
 gam_hs2 <- update(gam_hs1, formula = species.richness ~ s(mean.ann.temp) + s(log10.mean.ann.rain) + 
                 topographic.wetness + s(ph) + s(total.n) + s(tree.density) + 
                 s(log10.pesticide.risk) + s(log10.humans))
 
-
+gam_hs3 <- update(gam_hs1, family = tw())
 ```
 
 ```{r}
-aic_table <- AIC(gam_hs1, gam_hs2) %>%
+aic_table <- AIC(gam_hs1, gam_hs2, gam_hs3) %>%
   arrange(AIC) %>%
   mutate(delta_AIC = AIC - min(AIC)) %>%
   rownames_to_column(var = "Family")
@@ -378,12 +369,16 @@ summary(gam_hs1)
 summary(gam_hs2)
 ```
 
+### Habitat Specialists with negative binomial
+
+
+
 #### Plot residuals against predictors 
 ```{r}
 residuals <- resid(gam_hs1)
 
 #Use mapply to plot residuals against each environmental variable in turn
-(mfrow = c(2, 2))
+par(mfrow = c(2, 2))
 mapply(function(data, title){
   plot(residuals ~ data,  xlab= title  )
 }, site.by.env, names(site.by.env))
@@ -415,7 +410,6 @@ print(resmap)
 ```
 #Plot richness on the map
 ```{r}
-
 basemap <-tm_shape(gb) +
   tm_borders()
 
@@ -428,23 +422,101 @@ print(richmap)
 
 #### Check autocorrelation with the variogram
 ```{r}
-
-
 xy.res <- cbind(site.by.xy, residuals)
 
 v1 <-   variogram(residuals ~ 1, loc= ~ x+y, data = xy.res)
 fit1 <- fit.variogram(v1, vgm(c("Sph", "Exp"))); 
 plot(v1, fit1)
 
-# filepath <- paste0(out_path, "/variogram_tp", ".png")
-# unlink(filepath, recursive = FALSE, force = FALSE) #deletes previous version with the same name
-# 
-# png(file = filepath)
-# plot(v1, fit1)
-# dev.off()
+filepath <- here("Output/Spatial/GAM/GAM_hs/semivariogram_nb.png")
+unlink(filepath, recursive = FALSE, force = FALSE) #deletes previous version with the same name
+
+png(file = filepath)
+plot(v1, fit1)
+dev.off()
+```
+### Habitat specialists with Tweedie
+
+```{r}
+
+data <- hs
+
+site.by.species <- data$site.by.species
+  
+site.by.env <- data$site.by.env
+
+site.by.xy <- data$site.by.xy
+
+
+site.by.env.and.richness <- cbind(site.by.xy) %>%
+  cbind(site.by.env, rowSums(site.by.species)) %>% 
+  rename(species.richness = 'rowSums(site.by.species)')
 ```
 
 
+
+#### Plot residuals against predictors  
+```{r}
+residuals <- resid(gam_hs3)
+
+#Use mapply to plot residuals against each environmental variable in turn
+par(mfrow = c(2, 2))
+mapply(function(data, title){
+  plot(residuals ~ data,  xlab= title  )
+}, site.by.env, names(site.by.env))
+
+```
+
+#### Plot residuals on the map
+```{r}
+#dataframe for mapping
+site.by.env.and.richness <- site.by.env.and.richness %>%
+    cbind(residuals)
+
+#make it into a spatial object
+coordinates(site.by.env.and.richness) <- c("x","y")
+
+crs.geo <- CRS("+init=epsg:27700")  # looks up BNG crs
+proj4string(site.by.env.and.richness) <- crs.geo  # define projection system of our data
+
+bubble(site.by.env.and.richness, "residuals", col = c("black","grey"),
+       main = "Residuals", xlab = "X-coordinates", ylab = "Y-coordinates")
+
+basemap <-tm_shape(gb) +
+  tm_borders()
+
+resmap <- basemap +
+tm_shape(site.by.env.and.richness) +
+  tm_symbols(size = 0.25, col = "residuals", midpoint = NA)
+
+print(resmap)
+```
+#Plot richness on the map
+```{r}
+basemap <-tm_shape(gb) +
+  tm_borders()
+
+richmap <- basemap +
+tm_shape(site.by.env.and.richness) +
+  tm_symbols(size = 0.25, col = "species.richness", midpoint = NA)
+
+print(richmap)
+```
+
+#### Check autocorrelation with the variogram
+```{r}
+xy.res <- cbind(site.by.xy, residuals)
+
+v1 <-   variogram(residuals ~ 1, loc= ~ x+y, data = xy.res)
+fit1 <- fit.variogram(v1, vgm(c("Sph", "Exp"))); 
+plot(v1, fit1)
+
+filepath <- here("Output/Spatial/GAM/GAM_hs/semivariogram_tweedie.png")
+unlink(filepath, recursive = FALSE, force = FALSE) #deletes previous version with the same name
+png(file = filepath)
+plot(v1, fit1)
+dev.off()
+```
 
 
 

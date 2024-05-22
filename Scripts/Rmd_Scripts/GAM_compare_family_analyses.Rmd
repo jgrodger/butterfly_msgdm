@@ -17,15 +17,9 @@ knitr::opts_chunk$set(echo = TRUE)
 here::i_am("Scripts/Rmd_Scripts/GAM_compare_family_analyses.Rmd")
 
 library(tidyverse)
-library(sf)
-library(sp)
-library(terra)
 library(mgcv)
 library(knitr)
 library(knitrProgressBar)
-library(tmap)
-library(mgcViz)
-library(gstat)
 library(here)
 library(conflicted)
 conflicts_prefer(dplyr::filter)
@@ -41,7 +35,8 @@ conflicts_prefer(knitrProgressBar::progress_estimated)
 
 
 my.plot.gam <- function(gam_object){
-plot(gam_object, residuals = TRUE, seWithMean = TRUE, shade = TRUE, shift = coef(gam_object)[1], pages = 2) 
+plot(gam_object, residuals = TRUE, seWithMean = TRUE, shade = TRUE, 
+     shift = coef(gam_object)[1], pages = 2) 
 }
 
 
@@ -87,20 +82,13 @@ site.by.species <- data$site.by.species
 site.by.env <- data$site.by.env
 
 site.by.xy <- data$site.by.xy
-
-# gb polygon
-
-gb <- readRDS(here("./Data/Maps/gb_multipolygon_simplified.rds"))
-
-str(gb, max.level = 1)
-
-crs(gb)
 ```
 
 #### Parameters for this report
 ```{r}
 print(params)
 ```
+## Explore data
 
 #### Environmental variable, easting, northing and richness Pearson and Spearman correlations
 ```{r}
@@ -118,10 +106,9 @@ print("Spearman correlation")
 t2
 ```
 
-#### Visualise relationships with eachother and richness
+#### Visualise relationships between x, y, predictors and richness
 ```{r}
 pairs(site.by.env.and.richness[,3:11])
-
 pairs(site.by.env.and.richness[,c(1, 2, 11)])
 pairs(site.by.env.and.richness[, c(3, 4, 5, 11)])
 pairs(site.by.env.and.richness[,c(6, 7, 8, 11)])
@@ -132,9 +119,9 @@ pairs(site.by.env.and.richness[c(9, 10, 11)])
 ```{r}
 hist(site.by.env.and.richness$species.richness)
 ```
-#GAMS
+## GAMS
 
-#### Compare GAMs with different families
+### Run GAMs with different distributions for the response variable
 ```{r}
 # Gaussian
 gam_gaussian <- gam(species.richness ~ s(mean.ann.temp) + s(log10.mean.ann.rain) + 
@@ -151,45 +138,51 @@ gam_nb <- update(gam_gaussian, family = nb(), link = "log")
 
 gam_tweedie <- update(gam_poisson, family = tw())# tweedie distribution with p parameter estimated
 
+gam_ziP <- update(gam_poisson, family = ziP) #ziP for zero inflated Poisson data, when the zero inflation rate depends simply on the Poisson mean.
 
 ```
 
 
-# Gaussian
+### Gaussian
 ```{r}
 par(mfrow = c(2, 2))
 gam.check(gam_gaussian)
 my.plot.gam(gam_gaussian)
 ```
 
-#### Poisson
+### Poisson
 ```{r}
 par(mfrow = c(2, 2))
 gam.check(gam_poisson)
 my.plot.gam(gam_poisson)
 ```
 
-##### Negative Binomial
+#### Negative Binomial
 ```{r}
 par(mfrow = c(2, 2))
 gam.check(gam_nb)
 my.plot.gam(gam_nb)
 ```
 
-##### Tweedie 
+### Tweedie 
 ```{r}
 par(mfrow = c(2, 2))
 gam.check(gam_tweedie)
-my.plot.gam(gam_tweedie) #Tweedie is over-fitting on pH at least 
+my.plot.gam(gam_tweedie) #Tweedie tends to  over-fit on pH at least 
 ```
 
-
+### Zero-inflated poisson
+```{r}
+par(mfrow = c(2, 2))
+gam.check(gam_ziP)
+my.plot.gam(gam_ziP) 
+```
 
 #### Compare GAMs in terms of AIC
 ```{r}
-gam_fam_list <-list (gam_gaussian, gam_poisson, gam_nb, gam_tweedie)
+gam_fam_list <-list (gam_gaussian, gam_poisson, gam_nb, gam_tweedie, gam_ziP)
 
-aic_table <- AIC(gam_gaussian, gam_poisson, gam_nb, gam_tweedie) %>%
+aic_table <- AIC(gam_gaussian, gam_poisson, gam_nb, gam_tweedie, gam_ziP) %>%
   arrange(AIC) %>%
   mutate(delta_AIC = AIC - min(AIC)) %>%
   rownames_to_column(var = "Family")

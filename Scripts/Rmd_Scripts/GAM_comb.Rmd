@@ -127,6 +127,11 @@ rich <- site.by.env   %>%
 https://r.qcbs.ca/workshop08/book-en/introduction-to-generalized-additive-mixed-models-gamms.html#gamm-with-a-random-intercept
 ?gam.models
 
+We could have different distributions for hs versus wc
+"gfam creates a 'grouped family' (or 'family group') from a list of families. The response is supplied as a two column matrix, the first containing the response observations, and the second an index of the family to which each observation relates."
+
+
+
 Probably use this one
 
 https://drmowinckels.io/blog/2018/gamm-random-effects/
