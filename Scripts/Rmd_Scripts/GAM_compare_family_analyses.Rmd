@@ -4,12 +4,18 @@ output: html_document
 
 params:
   dataset: "all_species"
----
+ ---
 
 ## In this code, we explore relationships between environmental variables and richness, and compare GAMS for different distributions (family argument) 
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+#### Parameters for this report
+```{r}
+print(params)
 ```
 
 #### Packages
@@ -62,6 +68,8 @@ slow_function <- function(i, .pb=NULL) {
 # create an R6 progress object for
 # the number of loops/iterations in the target chunk
 ```
+
+
 
 #### File Paths
 ```{r}

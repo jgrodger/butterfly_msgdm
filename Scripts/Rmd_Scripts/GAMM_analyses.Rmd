@@ -1,6 +1,7 @@
 ---
 title: "GAMMs"
 output: html_document
+
 ---
 
 ```{r setup, include=FALSE}
@@ -190,15 +191,13 @@ gamm_list[[i]] <- my_gamm
 
 }
 
-filedir <- paste0(here(out_path), "/GAMM_wc_tp")
+filedir <- paste0(here(out_path), "/GAMM_wc")
 if(!dir.exists(filedir)) dir.create(filedir)
 filepath <- paste0(filedir, "/gamm_cor_struct_compare.rds")
 filepath
 write_rds(gamm_list , 
           file = filepath)
 ```
-## Try gams and gamms with hs with zeros
-
 #### Habitat specialist, thin plate splines, Tweedie close to Poisson
 ```{r}
 #checklist to modify after copy past
@@ -237,42 +236,3 @@ write_rds(gamm_list ,
           file = filepath)
 ```
 
-#### Wider countryside, cubic regression splines, gaussian family
-```{r}
-
-#checklist to modify after copy past
-
-#formula
-#family
-#data
-#filedir
-#write_rds
-
-gamm_list <- list()
-# Loop through the gamms saving output in list
-# Nugget allows non-zero autocorrelation at 0 distance
-for (i in 1:length(corStructs)) {
-my_gamm <- gamm(
-   species.richness ~ s(mean.ann.temp, bs="cr") + 
-    s(log10.mean.ann.rain, bs="cr") + s(topographic.wetness, bs="cr") + 
-    s(ph, bs="cr") + s(total.n, bs="cr") + s(tree.density, bs="cr") + 
-    s(log10.pesticide.risk, bs="cr") + s(log10.humans, bs="cr"),
-  method = "REML", 
-  family = "gaussian", 
-  correlation = corStructs[[i]], 
-  data = datasets$wc$gamm_input)
-
-print(i)
-print(Sys.time())
-
-gamm_list[[i]] <- my_gamm
-
-}
-
-filedir <- paste0(here(out_path), "/GAMM_wc_cr")
-if(!dir.exists(filedir)) dir.create(filedir)
-filepath <- paste0(filedir, "/gamm_cor_struct_compare.rds")
-filepath
-write_rds(gamm_list , 
-          file = filepath)
-```

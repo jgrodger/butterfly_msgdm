@@ -3,17 +3,40 @@ title: "Process GAMM analyses"
 output: html_document
 
 params:
-  dataset: "all_species"
-  spline: "tp"
+  gamm_path: "Output/Spatial/GAM/GAMM_all_species//"
+  analysis: "GAMM_all_species"
 ---
-
+ 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
+```{r}
+here::i_am("Scripts/Rmd_Scripts/process_GAMM_analyses.Rmd")
+library(tidyverse)
+library(tmap)
+library(mgcv)
+library(gstat)
+library(knitr)
+library(knitrProgressBar)
+library(tictoc)
+library(here)
+library(conflicted)
+conflicts_prefer(dplyr::filter)
+conflicts_prefer(dplyr::select)
+conflicts_prefer(knitrProgressBar::progress_estimated)
+# there is a same-named function in dplyr, check it out
+```
+
+#### Parameters for this report
+```{r}
+print(params)
+```
+
 #### Find best correlation structure
 ```{r}
-gamm_cor_struct_list <- readRDS(here("Output/Spatial/GAM/GAMM_all_species/all_species_gamm_cor_struct_compare.rds"))
+#gamm output has been saved in output already
+gamm_cor_struct_list <- readRDS(paste0(here(params$gamm_path), "/gamm_cor_struct_compare.rds"))
 
 gamm_corGaus <- gamm_cor_struct_list[[1]]
 gamm_corExp <- gamm_cor_struct_list[[2]]
@@ -34,7 +57,7 @@ aic_table <- aic_table %>%
 kable(aic_table)
 
 
-write_csv(aic_table, file = paste0(out_path, "/", "correlation_structure_aic_table.csv"))
+write_csv(aic_table, file = paste0(here(params$gamm_path), "correlation_structure_aic_table.csv"))
 
 index_best <- which(aic_table$AIC == min(aic_table$AIC))
 

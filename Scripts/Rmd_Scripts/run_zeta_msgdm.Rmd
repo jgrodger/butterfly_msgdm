@@ -46,8 +46,8 @@ render_report = function(analysis_script, params_list) {
                       paste0(here("Output/Spatial/GAM"), "/","GAM", "_" , params_list$dataset,  "/")  
                 } else if(analysis_script == "GAM_compare_spline_analyses.Rmd") {
                       paste0(here("Output/Spatial/GAM"), "/","GAM", "_" , params_list$dataset,  "/") 
-                } else if(analysis_script == "GAMM_analyses.Rmd"){  
-                      paste0(here("Output/Spatial/GAM"), "/","GAMM", "_" , params_list$dataset,  "/")
+                } else if(analysis_script == "process_GAMM_analyses.Rmd"){  
+                      paste0(here("Output/Spatial/GAM"), "/", params_list$analysis, "/")
                 } else if(analysis_script == "process_msgdm_results.Rmd"){  
                       paste0(here("Output/Spatial/msgdms"), "/", 
                       params_list$dataset, "_" , params_list$normalize_msgdm, "/", 
@@ -113,31 +113,32 @@ render_report(analysis_script = "GAM_compare_spline_analyses.Rmd", list(dataset 
 render_report(analysis_script = "GAM_compare_spline_analyses.Rmd", list(dataset = "hs_no_zeros", family = "Tweedie(p = 1.01)"))
 ```
 
-
-#### GAMMs
-
-#GAMMs run in notebook 
+#### GAMMS
+Note, GAMMS conducted in GAMM_analyses.Rmd notebook
 
 ```{r}
-render_report(analysis_script = "process_GAMM_analyses.Rmd", list(dataset = "all_species", spline = "cr"))
+render_report(analysis_script = "process_GAMM_analyses.Rmd", 
+              list(gamm_path = "Output/Spatial/GAM/GAMM_all_species//", 
+                   analysis = "GAMM_all_species"))
 ```
-
 ```{r}
-render_report(analysis_script = "GAMM_analyses.Rmd", list(dataset = "wc", spline = "tp"))
+render_report(analysis_script = "process_GAMM_analyses.Rmd", 
+              list(gamm_path = "Output/Spatial/GAM/GAMM_all_species//", 
+                   analysis = "GAMM_all_species"))
 ```
-
-
+#### wider countryside
 ```{r}
-render_report(analysis_script = "GAMM_analyses.Rmd", list(dataset = "hs_no_Zeros", family = "Tweedie(p = 1.01)", spline = "tp"))
+render_report(analysis_script = "process_GAMM_analyses.Rmd", 
+              list(gamm_path = "Output/Spatial/GAM/GAMM_wc//", 
+                   analysis = "GAMM_wc"))
 ```
 
-##### Also doing all species with the same spline as the others
+#### Habitat Specialists
 ```{r}
-render_report(analysis_script = "GAMM_analyses.Rmd", list(dataset = "all_species", spline = "tp"))
+render_report(analysis_script = "process_GAMM_analyses.Rmd", 
+              list(gamm_path = "Output/Spatial/GAM/GAMM_hs//", 
+                   analysis = "GAMM_hs"))
 ```
-
-
-
 
 
 ## MSGDMs
