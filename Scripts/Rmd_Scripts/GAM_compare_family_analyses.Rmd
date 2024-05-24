@@ -4,7 +4,7 @@ output: html_document
 
 params:
   dataset: "all_species"
- ---
+---
 
 ## In this code, we explore relationships between environmental variables and richness, and compare GAMS for different distributions (family argument) 
 
@@ -161,6 +161,7 @@ my.plot.gam(gam_gaussian)
 ### Poisson
 ```{r}
 par(mfrow = c(2, 2))
+summary(gam_poisson)
 gam.check(gam_poisson)
 my.plot.gam(gam_poisson)
 ```
@@ -168,6 +169,7 @@ my.plot.gam(gam_poisson)
 #### Negative Binomial
 ```{r}
 par(mfrow = c(2, 2))
+summary(gam_nb)
 gam.check(gam_nb)
 my.plot.gam(gam_nb)
 ```
@@ -175,6 +177,7 @@ my.plot.gam(gam_nb)
 ### Tweedie 
 ```{r}
 par(mfrow = c(2, 2))
+summary(gam_tweedie)
 gam.check(gam_tweedie)
 my.plot.gam(gam_tweedie) #Tweedie tends to  over-fit on pH at least 
 ```
@@ -182,6 +185,7 @@ my.plot.gam(gam_tweedie) #Tweedie tends to  over-fit on pH at least
 ### Zero-inflated poisson
 ```{r}
 par(mfrow = c(2, 2))
+summary(gam_ziP)
 gam.check(gam_ziP)
 my.plot.gam(gam_ziP) 
 ```

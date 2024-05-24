@@ -99,19 +99,6 @@ render_report(analysis_script = "GAM_compare_family_analyses.Rmd", list(dataset 
 render_report(analysis_script = "GAM_compare_family_analyses.Rmd", list(dataset = "hs"))
 ```
 
-#### GAMS comparing different spline methods
-
-```{r}
-render_report(analysis_script = "GAM_compare_spline_analyses.Rmd", list(dataset = "all_species"))
-```
-
-```{r}
-render_report(analysis_script = "GAM_compare_spline_analyses.Rmd", list(dataset = "wc"))
-```
-
-```{r}
-render_report(analysis_script = "GAM_compare_spline_analyses.Rmd", list(dataset = "hs_no_zeros", family = "Tweedie(p = 1.01)"))
-```
 
 #### GAMMS
 Note, GAMMS conducted in GAMM_analyses.Rmd notebook

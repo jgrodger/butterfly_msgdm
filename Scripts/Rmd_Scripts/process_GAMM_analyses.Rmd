@@ -74,7 +74,6 @@ Take care when interpreting results from applying this function to a model fitte
 
 par(mfrow = c(2, 2))
 plot(best_gamm$gam, residuals = TRUE, seWithMean = TRUE, shade = TRUE, shift = coef(best_gamm$gam)[1])
-
 par(mfrow = c(2, 2))
 (gam.check(best_gamm$gam))
 
