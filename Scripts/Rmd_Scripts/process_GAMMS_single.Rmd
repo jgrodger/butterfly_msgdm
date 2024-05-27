@@ -1,6 +1,10 @@
 ---
-title: "R Notebook"
+title: "Single GAMM"
 output: html_notebook
+
+params:
+  dataset: "all_species"
+  gamm_file: "gamm_all_species_exp_gaus2.rds"
 ---
 
 This is to do validated and get output of single GAMM models
@@ -40,17 +44,16 @@ slow_function <- function(i, .pb=NULL) {
 #### File Paths
 ```{r}
 
-#data_path <- paste0("./Data/Processed_Data/Spatial/", params$dataset, ".rds")
-data_path <- paste0("./Data/Processed_Data/Spatial/all_species.rds")
-out_path <-  here("Output/Spatial/GAM")
-if(!dir.exists(out_path)) dir.create(out_path)
+data_path <- here(paste0("./Data/Processed_Data/Spatial/", params$dataset, ".rds"))
+#data_path <- paste0("./Data/Processed_Data/Spatial/all_species.rds")
+out_path <-  here(paste0(("Output/Spatial/GAM/GAMM_"),  params$dataset), "/")
+
+#if(!dir.exists(out_path)) dir.create(out_path)
 ```
 
 #### Datasets for gamms
 ```{r}
-my_gamm <- readRDS(paste0(here(out_path), "/GAMM_all_species/gamm_all_species_exp_gaus2.rds"))
-
-
+my_gamm <- readRDS(paste0(out_path, params$gamm_file))
 
 data <- readRDS(data_path)
 ```

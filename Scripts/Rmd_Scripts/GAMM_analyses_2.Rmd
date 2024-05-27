@@ -8,13 +8,8 @@ output: html_notebook
 ```{r}
 here::i_am("Scripts/Rmd_Scripts/GAMM_analyses_2.Rmd")
 library(tidyverse)
-library(tmap)
 library(mgcv)
-library(gamm4)
-library(mgcViz)
-library(gstat)
 library(knitr)
-library(knitrProgressBar)
 library(tictoc)
 library(here)
 library(conflicted)
@@ -94,16 +89,12 @@ names(gamm_input) <- "gamm_input"
 datasets[[i]] <- c(datasets[[i]], gamm_input)
 }
 ```
-
-
 #### Specify  correlation structures
 ```{r}
-
 corStructs <- list(corGaus(form = ~x+y, nugget = TRUE), corExp(form = ~x+y, nugget = TRUE), corLin(form = ~x+y, nugget = TRUE), corRatio(form = ~x+y, nugget = TRUE), corSpher(form = ~x+y, nugget = TRUE) )
-
-
 ```
 
+### All Species
 ```{r}
 
 #note gamm4 does not take correlation structure
@@ -136,9 +127,7 @@ toc()
 ```
 
 
-
-
-
+### Wider Countryside
 
 ```{r}
 try(gamm_wc <- gamm(
@@ -156,6 +145,9 @@ filepath
 try(write_rds(gamm_wc , 
           file = filepath))
 ```
+
+
+### Habitat Specialists
 
 ```{r}
 # family = nb() not appropriate in gamm, gives warning
