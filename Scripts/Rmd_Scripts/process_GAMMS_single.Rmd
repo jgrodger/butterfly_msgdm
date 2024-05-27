@@ -7,6 +7,11 @@ params:
   gamm_file: "gamm_all_species_exp_gaus2.rds"
 ---
 
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
 This is to do validated and get output of single GAMM models
 
 #### Packages
