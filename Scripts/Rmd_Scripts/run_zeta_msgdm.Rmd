@@ -49,7 +49,7 @@ render_report = function(analysis_script, params_list) {
                 } else if(analysis_script == "process_GAMM_analyses.Rmd"){  
                       paste0(here("Output/Spatial/GAM"), "/", params_list$analysis, "/")
                 } else if(analysis_script == "process_GAMMS_single.Rmd"){  
-                      paste0(here("Output/Spatial/GAM/GAMM_"), "/", params_list$dataset, "/")
+                      paste0(here("Output/Spatial/GAM/GAMM_"), params_list$dataset, "/")
                 } else if(analysis_script == "process_msgdm_results.Rmd"){  
                       paste0(here("Output/Spatial/msgdms"), "/", 
                       params_list$dataset, "_" , params_list$normalize_msgdm, "/", 
@@ -108,20 +108,22 @@ Note, GAMMS conducted in GAMM_analyses.Rmd notebook
 
 ```{r}
 render_report(analysis_script = "process_GAMM_analyses.Rmd", 
-              list(gamm_path = "Output/Spatial/GAM/GAMM_all_species//", 
+              list(dataset = "all_species", 
                    analysis = "GAMM_all_species"))
 ```
+
+
 #### wider countryside
 ```{r}
 render_report(analysis_script = "process_GAMM_analyses.Rmd", 
-              list(gamm_path = "Output/Spatial/GAM/GAMM_wc//", 
+              list(dataset = "wc", 
                    analysis = "GAMM_wc"))
 ```
 
 #### Habitat Specialists
 ```{r}
 render_report(analysis_script = "process_GAMM_analyses.Rmd", 
-              list(gamm_path = "Output/Spatial/GAM/GAMM_hs//", 
+              list(dataset = "hs", 
                    analysis = "GAMM_hs"))
 ```
 
@@ -133,15 +135,12 @@ render_report(analysis_script = "process_GAMMS_single.Rmd",
                    dataset = "all_species"))
 ```
 
-
 #### WC
 ```{r}
 render_report(analysis_script = "process_GAMMS_single.Rmd", 
               list(gamm_file = "gamm_wc_exp_gaus2.rds", 
                    dataset = "wc"))
 ```
-
-
 
 #### HS
 ```{r}

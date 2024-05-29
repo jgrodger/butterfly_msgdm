@@ -3,8 +3,8 @@ title: "Process GAMM analyses"
 output: html_document
 
 params:
-  gamm_path: "Output/Spatial/GAM/GAMM_all_species//"
   analysis: "GAMM_all_species"
+  dataset: "all_species"
 ---
  
 ```{r setup, include=FALSE}
@@ -33,10 +33,50 @@ conflicts_prefer(knitrProgressBar::progress_estimated)
 print(params)
 ```
 
-#### Find best correlation structure
+#### Functions
+```{r}
+# A function to plot normalised residual plots
+plot_norm_res <- function(my_gamm, my_gamm_input){
+print("Normalized Residual Plots")
+resvals <- resid(my_gamm$lme, type = "normalized")
+expvals <- fitted(my_gamm$lme)
+obsvals <- gamm_input$species.richness
+par(mfrow = c(2, 2))
+  stats::qqnorm(resvals)
+    stats::qqline(resvals)
+  plot(resvals~expvals, xlab = "Fitted values", ylab = "Residuals",
+   cex = 0.3)
+  hist(resvals)
+  plot(obsvals ~ expvals, xlab = "Fitted values", ylab = "Observed values",
+   cex = 0.3)
+}
+
+# a wrapper function to plot variograms
+plot_variogram <- function(my_gamm, my_gamm_input){
+resvals <- resid(my_gamm$lme, type = "normalized")
+var_dat_resid <- variogram(resvals ~1, loc= ~ x + y, data = my_gamm_input)
+return(var_dat_resid)
+}
+
+```
+
+
+
 ```{r}
 #gamm output has been saved in output already
-gamm_cor_struct_list <- readRDS(paste0(here(params$gamm_path), "/gamm_cor_struct_compare.rds"))
+
+data_path <- here("Data/Processed_Data/Spatial//" )
+out_path <-  here(paste0("Output/Spatial/GAM/GAMM_", params$dataset))
+```
+
+
+#### Find best correlation structure
+```{r}
+
+gamm_input <- readRDS(paste0(data_path, params$dataset, "_gamm_input.rds"))
+gamm_cor_struct_list <- readRDS(paste0(here(out_path), "/gamm_cor_struct_compare.rds"))
+names(gamm_cor_struct_list) <- c("gamm_corGaus", "gamm_corExp", "gamm_corLin",
+"gamm_corRatio", "gamm_corSpher")
 
 gamm_corGaus <- gamm_cor_struct_list[[1]]
 gamm_corExp <- gamm_cor_struct_list[[2]]
@@ -67,27 +107,275 @@ best_gamm <- gamm_cor_struct_list[[index_best]]
 
 Take care when interpreting results from applying this function to a model fitted using gamm. In this case the returned gam object is based on the working model used for estimation, and will treat all the random effects as part of the error. This means that the residuals extracted from the gam object are not standardized for the family used or for the random effects or correlation structure. Usually it is necessary to produce your own residual checks based on consideration of the model structure you have used.
 
-#### View output for best correlation structure
+#### View output for each correlation structure
+
+
+### gam.check
+
+#### corGaus
 ```{r}
-
-(summary(best_gamm$gam))
-
+gamm_i <- gamm_cor_struct_list[[1]]
 par(mfrow = c(2, 2))
-plot(best_gamm$gam, residuals = TRUE, seWithMean = TRUE, shade = TRUE, shift = coef(best_gamm$gam)[1])
+gam.check(gamm_i$gam)
+```
+
+#### corExp
+```{r}
+gamm_i <- gamm_cor_struct_list[[2]]
 par(mfrow = c(2, 2))
-(gam.check(best_gamm$gam))
+gam.check(gamm_i$gam)
+```
 
-acf(residuals(best_gamm$lme,type="normalized"),main="standardized residual ACF")
+#### corLin
+```{r}
+gamm_i <- gamm_cor_struct_list[[3]]
+par(mfrow = c(2, 2))
+gam.check(gamm_i$gam)
+```
 
+#### corRatio
+```{r}
+gamm_i <- gamm_cor_struct_list[[4]]
+par(mfrow = c(2, 2))
+gam.check(gamm_i$gam)
+```
+
+#### corSpher
+```{r}
+gamm_i <- gamm_cor_struct_list[[5]]
+par(mfrow = c(2, 2))
+gam.check(gamm_i$gam)
+```
+
+### Normalized Residual Plots
+
+
+#### corGaus
+```{r}
+gamm_i <- gamm_cor_struct_list[[1]]
+plot_norm_res(gamm_i, gamm_input)
+```
+
+#### corExp
+```{r}
+gamm_i <- gamm_cor_struct_list[[2]]
+plot_norm_res(gamm_i, gamm_input)
+```
+
+#### corLin
+```{r}
+gamm_i <- gamm_cor_struct_list[[3]]
+plot_norm_res(gamm_i, gamm_input)
+```
+
+#### corRatio
+```{r}
+gamm_i <- gamm_cor_struct_list[[4]]
+plot_norm_res(gamm_i, gamm_input)
+```
+
+#### corSpher
+```{r}
+gamm_i <- gamm_cor_struct_list[[5]]
+plot_norm_res(gamm_i, gamm_input)
+```
+
+### Residual Variograms
+
+#### corGaus
+```{r}
+gamm_i <- gamm_cor_struct_list[[1]]
+vp <- plot_variogram(gamm_i, gamm_input)
+plot(vp)
+```
+
+#### corExp
+```{r}
+gamm_i <- gamm_cor_struct_list[[2]]
+vp <- plot_variogram(gamm_i, gamm_input)
+plot(vp)
+```
+
+#### corLin
+```{r}
+gamm_i <- gamm_cor_struct_list[[3]]
+vp <- plot_variogram(gamm_i, gamm_input)
+plot(vp)
+```
+
+#### corRatio
+```{r}
+gamm_i <- gamm_cor_struct_list[[4]]
+vp <- plot_variogram(gamm_i, gamm_input)
+plot(vp)
+```
+
+#### corSpher
+```{r}
+gamm_i <- gamm_cor_struct_list[[5]]
+vp <- plot_variogram(gamm_i, gamm_input)
+plot(vp)
+```
+
+### Concurvity
+
+#### corGaus
+```{r}
+gamm_i <- gamm_cor_struct_list[[1]]
 print("Overall concurvity")
-kable(concurvity(best_gamm$gam, full = TRUE), digits = 2)
+kable(concurvity(gamm_i$gam, full = TRUE), digits = 2)
 print("worst")
-kable(concurvity(best_gamm$gam, full = FALSE)$worst, digits = 2)
+kable(concurvity(gamm_i$gam, full = FALSE)$worst, digits = 2)
 print("observed")
-kable(concurvity(best_gamm$gam, full = FALSE)$observed, digits = 2)
+kable(concurvity(gamm_i$gam, full = FALSE)$observed, digits = 2)
 print("estimate")
-kable(concurvity(best_gamm$gam, full = FALSE)$estimate, digits = 2)
+kable(concurvity(gamm_i$gam, full = FALSE)$estimate, digits = 2)
+```
 
+#### corExp
+```{r}
+gamm_i <- gamm_cor_struct_list[[2]]
+print("Overall concurvity")
+kable(concurvity(gamm_i$gam, full = TRUE), digits = 2)
+print("worst")
+kable(concurvity(gamm_i$gam, full = FALSE)$worst, digits = 2)
+print("observed")
+kable(concurvity(gamm_i$gam, full = FALSE)$observed, digits = 2)
+print("estimate")
+kable(concurvity(gamm_i$gam, full = FALSE)$estimate, digits = 2)
+```
+
+#### corLin
+```{r}
+gamm_i <- gamm_cor_struct_list[[3]]
+print("Overall concurvity")
+kable(concurvity(gamm_i$gam, full = TRUE), digits = 2)
+print("worst")
+kable(concurvity(gamm_i$gam, full = FALSE)$worst, digits = 2)
+print("observed")
+kable(concurvity(gamm_i$gam, full = FALSE)$observed, digits = 2)
+print("estimate")
+kable(concurvity(gamm_i$gam, full = FALSE)$estimate, digits = 2)
+```
+
+#### corRatio
+```{r}
+gamm_i <- gamm_cor_struct_list[[4]]
+print("Overall concurvity")
+kable(concurvity(gamm_i$gam, full = TRUE), digits = 2)
+print("worst")
+kable(concurvity(gamm_i$gam, full = FALSE)$worst, digits = 2)
+print("observed")
+kable(concurvity(gamm_i$gam, full = FALSE)$observed, digits = 2)
+print("estimate")
+kable(concurvity(gamm_i$gam, full = FALSE)$estimate, digits = 2)
+```
+
+#### corSpher
+```{r}
+gamm_i <- gamm_cor_struct_list[[5]]
+print("Overall concurvity")
+kable(concurvity(gamm_i$gam, full = TRUE), digits = 2)
+print("worst")
+kable(concurvity(gamm_i$gam, full = FALSE)$worst, digits = 2)
+print("observed")
+kable(concurvity(gamm_i$gam, full = FALSE)$observed, digits = 2)
+print("estimate")
+kable(concurvity(gamm_i$gam, full = FALSE)$estimate, digits = 2)
+```
+
+### GAM summaries
+
+#### corGaus
+```{r}
+gamm_i <- gamm_cor_struct_list[[1]]
+summary(gamm_i$gam)
+```
+
+#### corExp
+```{r}
+gamm_i <- gamm_cor_struct_list[[2]]
+summary(gamm_i$gam)
+```
+
+#### corLin
+```{r}
+gamm_i <- gamm_cor_struct_list[[3]]
+summary(gamm_i$gam)
+```
+
+#### corRatio
+```{r}
+gamm_i <- gamm_cor_struct_list[[4]]
+summary(gamm_i$gam)
+```
+
+#### corSpher
+```{r}
+gamm_i <- gamm_cor_struct_list[[5]]
+summary(gamm_i$gam)
 ```
 
 
+### Smooth Plots with Partial Residuals
+
+#### corGaus
+```{r}
+gamm_i <- gamm_cor_struct_list[[1]]
+par(mfrow = c(2, 2))
+plot(gamm_i$gam, residuals = TRUE, seWithMean = TRUE, shade = TRUE, shift = coef(gamm_i$gam)[1])
+```
+
+#### corExp
+```{r}
+gamm_i <- gamm_cor_struct_list[[2]]
+par(mfrow = c(2, 2))
+plot(gamm_i$gam, residuals = TRUE, seWithMean = TRUE, shade = TRUE, shift = coef(gamm_i$gam)[1])
+```
+
+#### corLin
+```{r}
+gamm_i <- gamm_cor_struct_list[[3]]
+par(mfrow = c(2, 2))
+plot(gamm_i$gam, residuals = TRUE, seWithMean = TRUE, shade = TRUE, shift = coef(gamm_i$gam)[1])
+```
+
+#### corRatio
+```{r}
+gamm_i <- gamm_cor_struct_list[[4]]
+par(mfrow = c(2, 2))
+plot(gamm_i$gam, residuals = TRUE, seWithMean = TRUE, shade = TRUE, shift = coef(gamm_i$gam)[1])
+```
+
+#### corSpher
+```{r}
+gamm_i <- gamm_cor_struct_list[[5]]
+par(mfrow = c(2, 2))
+plot(gamm_i$gam, residuals = TRUE, seWithMean = TRUE, shade = TRUE, shift = coef(gamm_i$gam)[1])
+```
+
+
+<!-- #### corGaus -->
+<!-- ```{r} -->
+<!-- gamm_i <- gamm_cor_struct_list[[1]] -->
+<!-- ``` -->
+
+<!-- #### corExp -->
+<!-- ```{r} -->
+<!-- gamm_i <- gamm_cor_struct_list[[2]] -->
+<!-- ``` -->
+
+<!-- #### corLin -->
+<!-- ```{r} -->
+<!-- gamm_i <- gamm_cor_struct_list[[3]] -->
+<!-- ``` -->
+
+<!-- #### corRatio -->
+<!-- ```{r} -->
+<!-- gamm_i <- gamm_cor_struct_list[[4]] -->
+<!-- ``` -->
+
+<!-- #### corSpher -->
+<!-- ```{r} -->
+<!-- gamm_i <- gamm_cor_struct_list[[5]] -->
+<!-- ``` -->

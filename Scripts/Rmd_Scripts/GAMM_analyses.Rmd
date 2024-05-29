@@ -1,7 +1,6 @@
 ---
 title: "GAMMs"
 output: html_document
-
 ---
 
 ```{r setup, include=FALSE}
@@ -93,35 +92,35 @@ gamm_input <- site.by.env.xy.richness %>%
 hist(gamm_input$species.richness, main = names(datasets[i]))
 
 # add the input for the gamm to each dataset
+write_rds(gamm_input, 
+          file = here(
+            paste0("./Data/Processed_Data/Spatial/", names(datasets[i]), "_gamm_input.rds" )
+            )
+          )
+
 gamm_input <- list(gamm_input)
 names(gamm_input) <- "gamm_input"
 datasets[[i]] <- c(datasets[[i]], gamm_input)
 }
+
+
 ```
-#### Specify formulas (different ones needed for different splines) and correlation structures
+
+#### Specify  correlation structures
 ```{r}
-tp_formula <- as.formula(species.richness ~ s(mean.ann.temp, k = 5) + s(log10.mean.ann.rain, k = 5) + 
-  s(topographic.wetness, k = 5) + s(ph, k = 5) + s(total.n, k = 5) + s(tree.density, k = 5) + 
-  s(log10.pesticide.risk, k = 5) + s(log10.humans, k = 5))
-  
-cr_formula <- as.formula(
-  species.richness ~ s(mean.ann.temp, bs="cr") + 
-    s(log10.mean.ann.rain, bs="cr") + s(topographic.wetness, bs="cr") + 
-    s(ph, bs="cr") + s(total.n, bs="cr") + s(tree.density, bs="cr") + 
-    s(log10.pesticide.risk, bs="cr") + s(log10.humans, bs="cr")
-)
-
 corStructs <- list(corGaus(form = ~x+y, nugget = TRUE), corExp(form = ~x+y, nugget = TRUE), corLin(form = ~x+y, nugget = TRUE), corRatio(form = ~x+y, nugget = TRUE), corSpher(form = ~x+y, nugget = TRUE) )
-
-pb <- progress_estimated(length(corStructs)) # parameter for tracking progress
 ```
 
 
 ## run GAMMs and save
 
 
+# Full model before dropping terms based on concurvity
+
+
 ### Annoyingly, I did not succeed in a wrapper function and in the Markdown version, it was hanging
 ### Therefore, I have copied and pasted and checked carefully
+
 
 #### All species, thin plate splines, gaussian family
 ```{r}
@@ -138,9 +137,9 @@ gamm_list <- list()
 # Nugget allows non-zero autocorrelation at 0 distance
 for (i in 1:length(corStructs)) {
 my_gamm <- gamm(
-  species.richness ~ s(mean.ann.temp) + s(log10.mean.ann.rain) + 
-  s(topographic.wetness) + s(ph) + s(total.n) + s(tree.density) + 
-  s(log10.pesticide.risk) + s(log10.humans), 
+  species.richness ~ s(mean.ann.temp, k = 5) + s(log10.mean.ann.rain, k = 5) + 
+  s(topographic.wetness, k = 5) + s(ph, k = 5) + s(total.n, k = 5) + s(tree.density, k = 5) + 
+  s(log10.pesticide.risk, k = 5) + s(log10.humans, k = 5), 
   method = "REML", 
   family = "gaussian", 
   correlation = corStructs[[i]], 
@@ -198,6 +197,8 @@ filepath
 write_rds(gamm_list , 
           file = filepath)
 ```
+
+
 #### Habitat specialist, thin plate splines, nb
 ```{r}
 #checklist to modify after copy past
@@ -236,3 +237,81 @@ write_rds(gamm_list ,
           file = filepath)
 ```
 
+
+
+# Reduced model without rainfall, pesticide, trees to reduce concurvity
+
+### All Species
+```{r}
+
+#note gamm4 does not take correlation structure
+
+#did not converge. First reduced k to 5 for all terms, which should be fine 
+# k = 5 does not make a big difference compared to default k = 9 in gams
+
+# another way may be, from ?gamm, "In the event of lme convergence failures, consider modifying options(mgcv.vc.logrange): reducing it helps to remove indefiniteness in the likelihood, if that is the problem, but too large a reduction can force over or undersmoothing."
+
+tic()
+
+gamm_as <- gamm(
+  species.richness ~ s(mean.ann.temp, k = 5) + s(log10.mean.ann.rain, k = 5) + 
+  s(topographic.wetness, k = 5) + s(ph, k = 5) + s(total.n, k = 5) + s(tree.density, k = 5) + 
+  s(log10.pesticide.risk, k = 5) + s(log10.humans, k = 5), 
+  method = "REML", 
+  correlation = corStructs[[2]], #corExp
+  data = datasets$all_species$gamm_input)
+
+
+filedir <- paste0(here(out_path), "/GAMM_all_species")
+if(!dir.exists(filedir)) dir.create(filedir)
+filepath <- paste0(filedir, "/gamm_all_species_exp_gaus2_reduced_mod.rds")
+filepath
+write_rds(gamm_as, 
+          file = filepath)
+
+toc()
+
+```
+
+
+### Wider Countryside
+
+```{r}
+try(gamm_wc <- gamm(
+  species.richness ~ s(mean.ann.temp, k = 5) + s(log10.mean.ann.rain, k = 5) + 
+  s(topographic.wetness, k = 5) + s(ph, k = 5) + s(total.n, k = 5) + s(tree.density, k = 5) + 
+  s(log10.pesticide.risk, k = 5) + s(log10.humans, k = 5), 
+  method = "REML", 
+  correlation = corStructs[[2]], #corExp
+  data = datasets$wc$gamm_input))
+
+filedir <- paste0(here(out_path), "/GAMM_wc")
+if(!dir.exists(filedir)) dir.create(filedir)
+filepath <- paste0(filedir, "/gamm_wc_exp_gaus2_reduced_mod.rds")
+filepath
+try(write_rds(gamm_wc , 
+          file = filepath))
+```
+
+
+### Habitat Specialists
+
+```{r}
+# family = nb() not appropriate in gamm, gives warning
+try(gamm_hs <- gamm(
+  species.richness ~ s(mean.ann.temp, k = 5) + s(log10.mean.ann.rain, k = 5) + 
+  s(topographic.wetness, k = 5) + s(ph, k = 5) + s(total.n, k = 5) + s(tree.density, k = 5) + 
+  s(log10.pesticide.risk, k = 5) + s(log10.humans, k = 5), 
+  method = "REML", 
+  correlation = corStructs[[3]], #corLin
+  data = datasets$hs$gamm_input,
+  family = negbin(theta = 4.679)))#value from gam
+
+
+filedir <- paste0(here(out_path), "/GAMM_hs")
+if(!dir.exists(filedir)) dir.create(filedir)
+filepath <- paste0(filedir, "/gamm2_hs_lin_nb_reduced_mod.rds")
+filepath
+try(write_rds(gamm_hs , 
+          file = filepath))
+```
