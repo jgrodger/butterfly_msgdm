@@ -42,7 +42,7 @@ conflicts_prefer(knitrProgressBar::progress_estimated)
 
 
 my.plot.gam <- function(gam_object){
-plot(gam_object, residuals = TRUE, seWithMean = TRUE, shade = TRUE, 
+plot(gam_object, residuals = TRUE, seWithMean = FALSE, shade = TRUE, 
      shift = coef(gam_object)[1], pages = 2) 
 }
 

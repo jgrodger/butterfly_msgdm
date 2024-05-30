@@ -3,7 +3,7 @@ title: "Process GAMM analyses"
 output: html_document
 
 params:
-  analysis: "GAMM_all_species"
+  analysis: "gamm_cor_struct_compare"
   dataset: "all_species"
 ---
  
@@ -17,6 +17,7 @@ library(tidyverse)
 library(tmap)
 library(mgcv)
 library(gstat)
+library(moranfast)
 library(knitr)
 library(knitrProgressBar)
 library(tictoc)
@@ -66,7 +67,9 @@ return(var_dat_resid)
 #gamm output has been saved in output already
 
 data_path <- here("Data/Processed_Data/Spatial//" )
-out_path <-  here(paste0("Output/Spatial/GAM/GAMM_", params$dataset))
+gamm_path <-  here(paste0("Output/Spatial/GAM/GAMM_", params$dataset, "//"))
+out_path <-  here(paste0("Output/Spatial/GAM/GAMM_", params$dataset, "/", params$analysis, "//"))
+if(!dir.exists(out_path)) dir.create(out_path)
 ```
 
 
@@ -74,7 +77,7 @@ out_path <-  here(paste0("Output/Spatial/GAM/GAMM_", params$dataset))
 ```{r}
 
 gamm_input <- readRDS(paste0(data_path, params$dataset, "_gamm_input.rds"))
-gamm_cor_struct_list <- readRDS(paste0(here(out_path), "/gamm_cor_struct_compare.rds"))
+gamm_cor_struct_list <- readRDS(paste0(gamm_path, params$analysis, ".rds"))
 names(gamm_cor_struct_list) <- c("gamm_corGaus", "gamm_corExp", "gamm_corLin",
 "gamm_corRatio", "gamm_corSpher")
 
@@ -97,17 +100,12 @@ aic_table <- aic_table %>%
 kable(aic_table)
 
 
-write_csv(aic_table, file = paste0(here(params$gamm_path), "correlation_structure_aic_table.csv"))
+write_csv(aic_table, file = paste0(out_path, "/correlation_structure_aic_table.csv"))
 
 index_best <- which(aic_table$AIC == min(aic_table$AIC))
 
 best_gamm <- gamm_cor_struct_list[[index_best]]
 ```
-#### There is a need to do additional custom residual plots: From gam.check()
-
-Take care when interpreting results from applying this function to a model fitted using gamm. In this case the returned gam object is based on the working model used for estimation, and will treat all the random effects as part of the error. This means that the residuals extracted from the gam object are not standardized for the family used or for the random effects or correlation structure. Usually it is necessary to produce your own residual checks based on consideration of the model structure you have used.
-
-#### View output for each correlation structure
 
 
 ### gam.check
@@ -149,6 +147,9 @@ gam.check(gamm_i$gam)
 
 ### Normalized Residual Plots
 
+#### There is a need to do additional custom residual plots: From gam.check()
+
+from ?gam.check: "Take care when interpreting results from applying this function to a model fitted using gamm. In this case the returned gam object is based on the working model used for estimation, and will treat all the random effects as part of the error. This means that the residuals extracted from the gam object are not standardized for the family used or for the random effects or correlation structure. Usually it is necessary to produce your own residual checks based on consideration of the model structure you have used."
 
 #### corGaus
 ```{r}
@@ -216,6 +217,53 @@ gamm_i <- gamm_cor_struct_list[[5]]
 vp <- plot_variogram(gamm_i, gamm_input)
 plot(vp)
 ```
+
+
+
+#### Moran's i
+
+#### corGaus
+```{r}
+gamm_i <- gamm_cor_struct_list[[1]]
+print("Moran's test  with I value")
+moranfast(residuals(gamm_i$lme, type = "normalized"), 
+          gamm_input$x, gamm_input$y)
+```
+
+#### corExp
+```{r}
+gamm_i <- gamm_cor_struct_list[[2]]
+print("Moran's test  with I value")
+moranfast(residuals(gamm_i$lme, type = "normalized"), 
+          gamm_input$x, gamm_input$y)
+```
+
+#### corLin
+```{r}
+gamm_i <- gamm_cor_struct_list[[3]]
+print("Moran's test  with I value")
+moranfast(residuals(gamm_i$lme, type = "normalized"), 
+          gamm_input$x, gamm_input$y)
+```
+
+#### corRatio
+```{r}
+gamm_i <- gamm_cor_struct_list[[4]]
+print("Moran's test  with I value")
+moranfast(residuals(gamm_i$lme, type = "normalized"), 
+          gamm_input$x, gamm_input$y)
+```
+
+#### corSpher
+```{r}
+gamm_i <- gamm_cor_struct_list[[5]]
+print("Moran's test  with I value")
+moranfast(residuals(gamm_i$lme, type = "normalized"), 
+          gamm_input$x, gamm_input$y)
+```
+
+
+
 
 ### Concurvity
 
@@ -323,35 +371,35 @@ summary(gamm_i$gam)
 ```{r}
 gamm_i <- gamm_cor_struct_list[[1]]
 par(mfrow = c(2, 2))
-plot(gamm_i$gam, residuals = TRUE, seWithMean = TRUE, shade = TRUE, shift = coef(gamm_i$gam)[1])
+plot(gamm_i$gam, residuals = TRUE,  shade = TRUE, shift = coef(gamm_i$gam)[1])
 ```
 
 #### corExp
 ```{r}
 gamm_i <- gamm_cor_struct_list[[2]]
 par(mfrow = c(2, 2))
-plot(gamm_i$gam, residuals = TRUE, seWithMean = TRUE, shade = TRUE, shift = coef(gamm_i$gam)[1])
+plot(gamm_i$gam, residuals = TRUE, shade = TRUE, shift = coef(gamm_i$gam)[1])
 ```
 
 #### corLin
 ```{r}
 gamm_i <- gamm_cor_struct_list[[3]]
 par(mfrow = c(2, 2))
-plot(gamm_i$gam, residuals = TRUE, seWithMean = TRUE, shade = TRUE, shift = coef(gamm_i$gam)[1])
+plot(gamm_i$gam, residuals = TRUE,  shade = TRUE, shift = coef(gamm_i$gam)[1])
 ```
 
 #### corRatio
 ```{r}
 gamm_i <- gamm_cor_struct_list[[4]]
 par(mfrow = c(2, 2))
-plot(gamm_i$gam, residuals = TRUE, seWithMean = TRUE, shade = TRUE, shift = coef(gamm_i$gam)[1])
+plot(gamm_i$gam, residuals = TRUE, shade = TRUE, shift = coef(gamm_i$gam)[1])
 ```
 
 #### corSpher
 ```{r}
 gamm_i <- gamm_cor_struct_list[[5]]
 par(mfrow = c(2, 2))
-plot(gamm_i$gam, residuals = TRUE, seWithMean = TRUE, shade = TRUE, shift = coef(gamm_i$gam)[1])
+plot(gamm_i$gam, residuals = TRUE, shade = TRUE, shift = coef(gamm_i$gam)[1])
 ```
 
 
