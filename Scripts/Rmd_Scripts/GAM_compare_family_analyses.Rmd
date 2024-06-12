@@ -12,20 +12,21 @@ params:
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
+
+#### Parameters for this report
+```{r}
+print(params)
+```
+
 #### Packages
 ```{r}
 here::i_am("Scripts/Rmd_Scripts/GAM_compare_family_analyses.Rmd")
 
 library(tidyverse)
-library(sf)
-library(sp)
-library(terra)
 library(mgcv)
+library(moranfast)
 library(knitr)
 library(knitrProgressBar)
-library(tmap)
-library(mgcViz)
-library(gstat)
 library(here)
 library(conflicted)
 conflicts_prefer(dplyr::filter)
@@ -41,7 +42,8 @@ conflicts_prefer(knitrProgressBar::progress_estimated)
 
 
 my.plot.gam <- function(gam_object){
-plot(gam_object, residuals = TRUE, seWithMean = TRUE, shade = TRUE, shift = coef(gam_object)[1], pages = 2) 
+plot(gam_object, residuals = TRUE, seWithMean = TRUE, shade = TRUE, 
+     shift = coef(gam_object)[1], pages = 2) 
 }
 
 
@@ -68,6 +70,8 @@ slow_function <- function(i, .pb=NULL) {
 # the number of loops/iterations in the target chunk
 ```
 
+
+
 #### File Paths
 ```{r}
 data_path <- paste0("./Data/Processed_Data/Spatial/", params$dataset, ".rds")
@@ -87,20 +91,13 @@ site.by.species <- data$site.by.species
 site.by.env <- data$site.by.env
 
 site.by.xy <- data$site.by.xy
-
-# gb polygon
-
-gb <- readRDS(here("./Data/Maps/gb_multipolygon_simplified.rds"))
-
-str(gb, max.level = 1)
-
-crs(gb)
 ```
 
 #### Parameters for this report
 ```{r}
 print(params)
 ```
+## Explore data
 
 #### Environmental variable, easting, northing and richness Pearson and Spearman correlations
 ```{r}
@@ -118,10 +115,9 @@ print("Spearman correlation")
 t2
 ```
 
-#### Visualise relationships with eachother and richness
+#### Visualise relationships between x, y, predictors and richness
 ```{r}
 pairs(site.by.env.and.richness[,3:11])
-
 pairs(site.by.env.and.richness[,c(1, 2, 11)])
 pairs(site.by.env.and.richness[, c(3, 4, 5, 11)])
 pairs(site.by.env.and.richness[,c(6, 7, 8, 11)])
@@ -132,65 +128,94 @@ pairs(site.by.env.and.richness[c(9, 10, 11)])
 ```{r}
 hist(site.by.env.and.richness$species.richness)
 ```
-#GAMS
+## GAMS
 
-#### Compare GAMs with different families
+### Run GAMs with different distributions for the response variable
 ```{r}
 # Gaussian
 gam_gaussian <- gam(species.richness ~ s(mean.ann.temp) + s(log10.mean.ann.rain) + 
                 s(topographic.wetness) + s(ph) + s(total.n) + s(tree.density) + 
                 s(log10.pesticide.risk) + s(log10.humans),  
-                data = site.by.env.and.richness, method= "REML")
+                data = site.by.env.and.richness, method= "ML")
 
 gam_poisson <- update(gam_gaussian, family = "poisson", link = "log")
+
+gam_nb <- update(gam_gaussian, family = nb(link = "log"))
 
 #"When = = 0, the Tweedie distribution degenerates to the normal distribution; when p = 1, it becomes a Poisson distribution; when p = 2, it becomes a gamma distribution; when p = 3, it is an inverse Gaussian distribution. "
 #https://documentation.sas.com/doc/en/pgmsascdc/9.4_3.4/statug/statug_genmod_details28.htm
 
-gam_tweedie1 <- update(gam_poisson, family = Tweedie(p = 1.01))# p = 1 does not work
+gam_tweedie <- update(gam_poisson, family = tw())# tweedie distribution with p parameter estimated
 
-gam_tweedie2 <- update(gam_poisson, family = Tweedie(p = 2))
-
-
+gam_ziP <- update(gam_poisson, family = ziP, link = "log") #ziP for zero inflated Poisson data, when the zero inflation rate depends simply on the Poisson mean.
 
 ```
 
 
-# Gaussian
+### Gaussian
 ```{r}
 par(mfrow = c(2, 2))
+summary(gam_gaussian)
 gam.check(gam_gaussian)
 my.plot.gam(gam_gaussian)
+#### Moran's I
+# see also https://www.paulamoraga.com/book-spatial/spatial-autocorrelation.html
+
+print("Moran's test  with I value")
+moranfast(residuals(gam_gaussian, type = "deviance"), 
+          site.by.env.and.richness$x, site.by.env.and.richness$y)
 ```
 
-#### Poisson
+
+### Poisson
 ```{r}
 par(mfrow = c(2, 2))
-gam.check(gam_poisson)
+summary(gam_poisson)
+gam.check(gam_poisson, type = "pearson")
 my.plot.gam(gam_poisson)
+print("Moran's test  with I value")
+moranfast(residuals(gam_poisson, type = "deviance"), 
+          site.by.env.and.richness$x, site.by.env.and.richness$y)
 ```
 
-##### Tweedie = 1.01
+#### Negative Binomial
 ```{r}
 par(mfrow = c(2, 2))
-gam.check(gam_tweedie1)
-my.plot.gam(gam_tweedie1)
+summary(gam_nb)
+gam.check(gam_nb)
+my.plot.gam(gam_nb)
+print("Moran's test  with I value")
+moranfast(residuals(gam_nb, type = "deviance"), 
+          site.by.env.and.richness$x, site.by.env.and.richness$y)
 ```
 
-##### Tweedie = 2
+### Tweedie 
 ```{r}
 par(mfrow = c(2, 2))
-gam.check(gam_tweedie2)
-my.plot.gam(gam_tweedie2)
+summary(gam_tweedie)
+gam.check(gam_tweedie)
+my.plot.gam(gam_tweedie) #Tweedie tends to  over-fit on pH at least
+print("Moran's test  with I value")
+moranfast(residuals(gam_tweedie, type = "deviance"), 
+          site.by.env.and.richness$x, site.by.env.and.richness$y)
 ```
 
-
+### Zero-inflated poisson
+```{r}
+par(mfrow = c(2, 2))
+summary(gam_ziP)
+gam.check(gam_ziP)
+my.plot.gam(gam_ziP) 
+print("Moran's test  with I value")
+moranfast(residuals(gam_ziP, type = "deviance"), 
+          site.by.env.and.richness$x, site.by.env.and.richness$y)
+```
 
 #### Compare GAMs in terms of AIC
 ```{r}
-gam_fam_list <-list (gam_gaussian, gam_poisson, gam_tweedie1, gam_tweedie2)
+gam_fam_list <-list (gam_gaussian, gam_poisson, gam_nb, gam_tweedie, gam_ziP)
 
-aic_table <- AIC(gam_gaussian, gam_poisson, gam_tweedie1, gam_tweedie2) %>%
+aic_table <- AIC(gam_gaussian, gam_poisson, gam_nb, gam_tweedie, gam_ziP) %>%
   arrange(AIC) %>%
   mutate(delta_AIC = AIC - min(AIC)) %>%
   rownames_to_column(var = "Family")
@@ -205,4 +230,46 @@ kable(aic_table, digits = 2, align = "l")
 # row.names(aic_table[index_best , ])
 # gam_tp <- gam_fam_list[[index_best]] 
 ```
+```{r}
+# Gaussian
+gam_gaussian_reml <- update(gam_gaussian, method = "REML")
+gam_gaussian_reml_K_5 <- update(
+  gam_gaussian_reml,
+  formula = species.richness ~  
+    s(mean.ann.temp, k = 5) + s(log10.mean.ann.rain, k = 5) + s(topographic.wetness, k = 5) + 
+    s(ph, k = 5) + s(total.n, k = 5) + s(tree.density, k = 5) +   s(log10.pesticide.risk, k = 5) + 
+    s(log10.humans, k = 5))
+
+
+
+```
+
+
+
+
+```{r}
+aic_table <- AIC(gam_gaussian_reml, gam_gaussian_reml_K_5) %>%
+  arrange(AIC) %>%
+  mutate(delta_AIC = AIC - min(AIC)) %>%
+  rownames_to_column(var = "Family")
+
+kable(aic_table, digits = 2, align = "l")
+```
+
+### Gaussian with REML default k
+```{r}
+par(mfrow = c(2, 2))
+summary(gam_gaussian_reml)
+gam.check(gam_gaussian_reml)
+my.plot.gam(gam_gaussian_reml)
+```
+
+### Gaussian with REML default k
+```{r}
+par(mfrow = c(2, 2))
+summary(gam_gaussian_reml_K_5)
+gam.check(gam_gaussian_reml_K_5)
+my.plot.gam(gam_gaussian_reml_K_5)
+```
+
 

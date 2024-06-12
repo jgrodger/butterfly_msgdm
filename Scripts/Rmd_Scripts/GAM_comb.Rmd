@@ -1,0 +1,257 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+## Try combined gam with wc versus hs as factor (hierarchical GAM)
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+#### Packages
+```{r}
+here::i_am("Scripts/Rmd_Scripts/GAM_compare_family_analyses.Rmd")
+
+library(tidyverse)
+library(sf)
+library(sp)
+library(terra)
+library(mgcv)
+library(knitr)
+library(knitrProgressBar)
+library(tmap)
+library(mgcViz)
+library(gstat)
+library(here)
+library(conflicted)
+conflicts_prefer(dplyr::filter)
+conflicts_prefer(dplyr::select)
+conflicts_prefer(knitrProgressBar::progress_estimated)
+
+# there is a same-named function in dplyr, check it out
+```
+
+#### Functions
+```{r}
+# A function for plotting gam relationships with my preferences
+
+
+my.plot.gam <- function(gam_object){
+plot(gam_object, residuals = TRUE, seWithMean = TRUE, shade = TRUE, shift = coef(gam_object)[1], pages = 4) 
+}
+
+
+# a function to make a table for checking if smooths might be zero
+check_smooths <- function(gam_obj, capt){
+vars <- c("mean.ann.temp", "log10.mean.ann.rain", "topographic.wetness", "ph", 
+          "total.n",  "tree.density", "log10.pesticide.risk",  "log10.humans") 
+  
+gam_obj <- data.frame(cbind(vars, summary(gam_tp)$s.pv))
+names(gam_obj) <- c("Var", "p")
+gam_obj$p <- as.numeric(gam_obj$p)
+gam_obj<- kable(gam_obj, digits = 3, align = "l", caption = capt)
+}
+
+# From https://stackoverflow.com/questions/71252509/is-there-a-way-to-get-progress-information-whan-a-chunk-is-running-in-rmarkdown
+
+slow_function <- function(i, .pb=NULL) {  
+  update_progress(.pb)  
+  Sys.sleep(0.5)  
+  i  
+}
+
+# create an R6 progress object for
+# the number of loops/iterations in the target chunk
+```
+
+#### File Paths
+```{r}
+
+```
+
+#### Data
+```{r}
+# data <- readRDS(here(data_path))
+# 
+# site.by.species <- data$site.by.species
+#   
+# site.by.env <- data$site.by.env
+# 
+# site.by.xy <- data$site.by.xy
+
+# gb polygon
+
+gb <- readRDS(here("./Data/Maps/gb_multipolygon_simplified.rds"))
+
+
+all_species <- readRDS(here("./Data/Processed_Data/Spatial/all_species.rds"))
+wc <- readRDS(here("./Data/Processed_Data/Spatial/wc.rds"))
+hs <- readRDS(here("./Data/Processed_Data/Spatial/hs.rds"))
+
+
+```
+
+
+```{r}
+
+
+site.by.species.wc <- wc$site.by.species
+
+site.by.species.hs <- hs$site.by.species
+  
+site.by.env <- wc$site.by.env
+
+site.by.xy <- wc$site.by.xy
+```
+
+```{r}
+
+site.by.env <-site.by.env  %>% 
+  rownames_to_column(var = "site")
+
+site.by.xy <-site.by.xy  %>% 
+  rownames_to_column(var = "site")
+
+
+rich <- site.by.env   %>%
+  mutate(wc = rowSums(site.by.species.wc),
+         hs = rowSums(site.by.species.hs)) %>% 
+  select(site, wc, hs) %>% 
+  pivot_longer(!site ,names_to = "species.group", values_to = "richness") %>% 
+  merge(site.by.env, by = "site") %>% 
+  merge(site.by.xy, by = "site") %>%
+  mutate(site = factor(site),
+         species.group = factor(species.group))
+```
+
+https://r.qcbs.ca/workshop08/book-en/introduction-to-generalized-additive-mixed-models-gamms.html#gamm-with-a-random-intercept
+?gam.models
+
+We could have different distributions for hs versus wc
+"gfam creates a 'grouped family' (or 'family group') from a list of families. The response is supplied as a two column matrix, the first containing the response observations, and the second an index of the family to which each observation relates."
+
+
+
+Probably use this one
+
+https://drmowinckels.io/blog/2018/gamm-random-effects/
+```{r}
+
+
+gam_gaus <- gam(richness ~ species.group +
+                species.group +
+                s(mean.ann.temp, by = species.group) +
+                s(log10.mean.ann.rain, by = species.group) +
+                s(topographic.wetness, by = species.group) +
+                s(ph, by = species.group) +
+                s(total.n, by = species.group) +
+                s(tree.density, by = species.group) +
+                s(log10.pesticide.risk, by = species.group) +
+                s(log10.humans, by = species.group),
+              data = rich, method = 'REML')
+
+
+
+```
+# High variance explained, is I guess, because the species group predicts a lot
+
+# I reckon, present the separate gams
+```{r}
+par(mfrow = c(2, 2))
+gam.check(gam_gaus, type = "pearson")
+summary(gam_gaus)
+plot(gam_gaus)
+my.plot.gam(gam_gaus)
+```
+
+
+# reduce k for ph
+```{r}
+m2_gam <- gam(richness ~ species.group +
+                species.group +
+                s(mean.ann.temp, by = species.group) +
+                s(log10.mean.ann.rain, by = species.group) +
+                s(topographic.wetness, by = species.group) +
+                s(ph, by = species.group, k = 5) +
+                s(total.n, by = species.group) +
+                s(tree.density, by = species.group) +
+                s(log10.pesticide.risk, by = species.group) +
+                s(log10.humans, by = species.group),
+              data = rich, method = 'REML')
+
+
+gam.check(m2_gam)
+summary(m2_gam)
+plot(m2_gam, residuals = TRUE)
+
+```
+```{r}
+AIC(gam_gaus, m2_gam)
+```
+```{r}
+gam_pois <- update(gam_gaus, family = poisson(link = "log"))
+
+
+gam_negbin <- update(gam_gaus, family = nb())
+
+gam_tweedie <- update(gam_gaus, family = tw())# tweedie distribution with p parameter estimated
+```
+
+```{r}
+
+
+aic_table <- AIC(gam_gaus, gam_pois, gam_negbin, gam_tweedie) %>%
+  arrange(AIC) %>%
+  mutate(delta_AIC = AIC - min(AIC)) %>%
+  rownames_to_column(var = "Family")
+
+#write_csv(aic_table, file = paste0(out_path, "/", "family_aic_table.csv"))
+
+kable(aic_table, digits = 2, align = "l")
+```
+#### gaussian
+```{r}
+par(mfrow = c(2, 2))
+gam.check(gam_gaus)
+summary(gam_gaus)
+plot(gam_gaus)
+my.plot.gam(gam_gaus)
+```
+
+
+##### poisson
+```{r}
+par(mfrow = c(2, 2))
+gam.check(gam_pois, type = "pearson")
+summary(gam_pois)
+plot(gam_pois) 
+```
+
+##### negative binomial
+```{r}
+par(mfrow = c(2, 2))
+gam.check(gam_negbin, type = "pearson")
+summary(gam_negbin)
+plot(gam_negbin) #Tweedie is over-fitting on pH at least 
+```
+
+##### tweedie
+```{r}
+par(mfrow = c(2, 2))
+gam.check(gam_tweedie, type = "pearson")
+summary(gam_tweedie)
+plot(gam_tweedie) #Tweedie is over-fitting on pH at least 
+```
+
+
+```{r}
+print("Overall concurvity")
+kable(concurvity(gam_gaus, full = TRUE), digits = 2)
+print("worst")
+kable(concurvity(gam_gaus, full = FALSE)$worst, digits = 2)
+print("observed")
+kable(concurvity(gam_gaus, full = FALSE)$observed, digits = 2)
+print("estimate")
+kable(concurvity(gam_gaus, full = FALSE)$estimate, digits = 2)
+```
+
