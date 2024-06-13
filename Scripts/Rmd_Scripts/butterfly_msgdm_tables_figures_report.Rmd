@@ -28,13 +28,19 @@ conflicts_prefer(dplyr::rename)
 
 ```{r}
 
-#csv_path from "Output" directory
-print_csv <- function(csv_path, table_caption, my_digits = 3){
+#csv_path: file path for use in read_csv(here())
+#tab_no
+#tab_cap: caption argument for kable()
+#my_dig: digits argument for kable()
+
+print_csv <- function(csv_path, tab_no, tab_cap, my_dig = 3){
   
 my_table <- read_csv(here(csv_path))
 
-kable(my_table, digits = my_digits,
-      caption = table_caption)  
+my_caption <- paste0("Table ", tab_no, ".", tab_cap)
+
+kable(my_table, digits = my_dig,
+      caption = my_caption)  
 }
 
 ```
@@ -84,22 +90,20 @@ include_graphics(here("./Output/Spatial/Figures/fig_2_env_vars.png"))
 ```{r , message=FALSE}
 print_csv("Output/Spatial/zeta_declines_decays/all_species/butterfly_occupancy.csv",
           "Table S1. Occupancy of butterflies in the site used for this study")
-ts1 <- read_csv(here("Output/Spatial/zeta_declines_decays/all_species/butterfly_occupancy.csv"))
+
 
 ```
 
 #### GAMs and GAMMs
 ```{r , message=FALSE}
-print_csv("Output/Spatial/zeta_declines_decays/all_species/butterfly_occupancy.csv",
-          "Table S1. Occupancy of butterflies in the site used for this study")
-ts1 <- read_csv(here("Output/Spatial/zeta_declines_decays/all_species/butterfly_occupancy.csv"))
+print_csv("Output/Spatial/GAM/GAM_all_species/family_aic_table.csv",
+          "Table S2. Comparison of GAM models for different distribution of species richness for the All Species dataset.")
 ```
 
-
-```{r fig.cap = "Figure S1. Rank Occupancy for butterfly species in sites in this study", out.width = "100%"}
-include_graphics(here("Output/Spatial/zeta_declines_decays/all_species/rank_occupancy.png"))
+```{r , message=FALSE}
+print_csv("Output/Spatial/GAM/GAM_wc/family_aic_table.csv",
+          "Table S3. Comparison of GAM models for different distribution of species richness for the Wider Countryside dataset.")
 ```
-
 
 ## Environmental variables
 
