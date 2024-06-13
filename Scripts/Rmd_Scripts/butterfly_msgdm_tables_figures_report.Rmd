@@ -24,6 +24,21 @@ conflicts_prefer(dplyr::filter)
 conflicts_prefer(dplyr::rename)
 ```
 
+#### Functions (consider moving to another script)
+
+```{r}
+
+#csv_path from "Output" directory
+print_csv <- function(csv_path, table_caption, my_digits = 3){
+  
+my_table <- read_csv(here(csv_path))
+
+kable(my_table, digits = my_digits,
+      caption = table_caption)  
+}
+
+```
+
 
 #### The datasets we are reporting on 
 ```{r}
@@ -60,16 +75,26 @@ include_graphics(here("./Output/Spatial/Figures/fig_2_env_vars.png"))
 ## MSGDMS
 
 
+
 # Supplemental Materials
 
 ## Occupancy
 
-```{r , message=FALSE}
-occ <- read_csv(here("Output/Spatial/zeta_declines_decays/all_species/butterfly_occupancy.csv"))
 
-kable(occ, digits = 3,
-      caption = "Table S1. Occupancy of butterflies in the site used for this study")
+```{r , message=FALSE}
+print_csv("Output/Spatial/zeta_declines_decays/all_species/butterfly_occupancy.csv",
+          "Table S1. Occupancy of butterflies in the site used for this study")
+ts1 <- read_csv(here("Output/Spatial/zeta_declines_decays/all_species/butterfly_occupancy.csv"))
+
 ```
+
+#### GAMs and GAMMs
+```{r , message=FALSE}
+print_csv("Output/Spatial/zeta_declines_decays/all_species/butterfly_occupancy.csv",
+          "Table S1. Occupancy of butterflies in the site used for this study")
+ts1 <- read_csv(here("Output/Spatial/zeta_declines_decays/all_species/butterfly_occupancy.csv"))
+```
+
 
 ```{r fig.cap = "Figure S1. Rank Occupancy for butterfly species in sites in this study", out.width = "100%"}
 include_graphics(here("Output/Spatial/zeta_declines_decays/all_species/rank_occupancy.png"))
