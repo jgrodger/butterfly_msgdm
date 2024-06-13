@@ -88,22 +88,47 @@ include_graphics(here("./Output/Spatial/Figures/fig_2_env_vars.png"))
 
 
 ```{r , message=FALSE}
-print_csv("Output/Spatial/zeta_declines_decays/all_species/butterfly_occupancy.csv",
-          "Table S1. Occupancy of butterflies in the site used for this study")
-
-
+print_csv(tab_no = "S1",
+          csv_path = "Output/Spatial/zeta_declines_decays/all_species/butterfly_occupancy.csv",
+          tab_cap = "Occupancy of butterflies in the site used for this study")
 ```
 
 #### GAMs and GAMMs
 ```{r , message=FALSE}
-print_csv("Output/Spatial/GAM/GAM_all_species/family_aic_table.csv",
-          "Table S2. Comparison of GAM models for different distribution of species richness for the All Species dataset.")
+print_csv(tab_no = "SG1",
+          csv_path = "Output/Spatial/GAM/GAM_all_species/family_aic_table.csv",
+          tab_cap = "Comparison of GAM models for different distribution of species richness for All Species.",
+          my_dig = 2)
 ```
 
 ```{r , message=FALSE}
-print_csv("Output/Spatial/GAM/GAM_wc/family_aic_table.csv",
-          "Table S3. Comparison of GAM models for different distribution of species richness for the Wider Countryside dataset.")
+print_csv(tab_no = "SG2",
+          csv_path = "Output/Spatial/GAM/GAM_wc/family_aic_table.csv",
+          tab_cap = "Comparison of GAM models for different distribution of species richness for Wider Countryside Species.",
+          my_dig = 2)
 ```
+
+```{r , message=FALSE}
+print_csv(tab_no = "SG3",
+          csv_path = "Output/Spatial/GAM/GAM_hs/family_aic_table.csv",
+          tab_cap = "Comparison of GAM models for different distribution of species richness for Habitat Specialists.",
+          my_dig = 2)
+```
+
+```{r}
+  
+my_table <- read_txt(here(csv_path))
+
+my_caption <- paste0("Table ", tab_no, ".", tab_cap)
+
+kable(my_table, digits = my_dig,
+      caption = my_caption)  
+```
+
+
+
+
+
 
 ## Environmental variables
 

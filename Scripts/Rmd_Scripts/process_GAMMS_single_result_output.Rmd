@@ -1,23 +1,25 @@
 ---
-title: "Single GAMM"
-output: html_notebook
+title: ""
+output: html_document
 
 params:
+  analysis: "gamm_cor_struct_compare_reduced_mod"
   dataset: "all_species"
-  gamm_file: "gamm_all_species_exp_gaus2.rds"
+  corStruct: "corExp"
 ---
 
-This is to do validated and get output of single GAMM models
 
+```{r include = FALSE}
+knitr::opts_chunk$set(echo = FALSE, message = FALSE)
+```
+
+
+
+```{r }
 #### Packages
-```{r}
 here::i_am("Scripts/Rmd_Scripts/process_GAMMS_single.Rmd")
 library(tidyverse)
-library(tmap)
 library(mgcv)
-library(gamm4)
-library(mgcViz)
-library(gstat)
 library(knitr)
 library(knitrProgressBar)
 library(tictoc)
@@ -28,128 +30,56 @@ conflicts_prefer(dplyr::select)
 conflicts_prefer(knitrProgressBar::progress_estimated)
 # there is a same-named function in dplyr, check it out
 ```
-#### Functions
+#https://stackoverflow.com/questions/25824795/how-to-combine-two-rmarkdown-rmd-files-into-a-single-output
+
 ```{r}
-# From https://stackoverflow.com/questions/71252509/is-there-a-way-to-get-progress-information-whan-a-chunk-is-running-in-rmarkdown
+#gamm output has been saved in output already
 
-slow_function <- function(i, .pb=NULL) {  
-  update_progress(.pb)  
-  Sys.sleep(0.5)  
-  i  
-}
-# create an R6 progress object for
-# the number of loops/iterations in the target chunk
-```
-
-#### File Paths
-```{r}
-
-data_path <- here(paste0("./Data/Processed_Data/Spatial/", params$dataset, ".rds"))
-#data_path <- paste0("./Data/Processed_Data/Spatial/all_species.rds")
-out_path <-  here(paste0(("Output/Spatial/GAM/GAMM_"),  params$dataset), "/")
-
-#if(!dir.exists(out_path)) dir.create(out_path)
-```
-
-#### Datasets for gamms
-```{r}
-my_gamm <- readRDS(paste0(out_path, params$gamm_file))
-
-data <- readRDS(data_path)
+data_path <- here("Data/Processed_Data/Spatial//" )
+gamm_path <-  here(paste0("Output/Spatial/GAM/GAMM_", params$dataset, "//"))
+out_path <-  here(paste0("Output/Spatial/GAM/GAMM_", params$dataset, "/", params$analysis, "//"))
+if(!dir.exists(out_path)) dir.create(out_path)
 ```
 
 
-#### for each dataset, prepare data for gamm input, remove transects that are duplicates for x and y coordinates (keep first one)
 ```{r}
-site.by.species <- data$site.by.species
-site.by.env <- data$site.by.env
-site.by.xy <- data$site.by.xy
-sites <- data$sites
 
-# assemble xy, environmental vars and richness for analysis
-site.by.env.xy.richness <- cbind(site.by.env, rowSums(site.by.species)) %>%
-  cbind(site.by.xy) %>%
-rename(species.richness = 'rowSums(site.by.species)')
+#### Get the specified GAMM
+gamm_cor_struct_list <- readRDS(paste0(gamm_path, params$analysis, ".rds"))
+names(gamm_cor_struct_list) <- c("gamm_corGaus", "gamm_corExp", "gamm_corLin",
+"gamm_corRatio", "gamm_corSpher")
 
-#inspect duplicates to see how they arise
-dup_xy <- sites %>%
-  mutate(xy = paste(x,y)) %>%
-group_by(xy) %>% 
-  filter(n() > 1)
+#extract all the GAMMS
+gamm_corGaus <- gamm_cor_struct_list[[1]]
+gamm_corExp <- gamm_cor_struct_list[[2]]
+gamm_corLin <- gamm_cor_struct_list[[3]]
+gamm_corRatio <- gamm_cor_struct_list[[4]]
+gamm_corSpher <- gamm_cor_struct_list[[5]]
 
-print(kable(dup_xy, caption = "Transects with same coords"))
-  
-#remove duplicates for rows with the same x and y coordinates
-gamm_input <- site.by.env.xy.richness %>%
-  mutate(xy = paste(x,y)) %>%
-  distinct(xy, .keep_all = TRUE)
+#choose the one specified in params
+# get() finds object with name specified as a character string
+my_gamm <- get(paste0("gamm_", params$corStruct))
 
-hist(gamm_input$species.richness)
 ```
 
 
 
+
 ```{r}
-(summary(my_gamm$gam))
-#(summary(my_gamm$lme)) What does this mean?
-par(mfrow = c(2, 2))
-plot(my_gamm$gam, residuals = TRUE, shade = TRUE, 
-     shift = coef(my_gamm$gam)[1])
-
-#save to do custom plots later
-pdata <- plot(my_gamm$gam, residuals = TRUE, shade = TRUE, 
-     shift = coef(my_gamm$gam)[1])
-
-
-
-par(mfrow = c(2, 2))
-(gam.check(my_gamm$gam))
-
-acf(residuals(my_gamm$lme,type="normalized"),main="standardized residual ACF")
-
-print("Overall concurvity")
-kable(concurvity(my_gamm$gam, full = TRUE), digits = 2)
-print("worst")
-kable(concurvity(my_gamm$gam, full = FALSE)$worst, digits = 2)
-print("observed")
-kable(concurvity(my_gamm$gam, full = FALSE)$observed, digits = 2)
-print("estimate")
-kable(concurvity(my_gamm$gam, full = FALSE)$estimate, digits = 2)
-```
-### Residual plots 
-Following https://stats.stackexchange.com/questions/331716/gamm-residuals-patterns-temporal-and-spatial
-See Zuur et al. 2009 chapter 18
-```{r}
-resvals <- resid(my_gamm$lme, type = "normalized")
-expvals <- fitted(my_gamm$lme)
-obsvals <- gamm_input$species.richness
-
-par(mfrow = c(2, 2))
-  stats::qqnorm(resvals)
-  qqline(resvals)
-  
-  plot(resvals~expvals, xlab = "Fitted values", ylab = "Residuals",
-   cex = 0.3)
-  
-  hist(resvals)
-  
-  plot(obsvals ~ expvals, xlab = "Fitted values", ylab = "Observed values",
-   cex = 0.3)
-```
-#mgcViz smooth plots in case I want them later
-```{r}
-
-# viz_as <- getViz(my_gamm$gam)
-# 
-# for (i in 1:length(viz_as$sp))
-# {
-# p1 <- plot(sm(viz_as, i)) +
-#   l_fitLine(colour = "red") + l_rug(mapping = aes(x=x, y=y), alpha = 0.8) +
-#     l_ciLine(mul = 1.96, colour = "blue", linetype = 2) + #mul is parameter to multiply SE for CL
-#     l_points(shape = 19, size = 1, alpha = 0.1) + theme_classic()
-# print(p1)
-# }
-
+#gtable and modelsummary packages may offer nice options but I haven't figured it out
+#### Save gam summary to text file
+#sink(paste0(out_path, "gam_summ.txt"))
+print("Significance testing of smooth terms and other summary output for GAMM")
+summary(my_gamm$gam)
+#sink()
 ```
 
+
+```{r , fig.show='hide'}
+png(file = paste0(out_path, "gam_plot.png"))
+
+par(mfrow = c(2, 3))
+plot(my_gamm$gam, shade = TRUE, shift = coef(my_gamm$gam)[1])
+dev.off()  
+```
 

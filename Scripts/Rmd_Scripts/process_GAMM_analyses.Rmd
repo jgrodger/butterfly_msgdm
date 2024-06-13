@@ -3,7 +3,7 @@ title: "Process GAMM analyses"
 output: html_document
 
 params:
-  analysis: "gamm_cor_struct_compare"
+  analysis: "gamm_cor_struct_compare_reduced_mod"
   dataset: "all_species"
 ---
  
