@@ -162,7 +162,22 @@ render_report(analysis_script = "process_GAMMS_single_result_output.Rmd",
               list(dataset = "all_species", 
                    analysis = "gamm_cor_struct_compare_reduced_mod",
                    corStruct = "corExp"))
+```
+#### Wider Countryside
+```{r}
 
+render_report(analysis_script = "process_GAMMS_single_result_output.Rmd", 
+              list(dataset = "wc", 
+                   analysis = "gamm_cor_struct_compare_reduced_mod",
+                   corStruct = "corExp"))
+```
+#### Habitat Specialists corExp
+```{r}
+
+render_report(analysis_script = "process_GAMMS_single_result_output.Rmd", 
+              list(dataset = "hs", 
+                   analysis = "gamm_cor_struct_compare_reduced_mod",
+                   corStruct = "corExp"))
 ```
 
 ## MSGDMs
@@ -227,6 +242,5 @@ render_report(analysis_script = "process_msgdm_results.Rmd",
 render_report(analysis_script = "process_msgdm_results.Rmd", 
               list(dataset = "hs_no_zeros", normalize_msgdm = "Sorensen",
                    orders_msgdm =  c(2, 3, 4, 5, 6)))
-
 ```
 

@@ -65,6 +65,7 @@ my_gamm <- get(paste0("gamm_", params$corStruct))
 
 ```{r}
 gam_sum <- read.delim(paste0(out_path, "gam_summ.txt")) # it comes in as a dataframe with one column
+names(gam_sum) <- "column"
 ```
 
 #### First the parametric terms (only the intercept up to now)
@@ -93,7 +94,7 @@ par_sum <- par_sum %>%
   str_replace_all("< ", "<") %>% #remove space between less than and p-value
   as.data.frame(nm = "column") %>%
   separate_wider_delim(column, delim = " ", names = my_names) %>% # separate into multiple columns
-  mutate(p_value = paste0(P_value, Stars), .keep = "unused") %>% # add stars to p-value in one column
+  mutate(p = paste0(p, Stars), .keep = "unused") %>% # add stars to p-value in one column
   mutate_all(funs(type.convert(as.character(.), as.is = TRUE))) #This converts columns into the format that looks best to the function 
 
 write_csv(par_sum, file = paste0(out_path, "/", "parametric_p_value_table.csv"))
@@ -131,13 +132,24 @@ smooth_sum <- smooth_sum %>%
 
 my_names <- c("Smooth term", "edf", "Ref.df", "F", "p", "Stars")
 
-check <- gam_sum %>%
-  str_squish() %>% 
-  str_replace_all("< ", "<") %>% 
-  as.data.frame(nm = "column") %>%
+#separate out columns
+smooth_sum <- smooth_sum %>%
+  mutate(
+    column = str_squish(column),
+    column = str_replace_all(column, "< ", "<")) %>% 
   separate_wider_delim(column, delim = " ", names = my_names) %>%
-  mutate(p_value = paste0(P_value, Stars), .keep = "unused") %>%
+  mutate(p = paste0(p, Stars), .keep = "unused") %>%
   mutate_all(funs(type.convert(as.character(.), as.is = TRUE))) 
+
+# check <- smooth_sum %>%
+#   mutate(
+#     column = str_squish(column),
+#     column = str_replace_all(column, "< ", "<")) %>% 
+#   separate_wider_delim(column, delim = " ", names = my_names) %>%
+#   mutate(p = paste0(p, Stars), .keep = "unused") 
+# 
+# 
+# check1<- apply(check, 1, type.convert(as.character(.), as.is = TRUE)) 
 
 write_csv(smooth_sum, file = paste0(out_path, "/", "smooth_p_value_table.csv"))
 kable(smooth_sum, digits = 2)
