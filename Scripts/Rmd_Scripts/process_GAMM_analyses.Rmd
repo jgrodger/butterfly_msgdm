@@ -365,6 +365,55 @@ summary(gamm_i$gam)
 ```
 
 
+#### save summary output
+
+#### Write summary of gamm$gam to a text file
+```{r}
+#gtable and modelsummary packages may offer nice options but I haven't figured it out
+
+#below does not work in loop or function
+
+#corGaus
+summ_path <- paste0(out_path, "corGaus")
+sink(paste0(summ_path,"/" , "gam_summ.txt"))
+print("Significance testing of smooth terms and other summary output for GAMM")
+summary(gamm_corGaus$gam)
+sink()  
+
+#corExp
+summ_path <- paste0(out_path, "corExp")
+sink(paste0(summ_path,"/" , "gam_summ.txt"))
+print("Significance testing of smooth terms and other summary output for GAMM")
+summary(gamm_corExp$gam)
+sink()  
+
+#corLin
+summ_path <- paste0(out_path, "corLin")
+sink(paste0(summ_path,"/" , "gam_summ.txt"))
+print("Significance testing of smooth terms and other summary output for GAMM")
+summary(gamm_corLin$gam)
+sink()  
+
+#corRatio
+summ_path <- paste0(out_path, "corRatio")
+sink(paste0(summ_path,"/" , "gam_summ.txt"))
+print("Significance testing of smooth terms and other summary output for GAMM")
+summary(gamm_corRatio$gam)
+sink()  
+
+#corSpher
+summ_path <- paste0(out_path, "corSpher")
+sink(paste0(summ_path,"/" , "gam_summ.txt"))
+print("Significance testing of smooth terms and other summary output for GAMM")
+summary(gamm_corSpher$gam)
+sink()  
+
+```
+
+
+
+
+
 ### Smooth Plots with Partial Residuals
 
 #### corGaus
@@ -401,6 +450,7 @@ gamm_i <- gamm_cor_struct_list[[5]]
 par(mfrow = c(2, 2))
 plot(gamm_i$gam, residuals = TRUE, shade = TRUE, shift = coef(gamm_i$gam)[1])
 ```
+
 
 
 <!-- #### corGaus -->

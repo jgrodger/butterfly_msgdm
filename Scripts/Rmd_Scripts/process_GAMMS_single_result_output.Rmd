@@ -60,15 +60,6 @@ my_gamm <- get(paste0("gamm_", params$corStruct))
 
 ```
 
-#### Write summary of gamm$gam to a text file
-```{r, comment = "", label = 'Table XXX'}
-#gtable and modelsummary packages may offer nice options but I haven't figured it out
-#### Save gam summary to text file
-sink(paste0(out_path, "gam_summ.txt"))
-print("Significance testing of smooth terms and other summary output for GAMM")
-summary(my_gamm$gam)
-sink()
-```
 
 #### read the text file and edit to create summary tables for presentation
 
@@ -126,6 +117,8 @@ my_fam <- my_summary$family$family
 
 my_link <- my_summary$family$link
 
+my_cor <- params$corStruct
+
 my_rsq <-  my_summary$r.sq %>%
   signif(3) %>%
   as.character
@@ -137,7 +130,7 @@ my_scale <-  my_summary$scale %>%
 my_n <- my_summary$n %>%
   as.character()
 
-p_sum3 <- data.frame(Thing = c("Family", "Link", "R-sq.(adj)", "Scale est.", "n"), Value = c(my_fam, my_link, my_rsq, my_scale, my_n))
+p_sum3 <- data.frame(Thing = c("Family", "Link", "Correlation Structure", "R-sq.(adj)", "Scale est.", "n"), Value = c(my_fam, my_link, my_cor, my_rsq, my_scale, my_n))
 
 write_csv(p_sum3, file = paste0(out_path, "/", "gamm_info.csv"))
 kable(p_sum3)
