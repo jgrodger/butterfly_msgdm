@@ -1,0 +1,218 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+```{r}
+here::i_am("Scripts/Rmd_Scripts/process_GAMM_analyses.Rmd")
+library(tidyverse)
+library(tmap)
+library(mgcv)
+library(gstat)
+library(moranfast)
+library(knitr)
+library(knitrProgressBar)
+library(tictoc)
+library(here)
+library(conflicted)
+conflicts_prefer(dplyr::filter)
+conflicts_prefer(dplyr::select)
+conflicts_prefer(knitrProgressBar::progress_estimated)
+# there is a same-named function in dplyr, check it out
+```
+
+
+
+# ALL Species
+```{r}
+analysis <- "gamm_cor_struct_compare_reduced_mod"
+dataset <- "all_species"
+
+gamm_path <-  here(paste0("Output/Spatial/GAM/GAMM_", dataset, "//"))
+out_path <-  here(paste0("Output/Spatial/GAM/GAMM_", dataset, "/", analysis, "//"))
+if(!dir.exists(out_path)) dir.create(out_path)
+
+gamm_cor_struct_list <- readRDS(paste0(gamm_path, analysis, ".rds"))
+names(gamm_cor_struct_list) <- c("gamm_corGaus", "gamm_corExp", "gamm_corLin",
+"gamm_corRatio", "gamm_corSpher")
+
+gamm_corGaus <- gamm_cor_struct_list[[1]]
+gamm_corExp <- gamm_cor_struct_list[[2]]
+gamm_corLin <- gamm_cor_struct_list[[3]]
+gamm_corRatio <- gamm_cor_struct_list[[4]]
+gamm_corSpher <- gamm_cor_struct_list[[5]]
+
+#gtable and modelsummary packages may offer nice options but I haven't figured it out
+#below does not work in loop or function
+
+#corGaus
+summ_path <- paste0(out_path, "corGaus")
+if(!dir.exists(summ_path)) dir.create(summ_path)
+sink(paste0(summ_path,"/" , "gam_summ.txt"))
+print("Significance testing of smooth terms and other summary output for GAMM")
+summary(gamm_corGaus$gam)
+sink()  
+
+#corExp
+summ_path <- paste0(out_path, "corExp")
+if(!dir.exists(summ_path)) dir.create(summ_path)
+sink(paste0(summ_path,"/" , "gam_summ.txt"))
+print("Significance testing of smooth terms and other summary output for GAMM")
+summary(gamm_corExp$gam)
+sink()  
+
+#corLin
+summ_path <- paste0(out_path, "corLin")
+if(!dir.exists(summ_path)) dir.create(summ_path)
+sink(paste0(summ_path,"/" , "gam_summ.txt"))
+print("Significance testing of smooth terms and other summary output for GAMM")
+summary(gamm_corLin$gam)
+sink()  
+
+#corRatio
+summ_path <- paste0(out_path, "corRatio")
+if(!dir.exists(summ_path)) dir.create(summ_path)
+sink(paste0(summ_path,"/" , "gam_summ.txt"))
+print("Significance testing of smooth terms and other summary output for GAMM")
+summary(gamm_corRatio$gam)
+sink()  
+
+#corSpher
+summ_path <- paste0(out_path, "corSpher")
+if(!dir.exists(summ_path)) dir.create(summ_path)
+sink(paste0(summ_path,"/" , "gam_summ.txt"))
+print("Significance testing of smooth terms and other summary output for GAMM")
+summary(gamm_corSpher$gam)
+sink()  
+```
+
+# Wider Countryside
+```{r}
+analysis <- "gamm_cor_struct_compare_reduced_mod"
+dataset <- "wc"
+
+gamm_path <-  here(paste0("Output/Spatial/GAM/GAMM_", dataset, "//"))
+out_path <-  here(paste0("Output/Spatial/GAM/GAMM_", dataset, "/", analysis, "//"))
+if(!dir.exists(out_path)) dir.create(out_path)
+
+gamm_cor_struct_list <- readRDS(paste0(gamm_path, analysis, ".rds"))
+names(gamm_cor_struct_list) <- c("gamm_corGaus", "gamm_corExp", "gamm_corLin",
+"gamm_corRatio", "gamm_corSpher")
+
+gamm_corGaus <- gamm_cor_struct_list[[1]]
+gamm_corExp <- gamm_cor_struct_list[[2]]
+gamm_corLin <- gamm_cor_struct_list[[3]]
+gamm_corRatio <- gamm_cor_struct_list[[4]]
+gamm_corSpher <- gamm_cor_struct_list[[5]]
+
+#gtable and modelsummary packages may offer nice options but I haven't figured it out
+#below does not work in loop or function
+
+#corGaus
+summ_path <- paste0(out_path, "corGaus")
+if(!dir.exists(summ_path)) dir.create(summ_path)
+sink(paste0(summ_path,"/" , "gam_summ.txt"))
+print("Significance testing of smooth terms and other summary output for GAMM")
+summary(gamm_corGaus$gam)
+sink()  
+
+#corExp
+summ_path <- paste0(out_path, "corExp")
+if(!dir.exists(summ_path)) dir.create(summ_path)
+sink(paste0(summ_path,"/" , "gam_summ.txt"))
+print("Significance testing of smooth terms and other summary output for GAMM")
+summary(gamm_corExp$gam)
+sink()  
+
+#corLin
+summ_path <- paste0(out_path, "corLin")
+if(!dir.exists(summ_path)) dir.create(summ_path)
+sink(paste0(summ_path,"/" , "gam_summ.txt"))
+print("Significance testing of smooth terms and other summary output for GAMM")
+summary(gamm_corLin$gam)
+sink()  
+
+#corRatio
+summ_path <- paste0(out_path, "corRatio")
+if(!dir.exists(summ_path)) dir.create(summ_path)
+sink(paste0(summ_path,"/" , "gam_summ.txt"))
+print("Significance testing of smooth terms and other summary output for GAMM")
+summary(gamm_corRatio$gam)
+sink()  
+
+#corSpher
+summ_path <- paste0(out_path, "corSpher")
+if(!dir.exists(summ_path)) dir.create(summ_path)
+sink(paste0(summ_path,"/" , "gam_summ.txt"))
+print("Significance testing of smooth terms and other summary output for GAMM")
+summary(gamm_corSpher$gam)
+sink()  
+```
+
+
+# Habitat Specialists
+```{r}
+analysis <- "gamm_cor_struct_compare_reduced_mod"
+dataset <- "hs"
+
+gamm_path <-  here(paste0("Output/Spatial/GAM/GAMM_", dataset, "//"))
+out_path <-  here(paste0("Output/Spatial/GAM/GAMM_", dataset, "/", analysis, "//"))
+if(!dir.exists(out_path)) dir.create(out_path)
+
+gamm_cor_struct_list <- readRDS(paste0(gamm_path, analysis, ".rds"))
+names(gamm_cor_struct_list) <- c("gamm_corGaus", "gamm_corExp", "gamm_corLin",
+"gamm_corRatio", "gamm_corSpher")
+
+gamm_corGaus <- gamm_cor_struct_list[[1]]
+gamm_corExp <- gamm_cor_struct_list[[2]]
+gamm_corLin <- gamm_cor_struct_list[[3]]
+gamm_corRatio <- gamm_cor_struct_list[[4]]
+gamm_corSpher <- gamm_cor_struct_list[[5]]
+
+#gtable and modelsummary packages may offer nice options but I haven't figured it out
+#below does not work in loop or function
+
+#corGaus
+summ_path <- paste0(out_path, "corGaus")
+if(!dir.exists(summ_path)) dir.create(summ_path)
+sink(paste0(summ_path,"/" , "gam_summ.txt"))
+print("Significance testing of smooth terms and other summary output for GAMM")
+summary(gamm_corGaus$gam)
+sink()  
+
+#corExp
+summ_path <- paste0(out_path, "corExp")
+if(!dir.exists(summ_path)) dir.create(summ_path)
+sink(paste0(summ_path,"/" , "gam_summ.txt"))
+print("Significance testing of smooth terms and other summary output for GAMM")
+summary(gamm_corExp$gam)
+sink()  
+
+#corLin
+summ_path <- paste0(out_path, "corLin")
+if(!dir.exists(summ_path)) dir.create(summ_path)
+sink(paste0(summ_path,"/" , "gam_summ.txt"))
+print("Significance testing of smooth terms and other summary output for GAMM")
+summary(gamm_corLin$gam)
+sink()  
+
+#corRatio
+summ_path <- paste0(out_path, "corRatio")
+if(!dir.exists(summ_path)) dir.create(summ_path)
+sink(paste0(summ_path,"/" , "gam_summ.txt"))
+print("Significance testing of smooth terms and other summary output for GAMM")
+summary(gamm_corRatio$gam)
+sink()  
+
+#corSpher
+summ_path <- paste0(out_path, "corSpher")
+if(!dir.exists(summ_path)) dir.create(summ_path)
+sink(paste0(summ_path,"/" , "gam_summ.txt"))
+print("Significance testing of smooth terms and other summary output for GAMM")
+summary(gamm_corSpher$gam)
+sink()  
+```
+
+
+
+
