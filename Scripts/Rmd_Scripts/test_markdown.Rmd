@@ -1,0 +1,95 @@
+---
+title: "Test_markdown"
+output: html_document
+date: "2024-04-24"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE)
+```
+
+```{r}
+here::i_am("Scripts/Rmd_Scripts/butterfly_msgdm_tables_figures_report.Rmd")
+
+library(rmarkdown)
+library(readr)
+library(knitr)
+library(knitrProgressBar)
+library(tictoc)
+library(gridExtra)
+library(conflicted)
+library(here)
+
+conflicts_prefer(dplyr::filter)
+conflicts_prefer(dplyr::rename)
+```
+
+#### Functions (consider moving to another script)
+
+```{r}
+
+#csv_path: file path for use in read_csv(here())
+#tab_no
+#tab_cap: caption argument for kable()
+#my_dig: digits argument for kable()
+
+print_csv <- function(csv_path, tab_no = "", tab_cap = "", my_dig = 3){
+  
+my_table <- read_csv(here(csv_path))
+
+my_caption <- if(tab_cap == "") {
+"" #Allow caption to be empty if so desired
+} else {
+paste0("Table ", tab_no, ".", tab_cap)
+} 
+
+
+kable(my_table, digits = my_dig,
+      caption = my_caption)  
+}
+
+```
+
+
+#### The datasets we are reporting on 
+```{r}
+datasets <- c("all_species", "wc", "hs", "hs_no_zeros")
+dataset_names <- c("All Butterfly Species", "Wider Countryside Species", "Habitat Specialists including sites with no species", "Habitat Specialists excluding sites with no species" )
+```
+
+
+```{r include = FALSE }
+# Resources for markdown
+#https://epirhandbook.com/en/reports-with-r-markdown.html
+#https://bookdown.org/yihui/rmarkdown/r-code.html#figures
+#https://rmarkdown.rstudio.com/articles_report_from_r_script.html
+#https://uoepsy.github.io/scs/rmd-bootcamp/06-figs.html
+#http://zevross.com/blog/2017/06/19/tips-and-tricks-for-working-with-images-and-figures-in-r-markdown-documents/
+# to use loop for figures, it may work in pander, although I resorted to generating the chunk code with a loop
+#https://github.com/Rapporter/pander/blob/master/vignettes/pander.Rmd
+#https://stackoverflow.com/questions/36373630/create-a-loop-that-includes-both-a-code-chunk-and-text
+```
+
+# Main
+
+## Site density
+
+```{r fig.cap = "Figure 1. Geographic distribution and density of the 1149 UKBMS transects used in this study", out.width = "100%"}
+include_graphics(here("Output/Spatial/Figures/Hex_dens_transects.png/"))
+```
+
+#### GAMM table
+```{r , message=FALSE}
+print_csv(tab_no = "SGX",
+          csv_path = "Output/Spatial/GAM/GAMM_all_species/gamm_cor_struct_compare_reduced_mod/corExp/parametric_p_value_table.csv",
+          tab_cap = "Significance of parametric and smooth terms in GAMM for All Species")
+
+print_csv(csv_path = "Output/Spatial/GAM/GAMM_all_species/gamm_cor_struct_compare_reduced_mod/corExp/smooth_p_value_table.csv")
+```
+
+## Environmental variables
+
+```{r fig.cap = "Figure 2. Four Influential environmental variables for turnover and richness of butterflies in Great Britain", out.width = "100%"}
+include_graphics(here("./Output/Spatial/Figures/fig_2_env_vars.png"))
+```
+

@@ -1,6 +1,6 @@
 ---
 title: ""
-output: html_document
+output: pdf_document
 
 params:
   analysis: "gamm_cor_struct_compare_reduced_mod"
@@ -14,9 +14,8 @@ knitr::opts_chunk$set(echo = FALSE, message = FALSE)
 ```
 
 
-
-```{r }
 #### Packages
+```{r }
 here::i_am("Scripts/Rmd_Scripts/process_GAMMS_single.Rmd")
 library(tidyverse)
 library(mgcv)
@@ -30,18 +29,17 @@ conflicts_prefer(dplyr::select)
 conflicts_prefer(knitrProgressBar::progress_estimated)
 # there is a same-named function in dplyr, check it out
 ```
-#https://stackoverflow.com/questions/25824795/how-to-combine-two-rmarkdown-rmd-files-into-a-single-output
-
+#### File paths
 ```{r}
 #gamm output has been saved in output already
 
 data_path <- here("Data/Processed_Data/Spatial//" )
 gamm_path <-  here(paste0("Output/Spatial/GAM/GAMM_", params$dataset, "//"))
-out_path <-  here(paste0("Output/Spatial/GAM/GAMM_", params$dataset, "/", params$analysis, "//"))
+out_path <-  here(paste0("Output/Spatial/GAM/GAMM_", params$dataset, "/", params$analysis, "/", params$corStruct, "//"))
 if(!dir.exists(out_path)) dir.create(out_path)
 ```
 
-
+#### Load GAMM output 
 ```{r}
 
 #### Get the specified GAMM
@@ -62,19 +60,91 @@ my_gamm <- get(paste0("gamm_", params$corStruct))
 
 ```
 
-
-
-
-```{r}
+#### Write summary of gamm$gam to a text file
+```{r, comment = "", label = 'Table XXX'}
 #gtable and modelsummary packages may offer nice options but I haven't figured it out
 #### Save gam summary to text file
-#sink(paste0(out_path, "gam_summ.txt"))
+sink(paste0(out_path, "gam_summ.txt"))
 print("Significance testing of smooth terms and other summary output for GAMM")
 summary(my_gamm$gam)
-#sink()
+sink()
 ```
 
+#### read the text file and edit to create summary tables for presentation
 
+```{r}
+gam_sum <- read.delim(paste0(out_path, "gam_summ.txt")) # it comes in as a dataframe with one column
+```
+
+#### First the parametric terms (only the intercept up to now)
+```{r}
+#get names for table columns
+my_names <- c("Term", "Estimate", "SE", "t_value", "P_value", "Stars") #add remaining names needed
+
+p_sum2 <- gam_sum[9, ] # the relevant data
+p_sum2 <- p_sum2 %>% 
+  str_squish() %>% #merge column separators of multiple white spaces into single spaces
+  str_replace_all("< ", "<") %>% #remove space between less than and p-value
+  as.data.frame(nm = "column") %>%
+  separate_wider_delim(column, delim = " ", names = my_names) %>% # separate into multiple columns
+  mutate(p_value = paste0(P_value, Stars), .keep = "unused") %>% # add stars to p-value in one column
+  mutate_all(funs(type.convert(as.character(.), as.is = TRUE))) #This converts columns into the format that looks best to the function 
+
+write_csv(p_sum2, file = paste0(out_path, "/", "parametric_p_value_table.csv"))
+kable(p_sum2, digits = 2)
+```
+
+#### Then the smooths
+```{r}
+#This is mostly a copy and paste of the code above
+
+#get names for table columns
+my_names <- gam_sum[13, ]  %>%
+  str_replace_all("p-", "P_") %>% 
+  str_squish() %>% 
+   str_split_1(" ") 
+my_names <- c("Smooth term", my_names, "Stars")
+                
+p_sum <- gam_sum[14:18, ]
+p_sum <- p_sum %>%
+  str_squish() %>% 
+  str_replace_all("< ", "<") %>% 
+  as.data.frame(nm = "column") %>%
+  separate_wider_delim(column, delim = " ", names = my_names) %>%
+  mutate(p_value = paste0(P_value, Stars), .keep = "unused") %>%
+  mutate_all(funs(type.convert(as.character(.), as.is = TRUE))) 
+
+write_csv(p_sum, file = paste0(out_path, "/", "smooth_p_value_table.csv"))
+kable(p_sum, digits = 2)
+```
+
+# extract and paste together other relevant summary info
+```{r}
+my_summary <- summary(my_gamm$gam)
+
+my_fam <- my_summary$family$family 
+
+my_link <- my_summary$family$link
+
+my_rsq <-  my_summary$r.sq %>%
+  signif(3) %>%
+  as.character
+
+my_scale <-  my_summary$scale %>%
+  signif(3) %>%
+  as.character
+
+my_n <- my_summary$n %>%
+  as.character()
+
+p_sum3 <- data.frame(Thing = c("Family", "Link", "R-sq.(adj)", "Scale est.", "n"), Value = c(my_fam, my_link, my_rsq, my_scale, my_n))
+
+write_csv(p_sum3, file = paste0(out_path, "/", "gamm_info.csv"))
+kable(p_sum3)
+
+```
+
+#### Save the gam plots
 ```{r , fig.show='hide'}
 png(file = paste0(out_path, "gam_plot.png"))
 
