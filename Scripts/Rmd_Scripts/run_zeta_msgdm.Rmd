@@ -47,9 +47,11 @@ render_report = function(analysis_script, params_list) {
                 } else if(analysis_script == "GAM_compare_spline_analyses.Rmd") {
                       paste0(here("Output/Spatial/GAM"), "/","GAM", "_" , params_list$dataset,  "/") 
                 } else if(analysis_script == "process_GAMM_analyses.Rmd"){  
-                      paste0(here("Output/Spatial/GAM/GAMM_"), params_list$dataset, "/", params_list$analysis, "//")
-                } else if(analysis_script == "process_GAMMS_single.Rmd"){  
-                      paste0(here("Output/Spatial/GAM/GAMM_"), params_list$dataset, "/")
+                      paste0(here("Output/Spatial/GAM/GAMM_"), params_list$dataset, "/", 
+                             params_list$analysis,  "//")
+                } else if(analysis_script == "process_GAMMS_single_result_output.Rmd"){  
+                      paste0(here("Output/Spatial/GAM/GAMM_"), params_list$dataset, "/", 
+                             params_list$analysis, "/", params_list$corStruct, "//")
                 } else if(analysis_script == "process_msgdm_results.Rmd"){  
                       paste0(here("Output/Spatial/msgdms"), "/", 
                       params_list$dataset, "_" , params_list$normalize_msgdm, "/", 
@@ -151,39 +153,17 @@ render_report(analysis_script = "process_GAMM_analyses.Rmd",
                    analysis = "gamm_cor_struct_compare_reduced_mod"))
 ```
 
+### Generate output to report
 
-
-
-
-
-
-
-
-
-
-
-### Single GAMMS
+#### All species
 ```{r}
-render_report(analysis_script = "process_GAMMS_single.Rmd", 
-              list(gamm_file = "gamm_all_species_exp_gaus2.rds", 
-                   dataset = "all_species"))
+
+render_report(analysis_script = "process_GAMMS_single_result_output.Rmd", 
+              list(dataset = "all_species", 
+                   analysis = "gamm_cor_struct_compare_reduced_mod",
+                   corStruct = "corExp"))
+
 ```
-
-#### WC
-```{r}
-render_report(analysis_script = "process_GAMMS_single.Rmd", 
-              list(gamm_file = "gamm_wc_exp_gaus2.rds", 
-                   dataset = "wc"))
-```
-
-#### HS
-```{r}
-render_report(analysis_script = "process_GAMMS_single.Rmd", 
-              list(gamm_file = "gamm2_hs_lin_nb.rds", 
-                   dataset = "hs"))
-```
-
-
 
 ## MSGDMs
 ```{r}

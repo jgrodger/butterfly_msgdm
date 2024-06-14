@@ -6,13 +6,7 @@ output: html_notebook
 ```{r}
 here::i_am("Scripts/Rmd_Scripts/process_GAMM_analyses.Rmd")
 library(tidyverse)
-library(tmap)
 library(mgcv)
-library(gstat)
-library(moranfast)
-library(knitr)
-library(knitrProgressBar)
-library(tictoc)
 library(here)
 library(conflicted)
 conflicts_prefer(dplyr::filter)

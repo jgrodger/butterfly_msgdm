@@ -36,11 +36,16 @@ conflicts_prefer(dplyr::rename)
 #tab_cap: caption argument for kable()
 #my_dig: digits argument for kable()
 
-print_csv <- function(csv_path, tab_no, tab_cap, my_dig = 3){
+print_csv <- function(csv_path, tab_no = "", tab_cap = "", my_dig = 3){
   
 my_table <- read_csv(here(csv_path))
 
-my_caption <- paste0("Table ", tab_no, ".", tab_cap)
+my_caption <- if(tab_cap == "") {
+"" #Allow caption to be empty if so desired
+} else {
+paste0("Table ", tab_no, ".", tab_cap)
+} 
+
 
 kable(my_table, digits = my_dig,
       caption = my_caption)  
@@ -111,6 +116,7 @@ print_csv(tab_no = "SG2",
           my_dig = 2)
 ```
 
+
 ```{r , message=FALSE}
 print_csv(tab_no = "SG3",
           csv_path = "Output/Spatial/GAM/GAM_hs/family_aic_table.csv",
@@ -118,16 +124,79 @@ print_csv(tab_no = "SG3",
           my_dig = 2)
 ```
 
-```{r}
-  
-my_table <- read_txt(here(csv_path))
-
-my_caption <- paste0("Table ", tab_no, ".", tab_cap)
-
-kable(my_table, digits = my_dig,
-      caption = my_caption)  
+```{r include = FALSE}
+# All Species
 ```
 
+
+```{r , message=FALSE}
+print_csv(tab_no = "SG4",
+          csv_path = "Output/Spatial/GAM/GAMM_all_species/gamm_cor_struct_compare_reduced_mod/corExp/gamm_info.csv",
+          tab_cap = "Key information for GAMM for All Species")
+
+```
+
+```{r , message=FALSE}
+print_csv(tab_no = "SG5",
+          csv_path = "Output/Spatial/GAM/GAMM_all_species/gamm_cor_struct_compare_reduced_mod/corExp/parametric_p_value_table.csv",
+          tab_cap = "Significance of parametric and smooth terms in GAMM for All Species")
+
+print_csv(csv_path = "Output/Spatial/GAM/GAMM_all_species/gamm_cor_struct_compare_reduced_mod/corExp/smooth_p_value_table.csv")
+```
+
+```{r include = FALSE}
+# WCS
+```
+
+```{r , message=FALSE}
+print_csv(tab_no = "SG4",
+          csv_path = "Output/Spatial/GAM/GAMM_wc/gamm_cor_struct_compare_reduced_mod/corExp/gamm_info.csv",
+          tab_cap = "Key information for GAMM for Wider Countryside Species")
+
+```
+
+```{r , message=FALSE}
+print_csv(tab_no = "SG5",
+          csv_path = "Output/Spatial/GAM/GAMM_wc/gamm_cor_struct_compare_reduced_mod/corExp/parametric_p_value_table.csv",
+          tab_cap = "Significance of parametric and smooth terms in GAMM for Wider Counrysided Species")
+
+print_csv(csv_path = "Output/Spatial/GAM/GAMM_wc/gamm_cor_struct_compare_reduced_mod/corExp/smooth_p_value_table.csv")
+```
+
+```{r}
+# HS
+```
+
+```{r , message=FALSE}
+print_csv(tab_no = "SG4",
+          csv_path = "Output/Spatial/GAM/GAMM_hs/gamm_cor_struct_compare_reduced_mod/corExp/gamm_info.csv",
+          tab_cap = "Key information for GAMM for Habitat Specialists")
+
+```
+
+```{r , message=FALSE}
+print_csv(tab_no = "SG5",
+          csv_path = "Output/Spatial/GAM/GAMM_hs/gamm_cor_struct_compare_reduced_mod/corExp/parametric_p_value_table.csv",
+          tab_cap = "Significance of parametric and smooth terms in GAMM for Habitat Specialists")
+
+print_csv(csv_path = "Output/Spatial/GAM/GAMM_hs/gamm_cor_struct_compare_reduced_mod/corExp/smooth_p_value_table.csv")
+```
+
+
+#### All Butterfly Species
+```{r fig.cap = "Figure 3. Effects of environemental variables on speccies richness of All Species from GAMM analyses", out.width = "100%"}
+include_graphics(here("Output/Spatial/GAM/GAMM_all_species/gamm_cor_struct_compare_reduced_mod/corExp/gam_plot.png"))
+```
+
+#### Wider Countryside Species
+```{r fig.cap = "Figure 3. Effects of environemental variables on speccies richness of Wider Countryside Species from GAMM analyses", out.width = "100%"}
+include_graphics(here("Output/Spatial/GAM/GAMM_wc/gamm_cor_struct_compare_reduced_mod/corExp/gam_plot.png"))
+```
+
+#### Habitat Specialists
+```{r fig.cap = "Figure 3. Effects of environemental variables on speccies richness of Habitat Specialists from GAMM analyses", out.width = "100%"}
+include_graphics(here("Output/Spatial/GAM/GAMM_hs/gamm_cor_struct_compare_reduced_mod/corExp/gam_plot.png"))
+```
 
 
 
