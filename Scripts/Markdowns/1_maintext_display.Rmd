@@ -1,0 +1,24 @@
+---
+title: "Main Text Display Items"
+author: "JG Rodger"
+date: "2024-06-18"
+output: html_document
+---
+
+# Main Text Display Items
+
+## Site density
+
+```{r fig.cap = "Figure 1. Geographic distribution and density of the 1149 UKBMS transects used in this study", out.width = "100%"}
+include_graphics(here("Output/Spatial/Figures/Hex_dens_transects.png/"))
+```
+
+## Environmental variables
+
+```{r fig.cap = "Figure 2. Four Influential environmental variables for turnover and richness of butterflies in Great Britain", out.width = "100%"}
+include_graphics(here("./Output/Spatial/Figures/fig_2_env_vars.png"))
+```
+
+## MSGDMS
+
+

@@ -1,0 +1,45 @@
+---
+title: "Butterfly Richness and Turnover Report"
+author: "JG Rodger"
+date: "2024-06-18"
+output: html_document
+---
+
+```{r setup, echo = FALSE, message = FALSE}
+
+knitr::opts_chunk$set(
+  echo = FALSE)
+
+library(knitr)
+library(rmarkdown)
+library(readr)
+library(conflicted)
+library(here)
+
+here::i_am("Scripts/Markdowns/butterfly_richness_turnover_report.Rmd")
+
+# function to print csv table to my specs
+# csv_path: file path for use in read_csv(here())
+# tab_no
+# tab_cap: caption argument for kable()
+# my_dig: digits argument for kable()
+print_csv <- function(csv_path, tab_no = "", tab_cap = "", my_dig = 3){
+  
+my_table <- read_csv(here(csv_path))
+
+my_caption <- if(tab_cap == "") {
+"" #Allow caption to be empty if so desired
+} else {
+paste0("Table ", tab_no, ".", tab_cap)
+} 
+
+
+kable(my_table, digits = my_dig,
+      caption = my_caption)  
+}
+```
+
+
+```{r, child=c('1_maintext_display.Rmd', '2_data_proc_occ_supp.Rmd', '3_richness_supp.Rmd', '4_zeta_dec_supp.Rmd', '5_msgdm_supp.Rmd')}
+```
+
