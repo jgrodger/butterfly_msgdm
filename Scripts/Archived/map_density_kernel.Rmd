@@ -1,0 +1,99 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+# Libraries
+```{r}
+here::i_am("Scripts/Rmd_Scripts/butterfly_maps.Rmd")
+library(tidyverse)
+library(viridis)
+
+library(hrbrthemes)
+library(mapdata)
+library(fasterize)
+
+library(mapchina)
+library(terra)
+library(sf)
+library(spatstat)
+library(ggplot2)
+library(gridExtra)
+library(here)
+```
+
+```{r}
+# Basemap without outlying islands
+gb <- readRDS(here("./Data./Maps./gb_multipolygon_simplified.rds"))
+
+#All species data
+butterfly_data <- readRDS(here("./Data/Processed_Data/Spatial/all_species.rds"))
+
+sites <- butterfly_data$sites %>%
+  rename(as.richness = richness)
+
+# Wider countryside
+wc_data <- readRDS(here("./Data/Processed_Data/Spatial/wc.rds"))
+
+any(rownames(sites) != rownames(wc_data$site.by.species))
+any(rownames(sites) != rownames(hs_data$site.by.species))
+# can do cbind
+
+#Habitat specialists
+hs_data <- readRDS(here("./Data/Processed_Data/Spatial/hs.rds"))
+
+sites <- sites %>%
+  mutate(wc.richness = rowSums(wc_data$site.by.species),
+         hs.richness = rowSums(hs_data$site.by.species))
+
+```
+
+
+
+
+
+# I tried the approach below, it doesn't add much info to the points, rather for this use approach above, although I have to rasterise the map
+
+
+https://stackoverflow.com/questions/68643517/smoothed-density-maps-for-points-in-using-sf-within-a-given-boundary-in-r
+
+
+
+
+```{r}
+
+transect_centroids <- sites %>%
+  select(x, y) %>%
+  st_as_sf(coords = c("x", "y"), crs = crs(gb)) #%>%
+ # st_transform(32650)
+```
+
+
+
+```{r}
+ppp_points <- as.ppp(transect_centroids)
+Window(ppp_points) <- as.owin(gb)
+
+
+par(mar = rep(0, 4))
+plot(ppp_points, main = "")
+```
+
+
+```{r}
+density_spatstat <- density(ppp_points, dimyx = 256)
+
+density_stars <- stars::st_as_stars(density_spatstat)
+
+density_sf <- st_as_sf(density_stars) %>%
+  st_set_crs(crs(gb))
+
+ggplot() +
+  geom_sf(data = density_sf, aes(fill = v), col = NA) +
+  scale_fill_viridis_c() +
+  geom_sf(data = st_boundary(gb)) +
+  geom_sf(data = transect_centroids, size = 0.5, shape = 19, color = "red")
+
+```
+
+

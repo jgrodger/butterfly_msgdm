@@ -7,6 +7,7 @@ output: html_notebook
 here::i_am("Scripts/Rmd_Scripts/butterfly_maps.Rmd")
 library(tidyverse)
 library(viridis)
+
 library(hrbrthemes)
 library(mapdata)
 library(fasterize)
@@ -16,7 +17,7 @@ library(terra)
 library(sf)
 library(spatstat)
 library(ggplot2)
-
+library(gridExtra)
 library(here)
 ```
 
@@ -24,9 +25,25 @@ library(here)
 # Basemap without outlying islands
 gb <- readRDS(here("./Data./Maps./gb_multipolygon_simplified.rds"))
 
+#All species data
 butterfly_data <- readRDS(here("./Data/Processed_Data/Spatial/all_species.rds"))
 
-sites <- butterfly_data$sites
+sites <- butterfly_data$sites %>%
+  rename(as.richness = richness)
+
+# Wider countryside
+wc_data <- readRDS(here("./Data/Processed_Data/Spatial/wc.rds"))
+
+any(rownames(sites) != rownames(wc_data$site.by.species))
+any(rownames(sites) != rownames(hs_data$site.by.species))
+# can do cbind
+
+#Habitat specialists
+hs_data <- readRDS(here("./Data/Processed_Data/Spatial/hs.rds"))
+
+sites <- sites %>%
+  mutate(wc.richness = rowSums(wc_data$site.by.species),
+         hs.richness = rowSums(hs_data$site.by.species))
 
 ```
 
@@ -55,7 +72,12 @@ hex_dens <- ggplot() +
   theme(
   axis.text.x = element_blank(),
   axis.text.y = element_blank(),
-  axis.ticks = element_blank())
+  axis.ticks = element_blank(), 
+  legend.direction = "horizontal", 
+  legend.position = "bottom") +
+  guides(fill = guide_colorbar(title = "Transects", 
+                             theme(legend.title.position = "top",
+                                  legend.text.position = "bottom")))
 
 
 rect_dens
@@ -68,49 +90,95 @@ hex_dens
 dev.off()
 ```
 
-
-# I tried the approach below, it doesn't add much info to the points, rather for this use approach above, although I have to rasterise the map
-
-
-https://stackoverflow.com/questions/68643517/smoothed-density-maps-for-points-in-using-sf-within-a-given-boundary-in-r
-
-
-
-
 ```{r}
-
-transect_centroids <- sites %>%
-  select(x, y) %>%
-  st_as_sf(coords = c("x", "y"), crs = crs(gb)) #%>%
- # st_transform(32650)
-```
-
-
-
-```{r}
-ppp_points <- as.ppp(transect_centroids)
-Window(ppp_points) <- as.owin(gb)
-
-
-par(mar = rep(0, 4))
-plot(ppp_points, main = "")
+hist(sites$as.richness)
+hist(sites$wc.richness)
+hist(sites$hs.richness)
 ```
 
 
 ```{r}
-density_spatstat <- density(ppp_points, dimyx = 256)
+# modified above plot along lines suggested by answer https://stackoverflow.com/questions/74818772/r-how-to-fill-geom-hex-with-a-numerical-value-and-heat-scale-it
 
-density_stars <- stars::st_as_stars(density_spatstat)
 
-density_sf <- st_as_sf(density_stars) %>%
-  st_set_crs(crs(gb))
+# note, by default interals are left-open and right-closed, ie they do not include lower endpoint but do include right endpoint
 
-ggplot() +
-  geom_sf(data = density_sf, aes(fill = v), col = NA) +
-  scale_fill_viridis_c() +
-  geom_sf(data = st_boundary(gb)) +
-  geom_sf(data = transect_centroids, size = 0.5, shape = 19, color = "red")
+as_richness <- ggplot() + 
+    geom_sf(data = gb) +
+  stat_summary_hex(
+    bins=30,
+    right = FALSE, 
+    data = sites, 
+    aes(x = x, y = y, z = as.richness)) + #the mean is taken by default
+    scale_fill_viridis_b(name="AS",
+    breaks = c(5, 10, 15, 20, 25, 30, 35)) + 
+  labs(x = "", y = "") + 
+  theme(
+  axis.text.x = element_blank(),
+  axis.text.y = element_blank(),
+  axis.ticks = element_blank(), 
+  legend.direction = "horizontal", 
+  legend.position = "bottom") +
+  guides(fill = guide_colorbar(title = "AS", 
+                             theme(legend.title.position = "top",
+                                  legend.text.position = "bottom")))
+as_richness
+
 
 ```
+```{r}
 
+wc_richness <- ggplot() + 
+    geom_sf(data = gb) +
+  stat_summary_hex(
+    bins=30,
+    right = FALSE, 
+    data = sites, 
+    aes(x = x, y = y, z = wc.richness)) + #the mean is taken by default
+    scale_fill_viridis_b(name="WC",
+    breaks = c(5, 10, 15, 20, 25, 30, 35)) + 
+  labs(x = "", y = "") + 
+  theme(
+  axis.text.x = element_blank(),
+  axis.text.y = element_blank(),
+  axis.ticks = element_blank(), 
+  legend.direction = "horizontal", 
+  legend.position = "bottom") +
+  guides(fill = guide_colorbar(title = "WC", 
+                             theme(legend.title.position = "top",
+                                  legend.text.position = "bottom")))
 
+wc_richness
+```
+
+```{r}
+
+hs_richness <- ggplot() + 
+    geom_sf(data = gb) +
+  stat_summary_hex(
+    bins=30,
+    right = FALSE,
+    data = sites, 
+    aes(x = x, y = y, z = hs.richness)) + #the mean is taken by default
+    scale_fill_viridis_b(name = "HS",
+    breaks = c(0, 1 , 2, 4, 6, 8, 10)) + 
+  labs(x = "", y = "") + 
+  theme(
+  axis.text.x = element_blank(),
+  axis.text.y = element_blank(),
+  axis.ticks = element_blank(), 
+  legend.direction = "horizontal", 
+  legend.position = "bottom") +
+  guides(fill = guide_colorbar(title = "HS", 
+                             theme(legend.title.position = "top",
+                                  legend.text.position = "bottom")))
+
+hs_richness
+```
+```{r}
+grid.arrange(hex_dens, as_richness, wc_richness, hs_richness, ncol = 4, nrow = 1)
+
+png(filename =  paste0(here("Output/Spatial/Figures/Hex_dens_transects_richness.png/")))
+grid.arrange(hex_dens, as_richness, wc_richness, hs_richness, ncol = 4, nrow = 1)
+dev.off()
+```
