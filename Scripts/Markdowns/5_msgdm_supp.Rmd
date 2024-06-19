@@ -9,29 +9,6 @@ output: html_document
 
 ### Forest Plots
 
-#### All Butterfly Species, Simpson
-```{r, out.width = "100%"}
-include_graphics(here("./Output/Spatial/msgdms/all_species_Simpson/figs_tables/forest_plot.png"))
-```
-```{r fig.cap = "Figure S13. Effect sizes and p-values for splines of predictor variables and the intercept for All Butterfly Species, Simpson", out.width = "100%"}
-include_graphics(here("./Output/Spatial/msgdms/all_species_Simpson/figs_tables/forest_plot_p_values.png"))
-```
-
-#### Wider Countryside Species, Simpson
-```{r, out.width = "100%"}
-include_graphics(here("./Output/Spatial/msgdms/wc_Simpson/figs_tables/forest_plot.png"))
-```
-```{r fig.cap = "Figure S14. Effect sizes and p-values for splines of predictor variables and the intercept for Wider Countryside Species, Simpson", out.width = "100%"}
-include_graphics(here("./Output/Spatial/msgdms/wc_Simpson/figs_tables/forest_plot_p_values.png"))
-```
-
-#### Habitat Specialists, Simpson
-```{r, out.width = "100%"}
-include_graphics(here("./Output/Spatial/msgdms/hs_no_zeros_Simpson/figs_tables/forest_plot.png"))
-```
-```{r fig.cap = "Figure S15. Effect sizes and p-values for splines of predictor variables and the intercept for Habitat Specialists, Simpson", out.width = "100%"}
-include_graphics(here("./Output/Spatial/msgdms/hs_no_zeros_Simpson/figs_tables/forest_plot_p_values.png"))
-```
 
 #### All Butterfly Species, Sorensen
 ```{r, out.width = "100%"}

@@ -7,18 +7,58 @@ output: html_document
 
 # Main Text Display Items
 
-## Site density
-
 ```{r fig.cap = "Figure 1. Geographic distribution and density of the 1149 UKBMS transects used in this study", out.width = "100%"}
 include_graphics(here("Output/Spatial/Figures/Hex_dens_transects.png/"))
 ```
 
-## Environmental variables
+##### Figure 1 B-D richness of AS, WC, HS to be added to above in 1 by 4 layout
 
-```{r fig.cap = "Figure 2. Four Influential environmental variables for turnover and richness of butterflies in Great Britain", out.width = "100%"}
+
+
+```{r fig.cap = "Figure 2. Environmental variables assessed for relationships with richness and turnover of butterflies in Great Britain", out.width = "100%"}
 include_graphics(here("./Output/Spatial/Figures/fig_2_env_vars.png"))
 ```
 
-## MSGDMS
+
+```{r fig.cap = "Figure 3 A-E. Effects of environemental variables on speccies richness of All Species from GAMM analyses", out.width = "100%"}
+include_graphics(here("Output/Spatial/GAM/GAMM_all_species/gamm_cor_struct_compare_reduced_mod/corExp/gam_plot.png"))
+```
+
+
+```{r fig.cap = "Figure 3 F-J. Effects of environemental variables on speccies richness of Wider Countryside Species from GAMM analyses", out.width = "100%"}
+include_graphics(here("Output/Spatial/GAM/GAMM_wc/gamm_cor_struct_compare_reduced_mod/corExp/gam_plot.png"))
+```
+
+
+```{r fig.cap = "Figure 3 K-O. Effects of environemental variables on speccies richness of Habitat Specialists from GAMM analyses", out.width = "100%"}
+include_graphics(here("Output/Spatial/GAM/GAMM_hs/gamm_cor_struct_compare_reduced_mod/corExp/gam_plot.png"))
+```
+
+##### Above to be combined into 3 by 5 layout
+
+#### All Butterfly Species, Simpson
+```{r, out.width = "100%"}
+include_graphics(here("./Output/Spatial/msgdms/all_species_Simpson/figs_tables/forest_plot.png"))
+```
+```{r fig.cap = "Figure 4A. Effect sizes and p-values for splines of predictor variables and the intercept for All Butterfly Species, Simpson", out.width = "100%"}
+include_graphics(here("./Output/Spatial/msgdms/all_species_Simpson/figs_tables/forest_plot_p_values.png"))
+```
+
+#### Wider Countryside Species, Simpson
+```{r, out.width = "100%"}
+include_graphics(here("./Output/Spatial/msgdms/wc_Simpson/figs_tables/forest_plot.png"))
+```
+```{r fig.cap = "Figure 4B. Effect sizes and p-values for splines of predictor variables and the intercept for Wider Countryside Species, Simpson", out.width = "100%"}
+include_graphics(here("./Output/Spatial/msgdms/wc_Simpson/figs_tables/forest_plot_p_values.png"))
+```
+
+#### Habitat Specialists, Simpson
+```{r, out.width = "100%"}
+include_graphics(here("./Output/Spatial/msgdms/hs_no_zeros_Simpson/figs_tables/forest_plot.png"))
+```
+```{r fig.cap = "Figure 4C. Effect sizes and p-values for splines of predictor variables and the intercept for Habitat Specialists, Simpson", out.width = "100%"}
+include_graphics(here("./Output/Spatial/msgdms/hs_no_zeros_Simpson/figs_tables/forest_plot_p_values.png"))
+```
+
 
 
