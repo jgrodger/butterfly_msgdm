@@ -7,13 +7,6 @@ output: html_notebook
 here::i_am("Scripts/Rmd_Scripts/butterfly_maps.Rmd")
 library(tidyverse)
 library(viridis)
-
-#library(hrbrthemes)
-#library(mapdata)
-#library(fasterize)
-
-#library(mapchina)
-#library(terra)
 library(sf)
 library(spatstat)
 library(ggplot2)
