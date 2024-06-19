@@ -13,6 +13,7 @@ library(tidyverse)
 library(conflicted)
 library(tictoc)
 library(terra)
+library(tidyterra)
 library(sf)
 library(tmap)
 library(gridExtra)
@@ -152,28 +153,13 @@ for (i in 2:length(layers2)){
 }
 ```
 
-
-
-#### Plot env vars and save pngs for figures
 ```{r}
-# two sets of vars to be plotted 
-comb1 <- select(comb, x, y,  mean.ann.temp, topographic.wetness, ph, total.n)
-comb2 <- select(comb, x, y,  log10.mean.ann.rain, tree.density, log10.pesticide.risk, log10.humans)
-
-comb1 <- rast(comb1, crs = "EPSG:27700")
-comb2 <- rast(comb2, crs = "EPSG:27700")
-
-plot(comb1)
-plot(comb2)
-
-png(file= here("./Output/Spatial/Figures/fig_2_env_vars.png"))
-plot(comb1)
-dev.off() 
- 
-png(file= here("./Output/Spatial/Figures/fig_supp_other_env_vars.png"))
-plot(comb2)
-dev.off() 
+write_rds(comb, file = here("./Data/Processed_Data/Spatial/map_all_env_vars.rds"))
 ```
+
+
+
+
 
 
 #### Merge env vars with site data to make site.by.env and site.by.xy dataframes

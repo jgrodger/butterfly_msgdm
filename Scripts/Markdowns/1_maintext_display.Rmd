@@ -10,17 +10,17 @@ output: html_document
 ```{r fig.cap = "Figure 1. Geographic distribution and density of the 1149 UKBMS transects used in this study (A) and geographic patterns in species richness of All Species (B), Wider Countryside species (C) and Habitat Specialists (D)", out.width = "100%"}
 include_graphics(here("Output/Spatial/Figures/Hex_dens_transects_richness.png/"))
 ```
+
+
 ##### Figure 1 To do: prettify legends and layout 
 
 
 
-```{r fig.cap = "", out.width = "100%"}
-include_graphics(here("./Output/Spatial/Figures/fig_2_env_vars.png"))
+```{r fig.cap = "Figure 2. Environmental variables assessed for relationships with richness and turnover of butterflies in Great Britain", out.width = "100%"}
+include_graphics(here("./Output/Spatial/Figures/all_env_vars.png"))
 ```
 
-```{r fig.cap = "Figure 2. Environmental variables assessed for relationships with richness and turnover of butterflies in Great Britain", out.width = "100%"}
-include_graphics(here("./Output/Spatial/Figures/fig_supp_other_env_vars.png"))
-```
+##### Figure 2 To do: prettify legends and layout 
 
 ```{r fig.cap = "Figure 3 A-E. Effects of environemental variables on speccies richness of All Species from GAMM analyses", out.width = "100%"}
 include_graphics(here("Output/Spatial/GAM/GAMM_all_species/gamm_cor_struct_compare_reduced_mod/corExp/gam_plot.png"))
