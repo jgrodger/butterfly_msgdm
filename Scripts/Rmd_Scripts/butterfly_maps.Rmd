@@ -182,4 +182,7 @@ ggsave(
 png(filename =  here("Output/Spatial/Figures/Hex_dens_transects_richness.png/"))
 grid.arrange(hex_dens, as_richness, wc_richness, hs_richness, ncol = 4, nrow = 1)
 dev.off()
+
+#test
+
 ```
