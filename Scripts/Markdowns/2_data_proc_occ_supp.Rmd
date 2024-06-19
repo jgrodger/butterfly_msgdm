@@ -7,11 +7,7 @@ output: html_document
 
 ## Supplementary Materials: Occupancy
 
-## Environmental variables
 
-```{r fig.cap = "Figure S2. Four less influential environmental variables for turnover and richness of butterflies in Great Britain", out.width = "100%"}
-include_graphics(here("./Output/Spatial/Figures/fig_supp_other_env_vars.png"))
-```
 
 ```{r, message=FALSE}
 print_csv(tab_no = "S1",

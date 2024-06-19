@@ -8,12 +8,12 @@ here::i_am("Scripts/Rmd_Scripts/butterfly_maps.Rmd")
 library(tidyverse)
 library(viridis)
 
-library(hrbrthemes)
-library(mapdata)
-library(fasterize)
+#library(hrbrthemes)
+#library(mapdata)
+#library(fasterize)
 
-library(mapchina)
-library(terra)
+#library(mapchina)
+#library(terra)
 library(sf)
 library(spatstat)
 library(ggplot2)
@@ -34,12 +34,13 @@ sites <- butterfly_data$sites %>%
 # Wider countryside
 wc_data <- readRDS(here("./Data/Processed_Data/Spatial/wc.rds"))
 
-any(rownames(sites) != rownames(wc_data$site.by.species))
-any(rownames(sites) != rownames(hs_data$site.by.species))
-# can do cbind
 
 #Habitat specialists
 hs_data <- readRDS(here("./Data/Processed_Data/Spatial/hs.rds"))
+
+# check if sites are in the same order in all datasets
+any(rownames(sites) != rownames(wc_data$site.by.species))
+any(rownames(sites) != rownames(hs_data$site.by.species))
 
 sites <- sites %>%
   mutate(wc.richness = rowSums(wc_data$site.by.species),
@@ -67,7 +68,7 @@ hex_dens <- ggplot() +
     geom_sf(data = gb) +
   geom_hex(bins=30, data = sites, aes(x = x, y = y)) +
     scale_fill_viridis_b(name="Transects", 
-      breaks = c(0, 1,2, 5,10,15,20, 25, 30)) + 
+      breaks = c(0,2, 5,10,15,20, 25, 30)) + 
   labs(x = "", y = "") + 
   theme(
   axis.text.x = element_blank(),
@@ -106,8 +107,7 @@ hist(sites$hs.richness)
 as_richness <- ggplot() + 
     geom_sf(data = gb) +
   stat_summary_hex(
-    bins=30,
-    right = FALSE, 
+    bins=30, 
     data = sites, 
     aes(x = x, y = y, z = as.richness)) + #the mean is taken by default
     scale_fill_viridis_b(name="AS",
@@ -132,7 +132,6 @@ wc_richness <- ggplot() +
     geom_sf(data = gb) +
   stat_summary_hex(
     bins=30,
-    right = FALSE, 
     data = sites, 
     aes(x = x, y = y, z = wc.richness)) + #the mean is taken by default
     scale_fill_viridis_b(name="WC",
@@ -157,7 +156,6 @@ hs_richness <- ggplot() +
     geom_sf(data = gb) +
   stat_summary_hex(
     bins=30,
-    right = FALSE,
     data = sites, 
     aes(x = x, y = y, z = hs.richness)) + #the mean is taken by default
     scale_fill_viridis_b(name = "HS",
@@ -176,9 +174,19 @@ hs_richness <- ggplot() +
 hs_richness
 ```
 ```{r}
-grid.arrange(hex_dens, as_richness, wc_richness, hs_richness, ncol = 4, nrow = 1)
+all_hex <- grid.arrange(hex_dens, as_richness, wc_richness, hs_richness, ncol = 4, nrow = 1)
 
-png(filename =  paste0(here("Output/Spatial/Figures/Hex_dens_transects_richness.png/")))
+plot(all_hex)
+
+ggsave(
+  here("Output/Spatial/Figures/Hex_dens_transects_richness.png/"),
+  all_hex,
+  units = "mm",
+  width = 200,
+  dpi = 1200
+)
+
+png(filename =  here("Output/Spatial/Figures/Hex_dens_transects_richness.png/"))
 grid.arrange(hex_dens, as_richness, wc_richness, hs_richness, ncol = 4, nrow = 1)
 dev.off()
 ```
