@@ -14,12 +14,11 @@ include_graphics(here("Output/Spatial/Figures/Hex_dens_transects_richness.png/")
 
 
 
-```{r fig.cap = "Figure 2. Environmental variables assessed for relationships with richness and turnover of butterflies in Great Britain", out.width = "100%"}
+```{r fig.cap = "", out.width = "100%"}
 include_graphics(here("./Output/Spatial/Figures/fig_2_env_vars.png"))
 ```
 
-
-```{r fig.cap = "Figure S2. Four less influential environmental variables for turnover and richness of butterflies in Great Britain", out.width = "100%"}
+```{r fig.cap = "Figure 2. Environmental variables assessed for relationships with richness and turnover of butterflies in Great Britain", out.width = "100%"}
 include_graphics(here("./Output/Spatial/Figures/fig_supp_other_env_vars.png"))
 ```
 
