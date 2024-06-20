@@ -26,7 +26,7 @@ include_graphics(here("./Output/Spatial/Figures/all_env_vars.png"))
 include_graphics(here("Output/Spatial/GAM/GAMM_fig/gam_multiplot.png"))
 ```
 
-##### Figure 3 To do: reduce whitespace, improve annoation positioning, add p-values 
+##### Figure 3 To do: reduce whitespace, improve annoation positioning, add p-values, add heading for AS, WC, HS
 
 ##### Above to be combined into 3 by 5 layout
 
