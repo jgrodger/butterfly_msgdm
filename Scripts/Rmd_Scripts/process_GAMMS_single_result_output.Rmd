@@ -19,6 +19,7 @@ knitr::opts_chunk$set(echo = FALSE, message = FALSE)
 here::i_am("Scripts/Rmd_Scripts/process_GAMMS_single.Rmd")
 library(tidyverse)
 library(mgcv)
+library(mgcViz)
 library(knitr)
 library(knitrProgressBar)
 library(tictoc)
@@ -187,8 +188,34 @@ kable(info_sum)
 ```{r , fig.show='hide'}
 png(file = paste0(out_path, "gam_plot.png"))
 
-par(mfrow = c(2, 3))
-plot(my_gamm$gam, shade = TRUE, shift = coef(my_gamm$gam)[1])
+par(mfrow = c(5, 1),
+    mar = c(1, 1, 1, 1))
+plot(my_gamm$gam, 
+     shade = TRUE, 
+     shift = coef(my_gamm$gam)[1],
+     asp = 1)
 dev.off()  
 ```
+#mgcv plot
+
+```{r}
+# obtain gam_Viz object
+my_viz <-  getViz(my_gamm$gam)
+
+my_o_my <- plot( my_viz, allTerms = TRUE, shift = coef(my_gamm$gam)[1])
+my_o_my <- my_o_my + l_fitLine(colour = "red") + l_rug(mapping = aes(x=x), alpha = 0.8) +
+    l_ciLine(mul = 1.96, colour = "blue", linetype = 2) + 
+    l_points(shape = 19, size = 1, alpha = 0.1) + theme_classic()
+print(my_o_my, pages = 1)
+```
+
+```{r}
+# Making predictions
+pred = predict(fit, newdata=cars, type="response")
+
+# Now they match up
+plot(cars)
+lines(cars$speed, pred, col="red")
+```
+
 

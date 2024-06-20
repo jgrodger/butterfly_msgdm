@@ -40,9 +40,6 @@ kable(my_table, digits = my_dig,
 ```
 
 
-```{r, child=c('1_maintext_display.Rmd', '2_data_proc_occ_supp.Rmd')}
+```{r, child=c('1_maintext_display.Rmd', '2_data_proc_occ_supp.Rmd', '3_richness_supp.Rmd', '4_zeta_dec_supp.Rmd', '5_msgdm_supp.Rmd')}
 ```
-
-# ```{r, child=c('1_maintext_display.Rmd', '2_data_proc_occ_supp.Rmd', '3_richness_supp.Rmd', '4_zeta_dec_supp.Rmd', '5_msgdm_supp.Rmd')}
-# ```
 

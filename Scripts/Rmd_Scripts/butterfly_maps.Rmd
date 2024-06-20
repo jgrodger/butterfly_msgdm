@@ -7,6 +7,8 @@ output: html_notebook
 here::i_am("Scripts/Rmd_Scripts/butterfly_maps.Rmd")
 library(tidyverse)
 library(viridis)
+library(terra)
+library(tidyterra)
 library(sf)
 library(spatstat)
 library(ggplot2)
@@ -234,6 +236,7 @@ theme_j1 <- function(){
 ```{r}
 #copy and paste because I can't work out how to do inside a function
 
+
 # mean.ann.temp
 temp_rast <- comb3 %>%
   select(mean.ann.temp)
@@ -381,6 +384,7 @@ humans_plot <- ggplot() +
                                   legend.text.position = "bottom")))
 
 ```
+
 ```{r}
 all_env <- grid.arrange(temp_plot, wet_plot, ph_plot, n_plot, 
                         prec_plot, tree_plot, pest_plot, humans_plot, 
@@ -397,7 +401,7 @@ plot(all_env)
 #   dpi = 1200
 # )
 
-png(file = here("Output/Spatial/Figures/Hex_dens_transects_richness.png/"))
+png(file = here("Output/Spatial/Figures/all_env_vars.png/"))
 plot(all_env)
 dev.off()
 

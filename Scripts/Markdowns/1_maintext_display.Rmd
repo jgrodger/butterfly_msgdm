@@ -12,7 +12,7 @@ include_graphics(here("Output/Spatial/Figures/Hex_dens_transects_richness.png/")
 ```
 
 
-##### Figure 1 To do: prettify legends and layout 
+##### Figure 1 To do: prettify legends and layout; save at higher resolution
 
 
 
@@ -23,18 +23,10 @@ include_graphics(here("./Output/Spatial/Figures/all_env_vars.png"))
 ##### Figure 2 To do: prettify legends and layout 
 
 ```{r fig.cap = "Figure 3 A-E. Effects of environemental variables on speccies richness of All Species from GAMM analyses", out.width = "100%"}
-include_graphics(here("Output/Spatial/GAM/GAMM_all_species/gamm_cor_struct_compare_reduced_mod/corExp/gam_plot.png"))
+include_graphics(here("Output/Spatial/GAM/GAMM_fig/gam_multiplot.png"))
 ```
 
-
-```{r fig.cap = "Figure 3 F-J. Effects of environemental variables on speccies richness of Wider Countryside Species from GAMM analyses", out.width = "100%"}
-include_graphics(here("Output/Spatial/GAM/GAMM_wc/gamm_cor_struct_compare_reduced_mod/corExp/gam_plot.png"))
-```
-
-
-```{r fig.cap = "Figure 3 K-O. Effects of environemental variables on speccies richness of Habitat Specialists from GAMM analyses", out.width = "100%"}
-include_graphics(here("Output/Spatial/GAM/GAMM_hs/gamm_cor_struct_compare_reduced_mod/corExp/gam_plot.png"))
-```
+##### Figure 3 To do: reduce whitespace, improve annoation positioning, add p-values 
 
 ##### Above to be combined into 3 by 5 layout
 
