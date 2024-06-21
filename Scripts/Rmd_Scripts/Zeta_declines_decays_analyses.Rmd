@@ -98,7 +98,7 @@ all_performance <- zd_performance
 
 ```{r}
 
-png(file = paste0(out_path, params$dataset, "_", "zeta_decline_to_10.png"), pointsize=10, width=1400, height=960, res=300)
+png(file = paste0(out_path, params$dataset, "_", "zeta_decline_to_10.png"), pointsize=10, width=960, height=960, res=300)
 par(mfrow = c(2,2))
 Plot.zeta.decline(zd, arrange.plots = FALSE)
 dev.off()
@@ -127,7 +127,7 @@ all_performance <- rbind(all_performance, zd_performance)
 
 ```{r}
 
-png(file = paste0(out_path, params$dataset, "_", "zeta_decline_to_50.png"), pointsize=10, width=1400, height=960, res=300)
+png(file = paste0(out_path, params$dataset, "_", "zeta_decline_to_50.png"), pointsize=10, width=960, height=960, res=300)
 par(mfrow = c(2,2))
 Plot.zeta.decline(zd, arrange.plots = FALSE)
 dev.off()
@@ -176,7 +176,7 @@ kable(all_performance, digits = 3)
 
 ```{r}
 
-png(file = paste0(out_path, params$dataset, "_", "zeta_decline_to_250.png"), pointsize=10, width=1400, height=960, res=300)
+png(file = paste0(out_path, params$dataset, "_", "zeta_decline_to_250.png"), pointsize=10, width=960, height=960, res=300)
 par(mfrow = c(2,2))
 Plot.zeta.decline(zd, arrange.plots = FALSE)
 dev.off()
@@ -186,6 +186,111 @@ dev.off()
 write_csv(zeta_div, file = paste0(out_path, params$dataset, "_",  "zeta_decline_exact.csv"))
 kable(t(zeta_div), digits = 2)
 ```
+
+
+
+
+## check nestedness by comparing Sorensen and Simpson Dissimilarity (Cang's code)
+```{r}
+
+jac <- vector()
+sor <- vector()
+sim <- vector()
+
+for(i in 1:1000){
+a <- sample(1:nrow(site.by.species),2)  
+unio <- sum(ifelse((site.by.species[a[1],] == 1)|(site.by.species[a[2],]==1),1,0))
+inter <- sum(site.by.species[a[1],]*site.by.species[a[2],])
+minn <- min(sum(site.by.species[a[1],]),sum(site.by.species[a[2],]))
+avg <- (sum(site.by.species[a[1],])+sum(site.by.species[a[2],]))/2
+jac[i] <- inter/unio
+sor[i] <- inter/avg
+sim[i] <- inter/minn
+}
+
+boxplot(jac,sor,sim)
+text("Jaccard","Sorensen","Simpson")
+
+group <- c(rep("Jaccard", 1000), rep("Sorensen", 1000), rep("Simpson", 1000))
+Dissimilarity <- as.numeric(c(jac, sor, sim))
+
+boxdata <-data.frame(cbind(group, Dissimilarity))
+
+boxdata$Dissimilarity <- as.numeric(boxdata$Dissimilarity)
+
+
+boxplot(Dissimilarity ~ group, boxdata,                                
+        col = "red",
+        xlab = NULL,
+        cex.axis = 1)
+
+# save boxplot
+png(file = paste0(out_path, "zeta_boxplot.png"), pointsize=8, width=960, height=960, res=300)
+boxplot(Dissimilarity ~ group, boxdata,                                
+        col = "red",
+        xlab = NULL,
+        cex.axis = 1)
+dev.off()
+
+
+
+# compare Sorensen versus Simpson data to test for nestedness
+m1 <- lm(Dissimilarity ~ group, boxdata[1001:3000,])
+
+summary(m1)
+
+
+```
+# Save anova table to check nestedness
+
+```{r}
+# Obtain data to population caption for anova table
+
+my_dataset <- case_when(params$dataset == "all_species" ~ "All Species",
+                        params$dataset == "wc" ~ "Wider Countryside Species",
+                        params$dataset == "hs" ~ "Habitat Specialists")
+
+my_rsq <- summary(m1)$r.squared %>%
+  signif(2) %>%
+  as.character
+
+my_rsq_adj <- summary(m1)$adj.r.squared %>%
+  signif(2) %>%
+  as.character
+
+my_SE <- summary(m1)$sigma %>%
+  signif(2) %>%
+  as.character
+
+my_num_df <- (summary(m1)$df[1] - 1)  %>%
+  as.character
+
+my_denom_df <-summary(m1)$df[2]  %>%
+  as.character
+
+
+anova_caption <- paste0("Comparison of Simpson and Sorensen dissimilarity for pairs of sites for ", 
+                        my_dataset, ". Residual standard error = ",  my_SE, " on ",
+                        my_num_df, " and ", my_denom_df, 
+                        " degrees of freedom, adjusted R-squared = ",  my_rsq_adj, ".")
+
+anova_table <- data.frame(summary(m1)$coefficients)
+names(anova_table) <- c("Estimate", "SE", "t", "p")
+
+anova_out <- list(anova_caption, anova_table)
+names(anova_out) <- c("caption", "table")
+
+write_rds(anova_out, file = paste0(out_path, "nestedness_anova_table.rds"))
+
+kable(anova_table, caption = anova_caption, align = 'c')
+
+
+```
+
+
+
+
+
 
 
 ## Zeta decay 
@@ -242,3 +347,10 @@ zeta.ddecay.gam. <- Zeta.ddecay(xy = site.by.xy, data.spec = site.by.species, or
                                     reg.type="gam")
 }
 ```
+
+
+
+
+
+
+

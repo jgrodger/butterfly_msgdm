@@ -37,6 +37,28 @@ paste0("Table ", tab_no, ".", tab_cap)
 kable(my_table, digits = my_dig,
       caption = my_caption)  
 }
+
+# function to print table from dataframe and caption saved in rds file
+# file_path: file path to use in here()
+# tab_no
+# my_dig: digits argument for kable()
+print_rds <- function(file_path, tab_no = "", my_dig = 3){
+
+my_data <- read_rds(file_path)
+    
+my_table <- my_data$table
+
+my_caption <- if(tab_no == "") {
+"" #Allow caption to be empty if so desired
+} else {
+paste0("Table ", tab_no, ".", my_data$caption)
+} 
+
+kable(my_table, digits = my_dig,
+      caption = my_caption,
+      align = 'c')  
+}
+
 ```
 
 
