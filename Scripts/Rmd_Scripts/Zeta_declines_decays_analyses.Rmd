@@ -98,23 +98,23 @@ all_performance <- zd_performance
 
 ```{r}
 
-png(file = paste0(out_path, params$dataset, "_", "zeta_decline_to_10.png"))
+png(file = paste0(out_path, params$dataset, "_", "zeta_decline_to_10.png"), pointsize=10, width=1400, height=960, res=300)
 par(mfrow = c(2,2))
 Plot.zeta.decline(zd, arrange.plots = FALSE)
 dev.off()
 
 ```
 
-### Orders 1:60
+### Orders 1:50
 ```{r}
-zd <- Zeta.decline.ex(data.spec = site.by.species, orders = 1:60)
+zd <- Zeta.decline.ex(data.spec = site.by.species, orders = 1:50)
 # "Power Law"
 summary(zd$zeta.pl)
 # Exponential")
 summary(zd$zeta.exp)
 # "AIC"
 zd_performance <- zd$aic
-rownames(zd_performance) <- c("Exp_to_zeta_60", "PL_to_zeta_60")
+rownames(zd_performance) <- c("Exp_to_zeta_50", "PL_to_zeta_50")
 zd_performance$R.sq.multi <- c(summary(zd$zeta.exp)$r.squared, 
                               summary(zd$zeta.pl)$r.squared)
 zd_performance$R.sq.adj <- c(summary(zd$zeta.exp)$adj.r.squared, 
@@ -127,7 +127,7 @@ all_performance <- rbind(all_performance, zd_performance)
 
 ```{r}
 
-png(file = paste0(out_path, params$dataset, "_", "zeta_decline_to_60.png"))
+png(file = paste0(out_path, params$dataset, "_", "zeta_decline_to_50.png"), pointsize=10, width=1400, height=960, res=300)
 par(mfrow = c(2,2))
 Plot.zeta.decline(zd, arrange.plots = FALSE)
 dev.off()
@@ -150,18 +150,24 @@ zd_performance$R.sq.adj <- c(summary(zd$zeta.exp)$adj.r.squared,
                               summary(zd$zeta.pl)$adj.r.squared)
 kable(zd_performance)
 
+
+```
+
+# Below not used in paper but shows that results are qualitatively the same
+```{r}
 # Finalise a datafram summarising performance of exponential versus power law
 # declines
 all_performance <- rbind(all_performance, zd_performance)
 infocols <- data.frame(rep(c("Exponential", "Power Law"), times = 3))
 names(infocols) <- "Regression Fit"
-infocols$'Zeta values' <- rep(c("1 to 10", "1 to 60", "1 to 250"), each = 2)
+infocols$'Zeta values' <- rep(c("1 to 10", "1 to 50", "1 to 250"), each = 2)
 all_performance <- cbind(infocols, all_performance)
 
 # Output the zeta diversity to csv
 zeta_div <- data.frame(cbind(zd$zeta.order, zd$zeta.val, zd$zeta.val.sd))
 names(zeta_div) <- c("Order", "Value", "SD")
 ```
+
 
 ```{r}
 write_csv(all_performance, file = paste0(out_path, "/", params$dataset, "_",  "zeta_declines_performance.csv"))
@@ -170,7 +176,7 @@ kable(all_performance, digits = 3)
 
 ```{r}
 
-png(file = paste0(out_path, params$dataset, "_", "zeta_decline_to_250.png"))
+png(file = paste0(out_path, params$dataset, "_", "zeta_decline_to_250.png"), pointsize=10, width=1400, height=960, res=300)
 par(mfrow = c(2,2))
 Plot.zeta.decline(zd, arrange.plots = FALSE)
 dev.off()
@@ -194,7 +200,7 @@ write_rds(zeta.ddecays, file = paste0(out_path, params$dataset ,"_zeta_distance_
 
 ```{r}
 
-png(file = paste0(out_path, params$dataset, "_zeta_distance_decays.png"))
+png(file = paste0(out_path, params$dataset, "_zeta_distance_decays.png"), pointsize=10, width=960, height=960, res=300)
 Plot.zeta.ddecays(zeta.ddecays)
 dev.off()
 
