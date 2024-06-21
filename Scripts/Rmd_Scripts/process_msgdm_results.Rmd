@@ -11,7 +11,7 @@ params:
 ---
 
 ```{r}
-here::i_am("Scripts/Rmd_Scripts/butterfly_msgdm_tables_figures_report.Rmd")
+here::i_am("Scripts/Rmd_Scripts/process_msgdm_results.Rmd")
 
 library(rmarkdown)
 library(tidyverse)
@@ -329,7 +329,7 @@ grid.arrange(grobs = p_tables2,
               nrow = 1, ncol = length(p_tables))
 
 filepath <- paste0(out_path, "/forest_plot_p_values", ".png")
-
+unlink(filepath, recursive = FALSE, force = FALSE) #deletes previous version with the same name
 png(file = filepath, 
    width = 55*length(p_tables2),
    height = 210, 

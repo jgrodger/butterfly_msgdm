@@ -98,7 +98,7 @@ include_graphics(here("./Output/Spatial/zeta_declines_decays/all_species/zeta_bo
 ```
 
 ```{r}
-print_rds(here("Output/Spatial/zeta_declines_decays/all_species/all_species_nestedness_anova_table.rds"), tab_no = "SZ9")
+print_rds(here("Output/Spatial/zeta_declines_decays/all_species/nestedness_anova_table.rds"), tab_no = "SZ9")
 ```
 
 #### Wider Countryside Species

@@ -4,7 +4,7 @@ output: pdf_document
 
 params:
   analysis: "gamm_cor_struct_compare_reduced_mod"
-  dataset: "wc"
+  dataset: "all_species"
   corStruct: "corExp"
 ---
 
@@ -58,6 +58,14 @@ gamm_corSpher <- gamm_cor_struct_list[[5]]
 #choose the one specified in params
 # get() finds object with name specified as a character string
 my_gamm <- get(paste0("gamm_", params$corStruct))
+
+```
+
+
+```{r}
+sink(paste0(out_path, "gam_summ.txt"))
+summary(my_gamm$gam)
+sink()
 
 ```
 
@@ -209,13 +217,6 @@ my_o_my <- my_o_my + l_fitLine(colour = "red") + l_rug(mapping = aes(x=x), alpha
 print(my_o_my, pages = 1)
 ```
 
-```{r}
-# Making predictions
-pred = predict(fit, newdata=cars, type="response")
 
-# Now they match up
-plot(cars)
-lines(cars$speed, pred, col="red")
-```
 
 
