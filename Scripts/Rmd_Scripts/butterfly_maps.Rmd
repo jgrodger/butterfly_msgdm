@@ -181,7 +181,7 @@ ggsave(
   dpi = 1200
 )
 
-png(filename =  here("Output/Spatial/Figures/Hex_dens_transects_richness.png/"))
+png(filename =  here("Output/Spatial/Figures/Hex_dens_transects_richness.png/"), pointsize=10, width=1400, height=960, res=300)
 grid.arrange(hex_dens, as_richness, wc_richness, hs_richness, ncol = 4, nrow = 1)
 dev.off()
 
