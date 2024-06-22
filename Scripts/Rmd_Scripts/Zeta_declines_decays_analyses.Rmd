@@ -6,6 +6,7 @@ params:
   dataset: "all_species"
   sam_ddecay: 100
   orders_ddecay: !r 2:100
+  run_decay_analysis: FALSE
 ---
 
 ```{r setup, include=FALSE}
@@ -98,7 +99,7 @@ all_performance <- zd_performance
 
 ```{r}
 
-png(file = paste0(out_path, params$dataset, "_", "zeta_decline_to_10.png"), pointsize=10, width=960, height=960, res=300)
+png(file = paste0(out_path, params$dataset, "_", "zeta_decline_to_10.png"), pointsize = 6, width=960, height=960, res=300)
 par(mfrow = c(2,2))
 Plot.zeta.decline(zd, arrange.plots = FALSE)
 dev.off()
@@ -127,7 +128,7 @@ all_performance <- rbind(all_performance, zd_performance)
 
 ```{r}
 
-png(file = paste0(out_path, params$dataset, "_", "zeta_decline_to_50.png"), pointsize=10, width=960, height=960, res=300)
+png(file = paste0(out_path, params$dataset, "_", "zeta_decline_to_50.png"), pointsize = 6, width=960, height=960, res=300)
 par(mfrow = c(2,2))
 Plot.zeta.decline(zd, arrange.plots = FALSE)
 dev.off()
@@ -289,8 +290,11 @@ kable(anova_table, caption = anova_caption, align = 'c')
 
 
 
-
-
+```{r}
+if(params$run_decay_analysis == FALSE ){
+knitr::knit_exit()
+}
+```
 
 
 ## Zeta decay 

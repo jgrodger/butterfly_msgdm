@@ -23,8 +23,6 @@ library(conflicted)
 
 conflicts_prefer(dplyr::select)
 ```
-
-
 ##  Load functions
 ```{r}
 source(here("./Scripts/R_scripts/get_k_fold_performance.R"))
@@ -66,23 +64,6 @@ if(!dir.exists(out_path)) dir.create(out_path, recursive = TRUE)
 
 
 
-
-## Zeta declines and decays
-```{r}
-tic()
-render_report(analysis_script = "Zeta_declines_decays_analyses.Rmd", list(dataset = "all_species", sam_ddecay = 100, orders_ddecay = 2:100))
-toc()
-tic()
-render_report(analysis_script = "Zeta_declines_decays_analyses.Rmd", list(dataset = "wc", sam_ddecay = 100, orders_ddecay = 2:100))
-toc()
-#render_report(analysis_script = "Zeta_declines_decays_analyses.Rmd", list(dataset = "wc_no_zeros", sam_ddecay = 10000, orders_ddecay = 2:100))
-tic()
-render_report(analysis_script = "Zeta_declines_decays_analyses.Rmd", list(dataset = "hs", sam_ddecay = 100, orders_ddecay = 2:8)) # Computational issues at higher orders
-toc()
-tic()
-render_report(analysis_script = "Zeta_declines_decays_analyses.Rmd", list(dataset = "hs_no_zeros", sam_ddecay = 100, orders_ddecay = 2:10)) # Computational issues at higher orders
-toc()
-```
 
 #### GAMS comparing different distribution families
 
@@ -181,6 +162,28 @@ render_report(analysis_script = "process_GAMM_analyses.Rmd",
 <!--                    analysis = "gamm_cor_struct_compare_reduced_mod", -->
 <!--                    corStruct = "corExp")) -->
 <!-- ``` -->
+
+
+
+
+
+## Zeta declines and decays
+##### By default, the time consuming zeta decay analysis does not run (in params list include "run_decay_analysis = TRUE" to make it run)
+```{r}
+tic()
+render_report(analysis_script = "Zeta_declines_decays_analyses.Rmd", list(dataset = "all_species", sam_ddecay = 10000, orders_ddecay = 2:100))
+toc()
+tic()
+render_report(analysis_script = "Zeta_declines_decays_analyses.Rmd", list(dataset = "wc", sam_ddecay = 10000, orders_ddecay = 2:100))
+toc()
+#render_report(analysis_script = "Zeta_declines_decays_analyses.Rmd", list(dataset = "wc_no_zeros", sam_ddecay = 10000, orders_ddecay = 2:100))
+tic()
+render_report(analysis_script = "Zeta_declines_decays_analyses.Rmd", list(dataset = "hs", sam_ddecay = 10000, orders_ddecay = 2:8)) # Computational issues at higher orders
+toc()
+tic()
+render_report(analysis_script = "Zeta_declines_decays_analyses.Rmd", list(dataset = "hs_no_zeros", sam_ddecay = 10000, orders_ddecay = 2:10)) # Computational issues at higher orders
+toc()
+```
 
 ## MSGDMs
 ```{r}

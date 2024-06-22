@@ -18,6 +18,12 @@ library(here)
 
 here::i_am("Scripts/Markdowns/butterfly_richness_turnover_report.Rmd")
 
+
+
+```
+
+
+```{r}
 # function to print csv table to my specs
 # csv_path: file path for use in read_csv(here())
 # tab_no
@@ -30,7 +36,7 @@ my_table <- read_csv(here(csv_path))
 my_caption <- if(tab_cap == "") {
 "" #Allow caption to be empty if so desired
 } else {
-paste0("Table ", tab_no, ".", tab_cap)
+paste0("Table ", tab_no, ". ", tab_cap)
 } 
 
 
@@ -51,14 +57,13 @@ my_table <- my_data$table
 my_caption <- if(tab_no == "") {
 "" #Allow caption to be empty if so desired
 } else {
-paste0("Table ", tab_no, ".", my_data$caption)
+paste0("Table ", tab_no, ". ", my_data$caption)
 } 
 
 kable(my_table, digits = my_dig,
       caption = my_caption,
       align = 'c')  
 }
-
 ```
 
 

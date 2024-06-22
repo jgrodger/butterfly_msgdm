@@ -10,69 +10,61 @@ output: html_document
 ###Deviance explained
 
 #### All Butterfly Species, Simpson
-```{r, out.width = "100%"}
-devtab <- read_csv(here("./Output/Spatial/msgdms/all_species_Simpson/figs_tables/deviance_table.csv"))
-kable(devtab, digits = 3,
-caption = paste0("Table S", i + 9, ". Deviance explained by MSGDMs for All Butterfly Species, Simpson"))
+```{r  message = FALSE}
+print_csv("./Output/Spatial/msgdms/all_species_Simpson/figs_tables/deviance_table.csv", tab_no = "SM1", tab_cap = "Deviance explained by MSGDMs for Simpson-Normalized zeta diversity for All Butterfly Species", my_dig = 3)
 ```
 
-```{r fig.cap = "Figure S19. Deviance partitioning in MSGDMS for All Butterfly Species, Simpson", out.width = "100%"}
-include_graphics(here("./Output/Spatial/msgdms/all_species_Simpson/figs_tables/msgdm_var_pie.png"))
+```{r message = FALSE}
+print_csv("./Output/Spatial/msgdms/all_species_Simpson//figs_tables/variance_partitioning_table.csv", tab_no = "SM2", tab_cap = "Variation partitioning for MSGDMs for Simpson-Normalized zeta diversity for All Species", my_dig = 3)
 ```
+
 
 #### Wider Countryside Species, Simpson
-```{r, out.width = "100%"}
-devtab <- read_csv(here("./Output/Spatial/msgdms/wc_Simpson/figs_tables/deviance_table.csv"))
-kable(devtab, digits = 3,
-caption = paste0("Table S", i + 9, ". Deviance explained by MSGDMs for Wider Countryside Species, Simpson"))
+```{r  message = FALSE}
+print_csv("./Output/Spatial/msgdms/wc_Simpson/figs_tables/deviance_table.csv", tab_no = "SM3", tab_cap = "Deviance explained by MSGDMs for Simpson-Normalized zeta diversity for Wider Countryside Species", my_dig = 3)
 ```
 
-```{r fig.cap = "Figure S20. Deviance partitioning in MSGDMS for Wider Countryside Species, Simpson", out.width = "100%"}
-include_graphics(here("./Output/Spatial/msgdms/wc_Simpson/figs_tables/msgdm_var_pie.png"))
+```{r  message = FALSE}
+print_csv("./Output/Spatial/msgdms/wc_Simpson//figs_tables/variance_partitioning_table.csv", tab_no = "SM4", tab_cap = "Variation partitioning for MSGDMs for Simpson-Normalized zeta diversity for Wider Countryside Species", my_dig = 3)
 ```
 
 #### Habitat Specialists, Simpson
-```{r, out.width = "100%"}
-devtab <- read_csv(here("./Output/Spatial/msgdms/hs_no_zeros_Simpson/figs_tables/deviance_table.csv"))
-kable(devtab, digits = 3,
-caption = paste0("Table S", i + 9, ". Deviance explained by MSGDMs for Habitat Specialists, Simpson"))
+```{r  message = FALSE}
+print_csv("./Output/Spatial/msgdms/hs_no_zeros_Simpson/figs_tables/deviance_table.csv", tab_no = "SM5", tab_cap = "Deviance explained by MSGDMs for Simpson-Normalized zeta diversity for Habitat Specialists", my_dig = 3)
 ```
 
-```{r fig.cap = "Figure S21. Deviance partitioning in MSGDMS for Habitat Specialists, Simpson", out.width = "100%"}
-include_graphics(here("./Output/Spatial/msgdms/hs_no_zeros_Simpson/figs_tables/msgdm_var_pie.png"))
+```{r message = FALSE}
+print_csv("./Output/Spatial/msgdms/hs_no_zeros_Simpson//figs_tables/variance_partitioning_table.csv", tab_no = "SM6", tab_cap = "Variation partitioning for MSGDMs for Simpson-Normalized zeta diversity for Habitat Specialists", my_dig = 3)
 ```
 
 #### All Butterfly Species, Sorensen
-```{r, out.width = "100%"}
-devtab <- read_csv(here("./Output/Spatial/msgdms/all_species_Sorensen/figs_tables/deviance_table.csv"))
-kable(devtab, digits = 3,
-caption = paste0("Table S", i + 9, ". Deviance explained by MSGDMs for All Butterfly Species, Sorensen"))
+```{r  message = FALSE}
+print_csv("./Output/Spatial/msgdms/all_species_Sorensen/figs_tables/deviance_table.csv", tab_no = "SM7", tab_cap = "Deviance explained by MSGDMs for Sorensen-Normalized zeta diversity for All Species", my_dig = 3)
 ```
 
-```{r fig.cap = "Figure S22. Deviance partitioning in MSGDMS for All Butterfly Species, Sorensen", out.width = "100%"}
-include_graphics(here("./Output/Spatial/msgdms/all_species_Sorensen/figs_tables/msgdm_var_pie.png"))
+```{r  message = FALSE}
+print_csv("./Output/Spatial/msgdms/wc_Sorensen//figs_tables/variance_partitioning_table.csv", tab_no = "SM8", tab_cap = "Variation partitioning for MSGDMs for Sorensen-Normalized zeta diversity for Wider Countryside Species", my_dig = 3)
 ```
+
 
 #### Wider Countryside Species, Sorensen
-```{r, out.width = "100%"}
-devtab <- read_csv(here("./Output/Spatial/msgdms/wc_Sorensen/figs_tables/deviance_table.csv"))
-kable(devtab, digits = 3,
-caption = paste0("Table S", i + 9, ". Deviance explained by MSGDMs for Wider Countryside Species, Sorensen"))
+```{r message = FALSE}
+print_csv("./Output/Spatial/msgdms/wc_Sorensen/figs_tables/deviance_table.csv", tab_no = "SM9", tab_cap = "Deviance explained by MSGDMs for Sorensen-Normalized zeta diversity for Wider Countryside Species", my_dig = 3)
 ```
 
-```{r fig.cap = "Figure S23. Deviance partitioning in MSGDMS for Wider Countryside Species, Sorensen", out.width = "100%"}
-include_graphics(here("./Output/Spatial/msgdms/wc_Sorensen/figs_tables/msgdm_var_pie.png"))
+```{r message = FALSE}
+print_csv("./Output/Spatial/msgdms/wc_Sorensen//figs_tables/variance_partitioning_table.csv", tab_no = "SM10", tab_cap = "Variation partitioning for MSGDMs for Sorensen-Normalized zeta diversity for Wider Countryside Species", my_dig = 3)
 ```
+
 
 #### Habitat Specialists, Sorensen
-```{r, out.width = "100%"}
-devtab <- read_csv(here("./Output/Spatial/msgdms/hs_no_zeros_Sorensen/figs_tables/deviance_table.csv"))
-kable(devtab, digits = 3,
-caption = paste0("Table S", i + 9, ". Deviance explained by MSGDMs for Habitat Specialists, Sorensen"))
+```{r  message = FALSE}
+print_csv("./Output/Spatial/msgdms/hs_no_zeros_Sorensen/figs_tables/deviance_table.csv", tab_no = "SM11", tab_cap = "Deviance explained by MSGDMs for Sorensen-Normalized zeta diversity for Habitat Specialists", my_dig = 3)
 ```
 
-```{r fig.cap = "Figure S24. Deviance partitioning in MSGDMS for Habitat Specialists, Sorensen", out.width = "100%"}
-include_graphics(here("./Output/Spatial/msgdms/hs_no_zeros_Sorensen/figs_tables/msgdm_var_pie.png"))
+
+```{r  message = FALSE}
+print_csv("./Output/Spatial/msgdms/hs_no_zeros_Sorensen//figs_tables/variance_partitioning_table.csv", tab_no = "SM12", tab_cap = "Variation partitioning for MSGDMs for Sorensen-Normalized zeta diversity for Habitat Specialists", my_dig = 3)
 ```
 
 
