@@ -31,6 +31,9 @@ conflicts_prefer(dplyr::select)
 
 #### Functions
 ```{r}
+source(here("Scripts/R_scripts/butterfly_richness_turnover_functions.R"))
+
+
 # A function to add numbers of records, species and sites at each step to a table
 add_prisma <- function(tibble = prisma, recs = records, step_name = "?"){
   records <- recs
@@ -118,11 +121,7 @@ table(records$sampling.period)
 
 ```
 
-
-
-
 #### get suryeys for each site in each year in each of sampling periods that I define
-
 ```{r}
 #surveys per site per year
 surveys.site.year <-   records %>% 
@@ -143,7 +142,9 @@ summary(surveys.site.year$surveys.per.year)
 hist(surveys.site.year$surveys.per.year, main = "Surveys per site per year")
 
 ```
-#### Obtain dataframe with number of years per site, and minimym surveys for each site per year and  in each sampling period in each year
+
+
+#### Obtain dataframe with number of years per site, and minimum surveys for each site per year and  in each sampling period in each year
 ```{r}
 
 
