@@ -300,6 +300,35 @@ tm_shape(plot.points) +
 print(pointsmap)
 print(pointsmap2)
 ```
+
+
+```{r}
+# Create a variable to group surveys by sampling period. Divide the prescribed survey period into 4 quarters. To have equal length quarters, the last week of March (week 0) is included in the first period and first week of October (week 40) in 4th period, although they are outside the survey period
+
+# Create columns to identify survey events, site-year-month, and site-year combinations.
+records <- records %>%
+  mutate(survey.info = paste(site, year, month, day, week.no, sep = "_"),
+         site.year.month = paste(site, year, month, sep = "_"),
+         site.year = paste(site, year, sep = "_"))
+# Check variation in sampling effort by week
+table(records$week.no)
+hist(records$week.no)
+
+# Create sampling period variable
+records <- mutate(records, 
+                  sampling.period = case_match(week.no,
+                    -7:-1 ~ "pre-april",
+                    0:6   ~ "per1",
+                    7:13  ~ "per2",
+                    14:20 ~ "per3",
+                    21:27 ~ "per4",
+                    28:40 ~ "post-september"))
+
+table(records$sampling.period)
+```
+
+
+
 #### Save dataset to process for temporal analyses
 
 ```{r}
@@ -350,28 +379,7 @@ prisma
 
 #### Explore survey effort in terms of sampling spread across the survey period
 ```{r}
-# Create a variable to group surveys by sampling period. Divide the prescribed survey period into 4 quarters. To have equal length quarters, the last week of March (week 0) is included in the first period and first week of October (week 40) in 4th period, although they are outside the survey period
 
-# Create columns to identify survey events, site-year-month, and site-year combinations.
-records <- records %>%
-  mutate(survey.info = paste(site, year, month, day, week.no, sep = "_"),
-         site.year.month = paste(site, year, month, sep = "_"),
-         site.year = paste(site, year, sep = "_"))
-# Check variation in sampling effort by week
-table(records$week.no)
-hist(records$week.no)
-
-# Create sampling period variable
-records <- mutate(records, 
-                  sampling.period = case_match(week.no,
-                    -7:-1 ~ "pre-april",
-                    0:6   ~ "per1",
-                    7:13  ~ "per2",
-                    14:20 ~ "per3",
-                    21:27 ~ "per4",
-                    28:40 ~ "post-september"))
-
-table(records$sampling.period)
 
 # Get a dataframe with the number of surveys per period in each site in each year
 surveys.by.period <- records %>%
