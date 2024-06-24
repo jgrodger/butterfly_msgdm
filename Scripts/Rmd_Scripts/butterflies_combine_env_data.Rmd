@@ -66,19 +66,7 @@ site.by.prec <- readRDS(here("./Data/Masked_Cropped_Environmental_Data/site_by_p
 log10_plusone <- function(x)
 {log10(x + 1)}
 
-# A function to filter the rest of the output dataset after the site by species data is filtered/subsetted
-
-filter_dataset <- function(site.by.species, site.by.xy, site.by.env, species, sites){
-  site.by.xy <- filter(site.by.xy, rownames(site.by.xy) %in% rownames(site.by.species))
-  site.by.env <- filter(site.by.env, rownames(site.by.env) %in% rownames(site.by.species))
-  sites <- filter(sites, rownames(sites)  %in% rownames(site.by.species)) 
-  species <- filter(species, species.no %in% names(site.by.species))
-  
-  dataset <- list(site.by.species, site.by.xy, site.by.env, species, sites)
-  names(dataset) <- c("site.by.species", "site.by.xy", "site.by.env", "species", "sites")
-  
-  return(dataset)
-}
+source(here("Scripts/R_scripts/butterfly_richness_turnover_functions.R"))
 ```
 
 #### Rename Environmental variables and log transform where necessary
