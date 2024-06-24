@@ -1,13 +1,18 @@
 # Readme for Butterfly MSGDM project
 
-
 Template for file documentation
 
 X)Filename
 	•What this does: 
 	•Inputs
 	•Outputs
+----------------------------------------------------------------------------------------------------------
+Scripts
 
+R_Scripts
+butterfly_richness_turnover_functions.R
+	•What this does:
+		•loads functions used by other scripts, especially functions that are used by more than one script
 
 1)Process_CSV_Data.Rmd
 	•What this does: 
