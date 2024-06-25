@@ -77,21 +77,6 @@ head(species)
 ```
 
 
-#### Make a table to summarise remaining data and check data filtering at each step
-```{r}
-# Make a table
-prisma <- tibble(
-"Step" = "Imported Data",
-"Records" = nrow(records),
-"Sites in records" = length(unique(records$SITE)),
-"Species in records" = length(unique(records$SPECIES)),
-"Sites in sites" = nrow(sites),
-"Species in species" = nrow(species)
-)
-
-prisma
-```
-
 
 #### Clean data and rename columns in sites, species and records.
 ```{r}
@@ -154,12 +139,6 @@ records<- records %>%
 ```
 
 
-```{r}
-prisma <- add_prisma(step_name = "Renamed")
-prisma
-```
-
-
 #### Merge site data from David and Rob
 ```{r}
 # Some sites in David's list were not in site data from Rob
@@ -172,6 +151,35 @@ nrow(sites)
 names(sites)
 table(sites$survey.type)
 ```
+
+#### Create columns to identify survey events, site-year-month, and site-year combinations.
+#### (time consuming (about 160 seconds on hpc) to I wanted this for record keeping)
+```{r}
+tic()
+records <- records %>%
+  mutate(survey.info = paste(site, year, month, day, week.no, sep = "_"),
+         site.year.month = paste(site, year, month, sep = "_"),
+         site.year = paste("site", site, year, sep = "_"))
+toc()
+```
+
+
+#### Make a table to summarise remaining data and check data filtering at each step
+```{r}
+# Make a table
+prisma <- tibble(
+"Step" = "Imported Data",
+"Records" = nrow(records),
+"Site.years in records" = length(unique(records$site.year)),
+"Sites in records" = length(unique(records$site)),
+"Species in records" = length(unique(records$species.no)),
+"Sites in sites" = nrow(sites),
+"Species in species" = nrow(species)
+)
+
+prisma
+```
+
 
 #### Filter out zero counts to make processing quicker (note this removes info on surveys where no butterflies were seen).
 ```{r}
@@ -225,6 +233,31 @@ table(species$strategy)
 print("Check that only ukbms surveys remain")
 table(sites$survey.type)
 ```
+
+#### Combine records for small and essex skipper (species.nos 119 and 120), including those where observer recorded it as either of the two (species.no 200). These species cannot be reliably distinguished on the wing.
+```{r}
+# Make a new row in species dataset for the combined species
+new.row <- c ("1000", "Combined Skippers", "Thymelicus lineola-sylvestris", "Wider countryside sp", "Grassland", 1)
+
+species <- species  %>%
+  rbind(new.row)    %>%
+  filter(species.no!= 119,
+         species.no!= 120, 
+         species.no!= 200)# in the original dataset, when it was identified as one
+# of the two species, it was coded as 200. These are no longer present 
+# after filtering above, so this is redundant 
+
+# Recode species.no in records for the two skipper species in the records dataframe 
+# to 1000 to match species dataframe.
+records <- records %>% 
+ mutate(species.no = case_match(species.no, c("119", "120", "200") ~ "1000", .default = species.no))
+
+prisma <- add_prisma(step_name = "Combined 2 skippers")
+prisma
+```
+
+
+
 #### Check for sites with inadequate locality info.
 ```{r}
 # for inspection only, sites that have no co-ordinates or grid square reference
@@ -305,11 +338,7 @@ print(pointsmap2)
 ```{r}
 # Create a variable to group surveys by sampling period. Divide the prescribed survey period into 4 quarters. To have equal length quarters, the last week of March (week 0) is included in the first period and first week of October (week 40) in 4th period, although they are outside the survey period
 
-# Create columns to identify survey events, site-year-month, and site-year combinations.
-records <- records %>%
-  mutate(survey.info = paste(site, year, month, day, week.no, sep = "_"),
-         site.year.month = paste(site, year, month, sep = "_"),
-         site.year = paste(site, year, sep = "_"))
+
 # Check variation in sampling effort by week
 table(records$week.no)
 hist(records$week.no)
@@ -353,29 +382,6 @@ list2env(filtered_data, envir = .GlobalEnv)
 prisma <- add_prisma(step_name = "Kept 2015-2019")
 prisma
 ```
-
-#### Combine records for small and essex skipper (species.nos 119 and 120), including those where observer recorded it as either of the two (species.no 200). These species cannot be reliably distinguished on the wing.
-```{r}
-# Make a new row in species dataset for the combined species
-new.row <- c ("1000", "Combined Skippers", "Thymelicus lineola-sylvestris", "Wider countryside sp", "Grassland", 1)
-
-species <- species  %>%
-  rbind(new.row)    %>%
-  filter(species.no!= 119,
-         species.no!= 120, 
-         species.no!= 200)# in the original dataset, when it was identified as one
-# of the two species, it was coded as 200. These are no longer present 
-# after filtering above, so this is redundant 
-
-# Recode species.no in records for the two skipper species in the records dataframe 
-# to 1000 to match species dataframe.
-records <- records %>% 
- mutate(species.no = case_match(species.no, c("119", "120", "200") ~ "1000", .default = species.no))
-
-prisma <- add_prisma(step_name = "Combined 2 skippers")
-prisma
-```
-
 
 #### Explore survey effort in terms of sampling spread across the survey period
 ```{r}
@@ -692,8 +698,8 @@ toc()
 
 #### Save processed data and filtering summaries
 ```{r}
-spatial_ukbms_obs_sites_spp <- list(site.by.obs.5.year.presabs, species, sites)
-names(spatial_ukbms_obs_sites_spp) <- c("site.by.species", "species", "sites")
+spatial_ukbms_obs_sites_spp <- list(site.by.obs.5.year.presabs, site.by.obs.5.year.counts, species, sites)
+names(spatial_ukbms_obs_sites_spp) <- c("site.by.species", "site.by.species.counts", "species", "sites")
 
 write_rds(spatial_ukbms_obs_sites_spp, file = here("./Data/Processed_Data/Spatial/spatial_ukbms_obs_sites_spp.rds"))
 

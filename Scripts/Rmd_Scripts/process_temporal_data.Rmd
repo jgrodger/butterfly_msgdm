@@ -17,6 +17,12 @@ library(conflicted)
 
 library(tidyverse)
 
+library(sgo)
+
+library(sf)
+
+library(tmap)
+
 library(here)
 
 library(iNEXT)
@@ -26,6 +32,7 @@ library(tictoc)
 conflicts_prefer(dplyr::filter)
 conflicts_prefer(dplyr::mutate)
 conflicts_prefer(dplyr::select)
+conflicts_prefer(base::split)
 ```
 
 
@@ -57,7 +64,27 @@ species <- my_data$species
 
 sites <- my_data$sites
 
-records$site.year = paste0("site_", records$site.year)
+# Basemap without outlying islands
+GB_simpl <- readRDS(here("./Data./Maps./gb_multipolygon_simplified.rds"))
+```
+
+## Plot Sites
+```{r}
+plot.points <- st_as_sf(sites, coords=c("x","y"), remove = FALSE, crs = 27700) 
+
+basemap <-tm_shape(GB_simpl) +
+  tm_borders()
+
+pointsmap <- basemap +
+tm_shape(plot.points) +
+  tm_symbols(size = 0.05, col = "blue")
+
+pointsmap2 <- basemap +
+tm_shape(plot.points) +
+  tm_symbols(size = 0.5, alpha = 0.5, col = "blue")
+
+print(pointsmap)
+print(pointsmap2)
 ```
 
 #### Make a table to summarise remaining data and check data filtering at each step
@@ -66,6 +93,7 @@ records$site.year = paste0("site_", records$site.year)
 prisma <- tibble(
 "Step" = "Loaded Data",
 "Records" = nrow(records),
+"Site.years in records" = length(unique(records$site.year)),
 "Sites in records" = length(unique(records$site)),
 "Species in records" = length(unique(records$species.no)),
 "Sites in sites" = nrow(sites),
@@ -74,55 +102,19 @@ prisma <- tibble(
 
 prisma
 ```
-#### Combine records for small and essex skipper (species.nos 119 and 120), including those where observer recorded it as either of the two (species.no 200). These species cannot be reliably distinguished on the wing.
-```{r}
-# Make a new row in species dataset for the combined species
-new.row <- c ("1000", "Combined Skippers", "Thymelicus lineola-sylvestris", "Wider countryside sp", "Grassland", 1)
-
-species <- species  %>%
-  rbind(new.row)    %>%
-  filter(species.no!= 119,
-         species.no!= 120, 
-         species.no!= 200)# in the original dataset, when it was identified as one
-# of the two species, it was coded as 200. These are no longer present 
-# after filtering above, so this is redundant 
-
-# Recode species.no in records for the two skipper species in the records dataframe 
-# to 1000 to match species dataframe.
-records <- records %>% 
- mutate(species.no = case_match(species.no, c("119", "120", "200") ~ "1000", .default = species.no))
-
-prisma <- add_prisma(step_name = "Combined 2 skippers")
-prisma
-```
 
 
-
-
-# filter by by time, exclude covid 
+# filter by by time to pre-covid data
 ```{r}
 records <- records %>%
-  filter(year <= 2019 & year >= 1976)
-
+  filter(year <= 2019)
 
 filtered_data <- filter_ukbms("records")
 # This updates the objects in the global environment with filtered versions
 list2env(filtered_data, envir = .GlobalEnv)
 
-
-
 prisma <- add_prisma(step_name = "Filtered to records before covid")
 prisma
-```
-
-
-
-#### define sampling periods over year
-```{r}
-
-
-table(records$sampling.period)
-
 ```
 
 #### Filter to site-year combinations sampled in all four sampling periods
@@ -140,6 +132,8 @@ surveys.by.period <- records %>%
          all.4 = per1 > 0 & per2 > 0 & per3 > 0 & per4 > 0,
          total.surveys = sum(per1, per2, per3, per4)) %>% 
   ungroup()
+
+head(surveys.by.period)
 ```
 
 ```{r}
@@ -189,12 +183,14 @@ surveys.site.year <-   records %>%
   group_by (site, year, sampling.period)  %>% 
   summarise(n = n())  %>% 
   ungroup() %>%
-  mutate(site.year = paste(site, year, sep = "_")) %>%
+  mutate(site.year = paste("site", site, year, sep = "_")) %>%
   pivot_wider(
     names_from = sampling.period,
     values_from = n,
     values_fill = 0) %>%
   mutate(surveys.per.year = (per1 + per2 + per3 + per4))
+
+head(surveys.site.year)
 
 #inspect frequency distribution of surveys per site per year
 print("surveys per site per year")
@@ -208,21 +204,17 @@ hist(surveys.site.year$surveys.per.year, main = "Surveys per site per year")
 
 #### Obtain dataframe with number of years per site, and minimum surveys for each site per year and  in each sampling period in each year
 ```{r}
-
-
-
 #years per site summary and histogram
 years.per.site <- surveys.site.year %>% 
   group_by(site)%>% 
 summarise(years.surveyed = n(),
           first.year = min(year),
           last.year = max(year),
-          minimum.surveys.per.per1 = min(per1),
-          minimum.surveys.per.per2 = min(per2),
-          minimum.surveys.per.per3 = min(per3),
-          minimum.surveys.per.per4 = min(per4),
+          span.surveyed = last.year - first.year,
+          missing.years = span.surveyed + 1 - years.surveyed,
           minimum.surveys.per.year = min(surveys.per.year))
 
+head(years.per.site)
 
 #inspect frequency distribution of years
 print("years per site")
@@ -230,52 +222,51 @@ summary(years.per.site$years.surveyed)
 hist(years.per.site$years.surveyed, main = "Years per site")
 ```
 
-
-
-
+#### Obtain site by species (count) matrix and calculated coverage
 ```{r}
-aggregated.records <- records %>%
+
+# This is done with a function as there is a large amount of code that must be run again after filtering. 
+# Argument is the records dataframes, 
+# Steps are 1) aggregate to get count of each species in each site-year
+#           2) get the site by species dataframe for counts
+#           3) calculate coverage for each site year
+#           4) calculates a variable for time since last survey in each site
+#           5) summarises time series for each site
+# It prints the result of each of these steps and also checks that there are no sites or species without records
+# It outputs results of steps 2-5 in list
+
+#function to calculate the variable "diff" in function below
+get_diff <- function(df){
+  diff_vec <- diff(df$year)
+  df$diff <- c(0, diff_vec)
+  return(df)
+}
+
+# get dataframe with records per species for each site-year combination
+get_site_by_species_and_coverage <- function (my_records){
+  aggregated.records <- my_records %>%
   group_by(site, year, species.no)%>%
-    summarise(annual.records = sum(count))
-```
-
-
-#### Get site by species matrix
-```{r}
-
+  summarise(annual.records = sum(count))
+print(head(aggregated.records))   
   
-
 #get a site.year by species dataframe with counts of observations
 site.year.counts <- aggregated.records %>%
   pivot_wider(names_from = species.no,
               values_from = annual.records,
-              values_fill = 0) %>% # for cases when there wasn't a zero count record for a species that wasn't recorded in a survey, should still be zero
+              values_fill = 0) %>% # adds zero counts back in (these were filtered earlier)
   mutate (site.year = paste("site", site, year, sep = "_")) %>% 
-    column_to_rownames(var = "site.year")%>%
-      dplyr::select(-c(site, year))
-
+  column_to_rownames(var = "site.year")%>%
+  select(-c(site, year))
 names(site.year.counts) <- paste("species", names(site.year.counts), sep = "_")
+print(head(site.year.counts))
 
-
-
-
-```
-
-
-
-#### Check all sites and species have occurrence data
-```{r}
 print("are there any species with no records")
-any(colSums(site.year.counts) == 0)
+print(any(colSums(site.year.counts) == 0))
 
 print("are there any sites with no records")
-any(rowSums(site.year.counts) == 0)
-```
+print(any(rowSums(site.year.counts) == 0))
 
-
-
-#### Inspect coverage
-```{r}
+#calculate coverage
 coverage.multi <- DataInfo(t(site.year.counts),  datatype="abundance")
 coverage.multi <- coverage.multi %>%
   mutate(site = str_split_i(Assemblage, "_", 2),
@@ -284,11 +275,49 @@ coverage.multi <- coverage.multi %>%
          .before = Assemblage) %>% 
   rename(site.year = Assemblage)
 
+print(head(coverage.multi))
+
+
+# get data for each site.year on years since last data in dataset for that site
+site.year.cov <- coverage.multi[, 1:6]
+# split by site.year into a list of files
+split_data <- site.year.cov %>%
+  mutate(year = as.integer(year), 
+         site = as.factor(site)) 
+split_data <- base::split(split_data, split_data$site)
+
+# Calculate the variable "diff"
+split_data <- lapply(split_data, get_diff)
+# combine the list back into a single dataframe
+site.year.cov  <- bind_rows(split_data)
+print(head(site.year.cov))
+
+#summarise time series by site
+site.sum <- site.year.cov %>%
+  group_by(site) %>% 
+  summarise(
+    total.years = n(),
+    max.gap = max(diff) - 1,
+    missing.years = sum(diff) - total.years +1)
+print(head(site.sum))
+
+data_out <- list(site.year.counts, coverage.multi, site.year.cov, site.sum)
+names(data_out) <- c("site.year.counts", "coverage.multi", "site.year.cov", "site.sum")
+
+return(data_out)
+}
+```
+
+#### Run the function
+```{r}
+site.by.species.list <- get_site_by_species_and_coverage(records) 
+```
+
+#### Inspect coverage
+```{r}
+coverage.multi <- site.by.species.list[["coverage.multi"]]
 
 hist(coverage.multi$SC)
-
-hist(coverage.multi$SC, ylim = c(0, 800))
-
 
 hist(coverage.multi$SC, xlim = c(0.98, 1), breaks = 200)
 
@@ -296,50 +325,16 @@ hist(coverage.multi$SC, xlim = c(0.88, 0.99), ylim = c(0, 1000), breaks = 150)
 
 quantile(coverage.multi$SC, seq(from = 0, to = 1, by = 0.01), na.rm = TRUE)
 
-
 summary(coverage.multi$SC)
-```
-
-
-
-
-```{r}
-site.year.cov <- coverage.multi[, 1:6]
-
-split_data <- site.year.cov
-
-split_data <- split_data %>%
-  mutate(year = as.integer(year), 
-         site = as.factor(site)) %>%
-  split(., split_data$site)
-
-get_diff <- function(df){
-  diff_vec <- diff(df$year)
-  df$diff <- c(0, diff_vec)
-  return(df)
-}
-
-split_data <- lapply(split_data, get_diff)
-
-site.year.cov  <- bind_rows(split_data)
-
-site.sum <- site.year.cov %>%
-  group_by(site) %>% 
-  summarise(
-    total.years = n(),
-    max.gap = max(diff) - 1,
-    missing.years = sum(diff) - total.years +1
-  )
-
-
-site.year.cov.filtered <- site.year.cov %>%
-  filter(SC >= 0.99)
-
-
 ```
 
 # filter to site years with at least 0.99 coverage
 ```{r}
+site.year.cov <- site.by.species.list[["site.year.cov"]]
+
+# get a dataframe with the site-year combinations with >=99 % coverage
+site.year.cov.filtered <- site.year.cov %>%
+  filter(SC >= 0.99)
 
 records <- filter(records, site.year %in% site.year.cov.filtered$site.year)
 
@@ -353,8 +348,7 @@ prisma
 head(records)
 ```
 
-
-#Filter to sites with >= 20 years data to start with
+#### Filter to sites with >= 20 years data (after meeting othe filtering criteria)
 ```{r}
 enough.years <- filter(years.per.site, years.surveyed >= 20)
 
@@ -368,103 +362,87 @@ prisma <- add_prisma(step_name = "Filtered to sites with >= 20 years")
 prisma
 ```
 
-
-#recalculated aggregated records and site by species matrix
-
+# rerun function to get site by species and coverage 
 ```{r}
-aggregated.records <- records %>%
-  group_by(site, year, species.no)%>%
-    summarise(annual.records = sum(count))
+site.by.species.list <- get_site_by_species_and_coverage(records) 
 ```
 
-#### Get site by species matrix
-```{r}
-#get a site.year by species dataframe with counts of observations
-site.year.counts <- aggregated.records %>%
-  pivot_wider(names_from = species.no,
-              values_from = annual.records,
-              values_fill = 0) %>% # for cases when there wasn't a zero count record for a species that wasn't recorded in a survey, should still be zero
-  mutate (site.year = paste("site", site, year, sep = "_")) %>% 
-    column_to_rownames(var = "site.year")%>%
-      dplyr::select(-c(site, year))
 
-names(site.year.counts) <- paste("species", names(site.year.counts), sep = "_")
 
-#make a presence absence site by species matrix
-site.year.presabs <- site.year.counts
-site.year.presabs[site.year.presabs[, ] > 0] <- 1
-
-```
-
-#### Check all sites and species have occurrence data
-```{r}
-print("are there any species with no records")
-any(colSums(site.year.presabs) ==0)
-
-print("are there any sites with no records")
-any(rowSums(site.year.presabs) ==0)
-
-print("sites and species in matrix")
-dim(site.year.presabs)
-```
 # redo coverage matrix
 
 ```{r}
-coverage.multi <- DataInfo(t(site.year.counts),  datatype="abundance")
-coverage.multi <- coverage.multi %>%
-  mutate(site = str_split_i(Assemblage, "_", 2),
-         site = paste0("site_", site),
-         year = str_split_i(Assemblage, "_", -1),
-         .before = Assemblage) %>% 
-  rename(site.year = Assemblage)
-
-site.year.cov <- coverage.multi[, 1:6]
-
-split_data <- site.year.cov
-
-split_data <- split_data %>%
-  mutate(year = as.integer(year), 
-         site = as.factor(site)) %>%
-  split(., split_data$site)
-
-get_diff <- function(df){
-  diff_vec <- diff(df$year)
-  df$diff <- c(0, diff_vec)
-  return(df)
-}
-
-split_data <- lapply(split_data, get_diff)
-
-site.year.cov  <- bind_rows(split_data)
-
-site.sum <- site.year.cov %>%
-  group_by(site) %>% 
-  summarise(
-    total.years = n(),
-    max.gap = max(diff) - 1,
-    missing.years = sum(diff) - total.years +1
-  )
+site.year.cov <- site.by.species.list[["site.year.cov"]]
 
 cov_mat <- site.year.cov %>%
   select(site, year, SC) %>%
   pivot_wider(values_from = SC, names_from = site) %>%
-  column_to_rownames(var = "year")
+  column_to_rownames(var = "year") %>%
+  as.matrix()
 
+dim(cov_mat)
 
-dt2 <- cov_mat[, 1:50]
-dt2 <- as.matrix  (dt2)
-
-
-heatmap(dt2, Rowv= NA, Colv = NA)
-
-
+heatmap(cov_mat[, 1:55], Rowv= NA, Colv = NA)
+heatmap(cov_mat[, 56:110], Rowv= NA, Colv = NA)
+heatmap(cov_mat[, 111:165], Rowv= NA, Colv = NA)
+heatmap(cov_mat[, 166:221], Rowv= NA, Colv = NA)
 ```
 
 
+
+## Plot Sites
 ```{r}
-write_csv(site.year.presabs,
-          col_names = TRUE,
-          file = paste0(out_path, "/", "presabs.csv"))
+plot.points <- st_as_sf(sites, coords=c("x","y"), remove = FALSE, crs = 27700) 
+
+basemap <-tm_shape(GB_simpl) +
+  tm_borders()
+
+pointsmap <- basemap +
+tm_shape(plot.points) +
+  tm_symbols(size = 0.05, col = "blue")
+
+pointsmap2 <- basemap +
+tm_shape(plot.points) +
+  tm_symbols(size = 0.5, alpha = 0.5, col = "blue")
+
+print(pointsmap)
+print(pointsmap2)
+```
+
+```{r}
+site.year.by.species.counts <- site.by.species.list[["site.year.counts"]]
+
+#make a presence absence site by species matrix
+site.year.by.species.presabs <- site.year.by.species.counts
+site.year.by.species.presabs[site.year.by.species.presabs[, ] > 0] <- 1
+
+head(site.year.by.species.counts)
+head(site.year.by.species.presabs)
+```
+
+#### Extract data on number of sites in 2015-2019 data before and after subsequent filtering
+```{r}
+#prisma_short <- prisma[c(9, 12, 13), c(1,3) ]
+
+#prisma_short$Step <- c("All records", "Adequate effort", "Adequate coverage")
+
+#names(prisma_short) <- c("Records", "Sites Remaining")
+
+#prisma_short$`Sites Dropped` <- c(NA, abs(diff(prisma_short$`Sites Remaining`)))
+
+```
+
+```{r}
+temporal_ukbms_obs_sites_spp <- list(site.year.by.species.counts, site.year.by.species.presabs, species, sites)
+names(temporal_ukbms_obs_sites_spp) <- c("site.year.by.species.counts", "site.year.by.species.presabs",  "species", "sites")
+
+write_rds(temporal_ukbms_obs_sites_spp, file = here("./Data/Processed_Data/Temporal/temporal_ukbms_obs_sites_spp.rds"))
+
+csv_path <- paste0(here("Output/Temporal/filtering",  "/"))
+if(!dir.exists(csv_path)) dir.create(csv_path)
+
+write_csv(prisma, file = paste0(csv_path, "/", "filtering_summary.csv"))
+#write_csv(prisma_short, file = paste0(csv_path, "/", "sites_filtering_summary.csv"))
 ```
 
 

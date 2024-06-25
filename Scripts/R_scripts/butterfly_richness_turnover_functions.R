@@ -9,6 +9,7 @@ add_prisma <- function(tibble = prisma, recs = records, step_name = "?"){
   prisma_temp <- tibble(
     "Step" = step_name,
     "Records" = nrow(records),
+    "Site.years in records" = length(unique(records$site.year)),
     "Sites in records" = length(unique(records$site)),
     "Species in records" = length(unique(records$species.no)),
     "Sites in sites" = nrow(sites),
