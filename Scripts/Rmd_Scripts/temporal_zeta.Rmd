@@ -1,0 +1,170 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+
+#### Load packages.
+```{r}
+here::i_am("Scripts//Rmd_Scripts//temporal_zeta.Rmd")
+
+
+library(tidyverse)
+library(zetadiv)
+library(mgcv)
+library(here)
+library(conflicted)
+library(knitr)
+library(knitrProgressBar)
+library(tictoc)
+
+conflicts_prefer(dplyr::select)
+conflicts_prefer(knitrProgressBar::progress_estimated)
+
+conflicts_prefer(dplyr::filter)
+conflicts_prefer(dplyr::mutate)
+conflicts_prefer(dplyr::select)
+conflicts_prefer(base::split)
+```
+
+
+#### Functions
+```{r}
+source(here("Scripts/R_scripts/butterfly_richness_turnover_functions.R"))
+```
+
+#### File Paths
+```{r}
+# Path to data used for tje msgdm analysis (which is already done)
+data_path <- paste0("./Data/Processed_Data/Temporal/temporal_ukbms_obs_sites_spp.rds")
+
+
+# Path to folder to save output of this script
+out_path <- here(paste0("./Data/Processed_Data/Temporal/"))
+
+#if(!dir.exists(out_path)) dir.create(out_path, recursive = TRUE)
+```
+
+#### Data
+```{r}
+data <- readRDS(here(data_path))
+
+site.by.species <- data$site.year.by.species.presabs
+  
+#site.by.env <- data$site.by.env
+
+species <- data$species
+
+sites <- data$sites 
+
+site.by.xy <- sites %>%
+  select(site, x, y)  %>%
+  mutate(site = paste0("site_", site)) %>%
+  column_to_rownames(var = "site")
+```
+
+## Zeta Declines
+
+```{r}
+head(site.by.species)
+```
+
+#### Get a site
+```{r}
+ d1 <- site.by.species %>%
+   rownames_to_column(var = "site.year") %>%
+   filter(grepl('site_16_', site.year))  %>% #filter to site 1
+   column_to_rownames(var = "site.year")
+
+ years <- str_split_i(rownames(d1), "_", 3) %>%
+   as.integer()
+```
+
+
+### Orders 1:10
+```{r}
+
+
+zd <- Zeta.decline.ex(data.spec = d1, orders = 1:30)
+# "Power Law"
+summary(zd$zeta.pl)
+# Exponential")
+summary(zd$zeta.exp)
+# "AIC"
+# zd$aic has dollar signs in rownames, which messes up resulting table from kable
+# therefore I edit the rownames
+zd_performance <- zd$aic
+rownames(zd_performance) <- c("Exp_to_zeta_10", "PL_to_zeta_10")
+zd_performance$R.sq.multi <- c(summary(zd$zeta.exp)$r.squared, 
+                              summary(zd$zeta.pl)$r.squared)
+zd_performance$R.sq.adj <- c(summary(zd$zeta.exp)$adj.r.squared, 
+                              summary(zd$zeta.pl)$adj.r.squared)
+kable(zd_performance)
+
+# Keep to add values from below
+all_performance <- zd_performance
+```
+# this one uses first year and zeta diversity is species in common between the first i years
+```{r}
+
+year.xy <- data.frame(x = 1:50, y = 0)
+
+year.xy <- year.xy[1:nrow(d1), ]
+
+zd <- Zeta.decline.mc(data.spec = d1, xy = year.xy, FPO = c(1, 0), DIR = FALSE, orders = 1:30, sam = 10)#sam not used
+
+```
+
+# This one uses a directed nearest neighbour approach, site.years are sampled in NN sets but not always starting at first year
+
+```{r}
+set.seed(1)
+zd <- Zeta.decline.mc(data.spec = d1, xy = year.xy, FPO = c(1, 0), DIR = TRUE, orders = 1:30, sam = 1000)
+
+set.seed(1)
+zd <- Zeta.decline.mc(data.spec = d1, xy = year.xy, FPO = c(1, 0), DIR = TRUE, orders = 1:10, sam = 1000)
+```
+
+
+
+```{r}
+set.seed(1) 
+
+zeta.ddecays <- Zeta.ddecays(xy = year.xy, data.spec = d1, sam = 1000, orders = 2:10,
+plot = TRUE, confint.level = 0.95)
+```
+
+```{r, warning = FALSE, label='Zeta Distance Decay GAMs'}
+set.seed(1) 
+zeta.ddecay.gam. <- Zeta.ddecay(xy = year.xy, data.spec = d1, order = 2, 
+                                    reg.type="glm", sam = 5000)
+
+set.seed(1) 
+zeta.ddecay.gam. <- Zeta.ddecay(xy = year.xy, data.spec = d1, order = 3, 
+                                    reg.type="glm", sam = 5000)
+
+set.seed(1) 
+zeta.ddecay.gam. <- Zeta.ddecay(xy = year.xy, data.spec = d1, order = 5, 
+                                    reg.type="glm", sam = 5000)
+
+set.seed(1) 
+zeta.ddecay.gam. <- Zeta.ddecay(xy = year.xy, data.spec = d1, order = 8, 
+                                    reg.type="glm", sam = 5000)
+
+set.seed(1) 
+zeta.ddecay.gam. <- Zeta.ddecay(xy = year.xy, data.spec = d1, order = 10, 
+                                    reg.type="glm", sam = 5000)
+
+
+```
+
+
+
+
+
+
+
+
+
+
+
