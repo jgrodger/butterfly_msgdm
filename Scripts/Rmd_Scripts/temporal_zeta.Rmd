@@ -12,6 +12,8 @@ here::i_am("Scripts//Rmd_Scripts//temporal_zeta.Rmd")
 library(tidyverse)
 library(zetadiv)
 library(mgcv)
+library(lme4)
+library(ggplot2)
 library(here)
 library(conflicted)
 library(knitr)
@@ -69,6 +71,18 @@ site.by.xy <- sites %>%
 head(site.by.species)
 ```
 
+```{r}
+rich.data <- data.frame(
+  site = str_split_i(rownames(site.by.species), "_", 2),
+  year = str_split_i(rownames(site.by.species), "_", 3),
+  richness = rowSums(site.by.species)
+)
+
+rich.data$year <- as.numeric(rich.data$year)
+
+```
+
+
 #### Get a site
 ```{r}
  d1 <- site.by.species %>%
@@ -80,8 +94,7 @@ head(site.by.species)
    as.integer()
 ```
 
-
-### Orders 1:10
+#### Orders 1:10
 ```{r}
 
 
@@ -136,31 +149,139 @@ plot = TRUE, confint.level = 0.95)
 
 ```{r, warning = FALSE, label='Zeta Distance Decay GAMs'}
 set.seed(1) 
-zeta.ddecay.gam. <- Zeta.ddecay(xy = year.xy, data.spec = d1, order = 2, 
+zeta.ddecay.gam <- Zeta.ddecay(xy = year.xy, data.spec = d1, order = 2, 
                                     reg.type="glm", sam = 5000)
 
 set.seed(1) 
-zeta.ddecay.gam. <- Zeta.ddecay(xy = year.xy, data.spec = d1, order = 3, 
+zeta.ddecay.gam <- Zeta.ddecay(xy = year.xy, data.spec = d1, order = 3, 
+                                    reg.type="glm", sam = 5000)
+length(zeta.ddecay.gam$distance)
+
+check <- data.frame(cbind(zeta.ddecay.gam$zeta.val, zeta.ddecay.gam$distance))
+set.seed(1) 
+zeta.ddecay.gam <- Zeta.ddecay(xy = year.xy, data.spec = d1, order = 5, 
                                     reg.type="glm", sam = 5000)
 
 set.seed(1) 
-zeta.ddecay.gam. <- Zeta.ddecay(xy = year.xy, data.spec = d1, order = 5, 
+zeta.ddecay.gam <- Zeta.ddecay(xy = year.xy, data.spec = d1, order = 8, 
                                     reg.type="glm", sam = 5000)
 
 set.seed(1) 
-zeta.ddecay.gam. <- Zeta.ddecay(xy = year.xy, data.spec = d1, order = 8, 
-                                    reg.type="glm", sam = 5000)
-
-set.seed(1) 
-zeta.ddecay.gam. <- Zeta.ddecay(xy = year.xy, data.spec = d1, order = 10, 
+zeta.ddecay.gam <- Zeta.ddecay(xy = year.xy, data.spec = d1, order = 10, 
                                     reg.type="glm", sam = 5000)
 
 
 ```
 
+```{r}
+
+split_factor <- str_split_i(rownames(site.by.species), "_", 2)
+
+site.species.list <- split(
+  site.by.species, split_factor)
+
+zeta.time <- data.frame(
+  site = factor(levels = unique(split_factor)),
+  zeta = numeric, 
+  time.diff = numeric())
+
+for (i in 1:length(site.species.list)){
+  year.by.species <- site.species.list[[i]]
+  year.xy <- data.frame(x = 1:nrow(year.by.species), y = 0)
+  site <- str_split_i(rownames(year.by.species[1,]), "_", 2)
+  
+  zeta.ddecay.sample <- Zeta.ddecay(
+    xy = year.xy, 
+    data.spec = year.by.species, 
+    order = 2, 
+    #normalize = "Simpson",
+    reg.type="glm", 
+    sam = 5000)
+  out.data <- data.frame(
+    site,
+    zeta.ddecay.sample$zeta.val, 
+    zeta.ddecay.sample$distance)
+ zeta.time <- rbind(zeta.time, out.data)
+  print(i)
+}
+
+names(zeta.time) <- c("site", "zeta.val", "time.diff")
+zeta.time$site <- as.factor(zeta.time$site )
+
+
+```
+
+```{r}
+gls.rich <-gls(richness ~ year, method="REML",
+             correlation = corCompSymm(form= ~ 1 | site),
+            data = rich.data)
+summary(gls.rich)
+
+anova(gls.rich)
+```
+```{r}
+g2 <- ggplot(rich.data,aes(x = year,y = richness, colour = site))+ 
+		theme_classic() 
+
+# Plotting multiple Regression Lines 
+g2 + geom_line(
+  stat = "smooth",
+  method = "lm",
+  se = FALSE,
+  fullrange = FALSE, 
+	aes(
+	  color = site, 
+	  alpha = 0.5))  +
+  
+  theme(legend.position = "none")
+```
+
+
+```{r}
+gls.fit<-gls(zeta.val ~ time.diff, method="REML",
+             correlation = corCompSymm(form= ~ 1 | site),
+            data = zeta.time)
+summary(gls.fit)
+
+anova(gls.fit)
+```
 
 
 
+
+
+```{r}
+
+
+g1 <- ggplot(zeta.time,aes(x = time.diff,y = zeta.val, colour = site))+ 
+		theme_classic() 
+
+# Plotting multiple Regression Lines 
+g1 + geom_line(
+  stat = "smooth",
+  method = "lm",
+  se = FALSE,
+  fullrange = FALSE, 
+	aes(
+	  color = site, 
+	  alpha = 0.5))  +
+  
+  theme(legend.position = "none")
+
+```
+
+```{r}
+m1 <-lm(zeta.val ~ time.diff, data =  zeta.time)
+summary(m1)
+```
+
+
+```{r}
+m2 <-lm(zeta.val ~ site*time.diff, data =  zeta.time)
+
+anova(m2)
+#summary(m2)
+```
 
 
 
