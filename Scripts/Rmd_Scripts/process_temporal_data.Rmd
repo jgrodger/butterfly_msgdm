@@ -3,11 +3,7 @@ title: "R Notebook"
 output: html_notebook
 ---
 
-Previous version of code in filter_timeseries.Rmd
-
-This is abbreviated 
-
-so far I have only used this to choose three sites for Cang to play with
+Checked 26/06/2024
 
 #### Load packages.
 ```{r}
@@ -39,19 +35,15 @@ conflicts_prefer(base::split)
 #### Functions
 ```{r}
 source(here("Scripts/R_scripts/butterfly_richness_turnover_functions.R"))
-
 ```
 
 #### File Paths
 ```{r}
 # Path to data used for tje msgdm analysis (which is already done)
 data_path <- paste0("./Data/Processed_Data/Temporal/for_temporal_ukbms.rds")
-
-
 # Path to folder to save output of this script
 out_path <- here(paste0("./Data/Processed_Data/Temporal/"))
-
-#if(!dir.exists(out_path)) dir.create(out_path, recursive = TRUE)
+if(!dir.exists(out_path)) dir.create(out_path, recursive = TRUE)
 ```
 
 #### Load Data
@@ -68,7 +60,7 @@ sites <- my_data$sites
 GB_simpl <- readRDS(here("./Data./Maps./gb_multipolygon_simplified.rds"))
 ```
 
-## Plot Sites
+#### Plot Sites
 ```{r}
 plot.points <- st_as_sf(sites, coords=c("x","y"), remove = FALSE, crs = 27700) 
 
@@ -87,7 +79,8 @@ print(pointsmap)
 print(pointsmap2)
 ```
 
-#### Make a table to summarise remaining data and check data filtering at each step
+#### Make a prisma-like table to summarise remaining data and check data filtering at each step
+#### site.years are site-year combinations
 ```{r}
 # Make a table
 prisma <- tibble(
@@ -103,50 +96,56 @@ prisma <- tibble(
 prisma
 ```
 
-
-# filter by by time to pre-covid data
+#### filter by by time to pre-covid data (this criterion seems unncessary but can add back in later if there is a reason to do so)
 ```{r}
-records <- records %>%
-  filter(year <= 2019)
-
-filtered_data <- filter_ukbms("records")
-# This updates the objects in the global environment with filtered versions
-list2env(filtered_data, envir = .GlobalEnv)
-
-prisma <- add_prisma(step_name = "Filtered to records before covid")
-prisma
+# records <- records %>%
+#   filter(year <= 2019)
+# 
+# filtered_data <- filter_ukbms("records")
+# # This updates the objects in the global environment with filtered versions
+# list2env(filtered_data, envir = .GlobalEnv)
+# 
+# prisma <- add_prisma(step_name = "Filtered to records before covid")
+# prisma
 ```
 
-#### Filter to site-year combinations sampled in all four sampling periods
+
+
+
+#### Find number of surveys in each sampling period (see process_CSV_data.Rmd) and in each year for each site.year
 ```{r}
-# Get a dataframe with the number of surveys per period in each site in each year
-surveys.by.period <- records %>%
+# Get a dataframe with survey information
+
+
+get_surveys_by_period <- function(my_records){
+surveys.by.period <- my_records %>%
   distinct(survey.info, .keep_all = TRUE) %>%
   group_by(site, year, sampling.period) %>%
   summarise(surveys.per.period = n()) %>%
-  pivot_wider(names_from = sampling.period,
+  ungroup() %>%
+  pivot_wider(
+    names_from = sampling.period,
     values_from = surveys.per.period,
     values_fill = 0) %>%
-  mutate(site.year = paste("site", site, year, sep = "_"), 
-         #criterion for inclusion, being sampled in all 4 periods
-         all.4 = per1 > 0 & per2 > 0 & per3 > 0 & per4 > 0,
-         total.surveys = sum(per1, per2, per3, per4)) %>% 
-  ungroup()
+  mutate(
+    site.year = paste("site", site, year, sep = "_"), 
+    #criterion for inclusion, being sampled in all 4 periods
+    all.4 = per1 > 0 & per2 > 0 & per3 > 0 & per4 > 0,
+    surveys.per.year = (per1 + per2 + per3 +per4)) 
+}
+
+surveys.by.period <- get_surveys_by_period(records)
 
 head(surveys.by.period)
 ```
-
+#### Filter data to site.years with at least eight surveys
 ```{r}
-# Get number of years for each site that there were surveys in all four periods
-sites.years.with.8plus.surveys  <- surveys.by.period %>% 
-  filter(total.surveys >= 8) 
+sites.years.with.8plus.surveys <- surveys.by.period %>% 
+  filter(surveys.per.year >= 8) 
 
-# this merge adds info on number of years with all four periods and filters
-# to only include years with two or more sites
 records <- records %>%
   filter(site.year %in% sites.years.with.8plus.surveys$site.year)
 
-print("filter to site.years with at least 8 surveys")
 filtered_data <- filter_ukbms("sites")
 list2env(filtered_data, envir = .GlobalEnv)
 
@@ -154,7 +153,7 @@ prisma <- add_prisma(step_name = "Filtered to site.years with at least 8 surveys
 tail(prisma)
 ```
 
-
+#### Filter data to site.years sampled in all four sampling periods (see process_CSV_data.Rmd)
 ```{r}
 # Get number of years for each site that there were surveys in all four periods
 sites.years.with.all.four  <- surveys.by.period %>% 
@@ -173,39 +172,16 @@ prisma <- add_prisma(step_name = "Filtered all 4 periods")
 tail(prisma)
 ```
 
-
-
-#### get surveys for each site in each year in each of sampling periods that I define
 ```{r}
-#surveys per site per year
-surveys.site.year <-   records %>% 
-  distinct(survey.info, .keep_all = TRUE) %>%
-  group_by (site, year, sampling.period)  %>% 
-  summarise(n = n())  %>% 
-  ungroup() %>%
-  mutate(site.year = paste("site", site, year, sep = "_")) %>%
-  pivot_wider(
-    names_from = sampling.period,
-    values_from = n,
-    values_fill = 0) %>%
-  mutate(surveys.per.year = (per1 + per2 + per3 + per4))
-
-head(surveys.site.year)
-
-#inspect frequency distribution of surveys per site per year
-print("surveys per site per year")
-summary(surveys.site.year$surveys.per.year)
-hist(surveys.site.year$surveys.per.year, main = "Surveys per site per year")
-
-
-
+head(records)
 ```
 
-
-#### Obtain dataframe with number of years per site, and minimum surveys for each site per year and  in each sampling period in each year
+####  Get data on surveys per site per year and number of years per site
 ```{r}
-#years per site summary and histogram
-years.per.site <- surveys.site.year %>% 
+
+get_years_per_site <- function(my_surveys_by_period){
+# Obtain dataframe with number of years per site, and minimum surveys for each site per year and  in each sampling period in each year
+years.per.site <- my_surveys_by_period %>% 
   group_by(site)%>% 
 summarise(years.surveyed = n(),
           first.year = min(year),
@@ -213,16 +189,21 @@ summarise(years.surveyed = n(),
           span.surveyed = last.year - first.year,
           missing.years = span.surveyed + 1 - years.surveyed,
           minimum.surveys.per.year = min(surveys.per.year))
+return(years.per.site)
+}
+```
+
+```{r}
+years.per.site <- get_years_per_site(surveys.by.period)
 
 head(years.per.site)
 
 #inspect frequency distribution of years
 print("years per site")
 summary(years.per.site$years.surveyed)
-hist(years.per.site$years.surveyed, main = "Years per site")
+hist(years.per.site$years.surveyed, main = "Years per site")  
 ```
-
-#### Obtain site by species (count) matrix and calculated coverage
+#### Obtain site by species (count) matrix and calculate coverage
 ```{r}
 
 # This is done with a function as there is a large amount of code that must be run again after filtering. 
@@ -244,10 +225,11 @@ get_diff <- function(df){
 
 # get dataframe with records per species for each site-year combination
 get_site_by_species_and_coverage <- function (my_records){
-  aggregated.records <- my_records %>%
+
+aggregated.records <- my_records %>%
   group_by(site, year, species.no)%>%
   summarise(annual.records = sum(count))
-print(head(aggregated.records))   
+  print(head(aggregated.records))   
   
 #get a site.year by species dataframe with counts of observations
 site.year.counts <- aggregated.records %>%
@@ -306,17 +288,20 @@ names(data_out) <- c("site.year.counts", "coverage.multi", "site.year.cov", "sit
 
 return(data_out)
 }
+
 ```
 
 #### Run the function
 ```{r}
 site.by.species.list <- get_site_by_species_and_coverage(records) 
+
+# This updates the global environment with objects from list
+list2env(site.by.species.list, envir = .GlobalEnv)
+
 ```
 
 #### Inspect coverage
 ```{r}
-coverage.multi <- site.by.species.list[["coverage.multi"]]
-
 hist(coverage.multi$SC)
 
 hist(coverage.multi$SC, xlim = c(0.98, 1), breaks = 200)
@@ -328,10 +313,8 @@ quantile(coverage.multi$SC, seq(from = 0, to = 1, by = 0.01), na.rm = TRUE)
 summary(coverage.multi$SC)
 ```
 
-# filter to site years with at least 0.99 coverage
+#### filter to site years with at least 0.99 coverage
 ```{r}
-site.year.cov <- site.by.species.list[["site.year.cov"]]
-
 # get a dataframe with the site-year combinations with >=99 % coverage
 site.year.cov.filtered <- site.year.cov %>%
   filter(SC >= 0.99)
@@ -347,6 +330,15 @@ prisma
 
 head(records)
 ```
+#### Recalculate years per site (so it is years with adequate coverage and survey effort)
+
+```{r}
+surveys.by.period <- get_surveys_by_period(records)
+
+years.per.site <- get_years_per_site(surveys.by.period)
+```
+
+
 
 #### Filter to sites with >= 20 years data (after meeting othe filtering criteria)
 ```{r}
@@ -362,17 +354,16 @@ prisma <- add_prisma(step_name = "Filtered to sites with >= 20 years")
 prisma
 ```
 
-# rerun function to get site by species and coverage 
+#### Rerun function to get site by species and coverage 
 ```{r}
 site.by.species.list <- get_site_by_species_and_coverage(records) 
+# This updates the objects in the global environment with filtered versions
+list2env(site.by.species.list, envir = .GlobalEnv)
 ```
-
-
-
-# redo coverage matrix
-
+# To do later: decide on additional criteria to remove time seriew with gaps that are too big, or with too many missing years
+#### Inspect coverage for time series
 ```{r}
-site.year.cov <- site.by.species.list[["site.year.cov"]]
+site.year.cov <- site.year.cov[order(site.year.cov$year, decreasing = FALSE), ] 
 
 cov_mat <- site.year.cov %>%
   select(site, year, SC) %>%
@@ -382,15 +373,18 @@ cov_mat <- site.year.cov %>%
 
 dim(cov_mat)
 
-heatmap(cov_mat[, 1:55], Rowv= NA, Colv = NA)
-heatmap(cov_mat[, 56:110], Rowv= NA, Colv = NA)
-heatmap(cov_mat[, 111:165], Rowv= NA, Colv = NA)
-heatmap(cov_mat[, 166:221], Rowv= NA, Colv = NA)
+heatmap(cov_mat[, 1:50], Rowv= NA, Colv = NA)
+heatmap(cov_mat[, 51:100], Rowv= NA, Colv = NA)
+heatmap(cov_mat[, 101:150], Rowv= NA, Colv = NA)
+heatmap(cov_mat[, 151:201], Rowv= NA, Colv = NA)
+heatmap(cov_mat[, 151:ncol(cov_mat)], Rowv= NA, Colv = NA)
+# I am not sure why, but 1973-1975 data appear empty in plot, but they are there in the input
+
 ```
 
 
 
-## Plot Sites
+#### Plot Sites
 ```{r}
 plot.points <- st_as_sf(sites, coords=c("x","y"), remove = FALSE, crs = 27700) 
 
@@ -410,7 +404,7 @@ print(pointsmap2)
 ```
 
 ```{r}
-site.year.by.species.counts <- site.by.species.list[["site.year.counts"]]
+site.year.by.species.counts <- site.year.counts
 
 #make a presence absence site by species matrix
 site.year.by.species.presabs <- site.year.by.species.counts
@@ -432,6 +426,8 @@ head(site.year.by.species.presabs)
 
 ```
 
+
+#### Save for analysis
 ```{r}
 temporal_ukbms_obs_sites_spp <- list(site.year.by.species.counts, site.year.by.species.presabs, species, sites)
 names(temporal_ukbms_obs_sites_spp) <- c("site.year.by.species.counts", "site.year.by.species.presabs",  "species", "sites")
