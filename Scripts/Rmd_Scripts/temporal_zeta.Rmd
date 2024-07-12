@@ -430,6 +430,13 @@ pairwise_distances <- bind_rows(pairwise_list, .id = "site")
 head(pairwise_distances)
 
 ```
+
+```{r}
+plot(bc.similarity ~ hm.similarity, data = pairwise_distances)
+plot(bc.similarity ~ simpson.similarity, data = pairwise_distances)
+```
+
+
 # check what is still needed below
 
 
