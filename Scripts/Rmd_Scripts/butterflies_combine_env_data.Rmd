@@ -121,6 +121,7 @@ site.by.log10.mean.ann.rain <- site.by.prec %>%
 
 
 
+
 #### Merge env variables
 ```{r}
 # Make a list to be able to use lapply
@@ -139,6 +140,14 @@ for (i in 2:length(layers2)){
   
   comb <- merge(comb, layers2[[i]], by = "ngr.1km")
 }
+
+
+```
+
+```{r}
+comb.check <- select(comb, -ngr.1km)
+
+plot(rast(comb.check, crs = "EPSG:27700", type = "xyz"))
 ```
 
 ```{r}

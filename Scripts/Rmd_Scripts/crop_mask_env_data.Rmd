@@ -23,7 +23,7 @@ conflicts_prefer(dplyr::filter)
 ```{r}
 # load polygon to use to crop and mask as map extents a bit different
 
-gb <- readRDS(here("./Data/Input_Environmental_Data/gb_multipolygon.rds"))
+gb <- readRDS(here("./Data/Maps/gb_multipolygon.rds"))
 
 str(gb, max.level = 1)
 
@@ -76,6 +76,28 @@ return(df2)
 ```
 
 
+#### Compare before and after
+
+```{r}
+plot(rast(site.by.humans, crs = "EPSG:27700", type = "xyz"))
+
+plot(rast(site.by.ph, crs = "EPSG:27700", type = "xyz"))
+
+plot(rast(site.by.trees, crs = "EPSG:27700", type = "xyz"))
+
+plot(rast(site.by.nitrogen, crs = "EPSG:27700", type = "xyz"))
+
+plot(rast(site.by.pesticide.risk, crs = "EPSG:27700", type = "xyz"))
+
+plot(rast(site.by.wetness, crs = "EPSG:27700", type = "xyz"))
+
+plot(rast(site.by.temp, crs = "EPSG:27700", type = "xyz"))
+
+plot(rast(site.by.prec, crs = "EPSG:27700", type = "xyz"))
+
+```
+
+#### Compare before and after
 
 ```{r}
 site.by.humans <- crop.and.mask(site.by.humans, gb)
@@ -88,6 +110,9 @@ site.by.temp <- crop.and.mask(site.by.temp, gb)
 site.by.prec <- crop.and.mask(site.by.prec, gb)
 
 ```
+
+
+
 
 #### Write the files
 ```{r}
