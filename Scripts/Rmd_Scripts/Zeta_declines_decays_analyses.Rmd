@@ -66,6 +66,10 @@ site.by.env <- data$site.by.env
 site.by.xy <- data$site.by.xy
 
 species <- data$species
+
+
+
+
 ```
 
 #### Parameters for this report

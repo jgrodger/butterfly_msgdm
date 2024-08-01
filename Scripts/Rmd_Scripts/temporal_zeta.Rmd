@@ -10,10 +10,13 @@ here::i_am("Scripts//Rmd_Scripts//temporal_zeta.Rmd")
 
 
 library(tidyverse)
+library(sf)
+library(tmap)
 library(zetadiv)
+library(vegan)
+library(gdm)
 library(mgcv)
 library(lme4)
-library(ggplot2)
 library(here)
 library(conflicted)
 library(knitr)
@@ -42,9 +45,12 @@ data_path <- paste0("./Data/Processed_Data/Temporal/temporal_ukbms_obs_sites_spp
 
 
 # Path to folder to save output of this script
-out_path <- here(paste0("./Data/Processed_Data/Temporal/"))
+out_path <- here(paste0("./Output/Temporal/Retreat/"))
 
-#if(!dir.exists(out_path)) dir.create(out_path, recursive = TRUE)
+if(!dir.exists(out_path)) dir.create(out_path, recursive = TRUE)
+
+# Basemap without outlying islands
+GB_simpl <- readRDS(here("./Data./Maps./gb_multipolygon_simplified.rds"))
 ```
 
 #### Data
@@ -52,6 +58,9 @@ out_path <- here(paste0("./Data/Processed_Data/Temporal/"))
 data <- readRDS(here(data_path))
 
 site.by.species <- data$site.year.by.species.presabs
+
+
+site.by.species.counts <- data$site.year.by.species.counts
   
 #site.by.env <- data$site.by.env
 
@@ -65,11 +74,59 @@ site.by.xy <- sites %>%
   column_to_rownames(var = "site")
 ```
 
-## Zeta Declines
 
+# to do, include the matrix needed for plots below in data
+
+#### Inspect coverage for time series
 ```{r}
-head(site.by.species)
+# site.year.cov <- site.year.cov[order(site.year.cov$year, decreasing = FALSE), ] 
+# 
+# cov_mat <- site.year.cov %>%
+#   select(site, year, SC) %>%
+#   pivot_wider(values_from = SC, names_from = site) %>%
+#   column_to_rownames(var = "year") %>%
+#   as.matrix()
+# 
+# dim(cov_mat)
+# 
+# heatmap(cov_mat[, 1:50], Rowv= NA, Colv = NA)
+# heatmap(cov_mat[, 51:100], Rowv= NA, Colv = NA)
+# heatmap(cov_mat[, 101:150], Rowv= NA, Colv = NA)
+# heatmap(cov_mat[, 151:201], Rowv= NA, Colv = NA)
+# heatmap(cov_mat[, 151:ncol(cov_mat)], Rowv= NA, Colv = NA)
+# # I am not sure why, but 1973-1975 data appear empty in plot, but they are there in the input
+
 ```
+
+
+
+#### Plot Sites
+```{r}
+plot.points <- st_as_sf(sites, coords=c("x","y"), remove = FALSE, crs = 27700)
+
+basemap <-tm_shape(GB_simpl) +
+  tm_borders()
+
+pointsmap <- basemap +
+tm_shape(plot.points) +
+  tm_symbols(size = 0.05, col = "blue")
+
+pointsmap2 <- basemap +
+tm_shape(plot.points) +
+  tm_symbols(size = 0.5, alpha = 0.5, col = "blue")
+
+print(pointsmap)
+print(pointsmap2)
+
+filepath <- paste0(out_path, "/temporal_sites_map.png")
+
+png(file = filepath)
+print(pointsmap2)
+dev.off()
+```
+
+
+# Get richnes for each site in each year
 
 ```{r}
 rich.data <- data.frame(
@@ -79,114 +136,367 @@ rich.data <- data.frame(
 )
 
 rich.data$year <- as.numeric(rich.data$year)
-
+str(rich.data)
 ```
-
-
-#### Get a site
+# Get years per site, start and end year of each site, and sites per year
 ```{r}
- d1 <- site.by.species %>%
-   rownames_to_column(var = "site.year") %>%
-   filter(grepl('site_16_', site.year))  %>% #filter to site 1
-   column_to_rownames(var = "site.year")
+years.per.site <- rich.data %>%
+  group_by(site) %>%
+  summarize(years = n(),
+            start.year = min(year),
+            end.year = max(year),
+            span = end.year - start.year)
 
- years <- str_split_i(rownames(d1), "_", 3) %>%
-   as.integer()
+sites.per.year <- rich.data %>%
+  group_by(year) %>%
+  summarize(sites = n())
+
+# years for sites
+ggplot(years.per.site, aes(x = years)) + 
+  geom_histogram()
+
+filepath <- paste0(out_path, "/temporal_sites_start_year.png")
+png(file = filepath)
+ggplot(years.per.site, aes(x = start.year)) + 
+  geom_histogram()
+dev.off()
+
+# span for sites
+ggplot(years.per.site, aes(x = span)) + 
+  geom_histogram()
+
+filepath <- paste0(out_path, "/temporal_sites_span.png")
+png(file = filepath)
+ggplot(years.per.site, aes(x = start.year)) + 
+  geom_histogram()
+dev.off()
+
+# Start year for sites
+ggplot(years.per.site, aes(x = start.year)) + 
+  geom_histogram()
+
+filepath <- paste0(out_path, "/temporal_sites_end_year.png")
+png(file = filepath)
+ggplot(years.per.site, aes(x = end.year)) + 
+  geom_histogram()
+dev.off()
+
+# End year for sites
+ggplot(years.per.site, aes(x = end.year)) + 
+  geom_histogram()
+
+filepath <- paste0(out_path, "/temporal_sites_years_per_site.png")
+png(file = filepath)
+ggplot(years.per.site, aes(x = years)) + 
+  geom_histogram()
+dev.off()
+
+# Sites per year
+ggplot(sites.per.year, aes(year, sites)) + 
+  geom_point()
+
+
+filepath <- paste0(out_path, "/temporal_sites_per_year.png")
+png(file = filepath)
+ggplot(sites.per.year, aes(year, sites)) + 
+  geom_point()
+dev.off()
+
 ```
 
-#### Orders 1:10
+# Examples of richness time series
 ```{r}
+rich.data$site.num <- as.numeric(rich.data$site)
 
+d2 <- filter(rich.data, site.num <= 10)
 
-zd <- Zeta.decline.ex(data.spec = d1, orders = 1:30)
-# "Power Law"
-summary(zd$zeta.pl)
-# Exponential")
-summary(zd$zeta.exp)
-# "AIC"
-# zd$aic has dollar signs in rownames, which messes up resulting table from kable
-# therefore I edit the rownames
-zd_performance <- zd$aic
-rownames(zd_performance) <- c("Exp_to_zeta_10", "PL_to_zeta_10")
-zd_performance$R.sq.multi <- c(summary(zd$zeta.exp)$r.squared, 
-                              summary(zd$zeta.pl)$r.squared)
-zd_performance$R.sq.adj <- c(summary(zd$zeta.exp)$adj.r.squared, 
-                              summary(zd$zeta.pl)$adj.r.squared)
-kable(zd_performance)
+ggplot(d2, aes(year, richness)) + 
+  geom_point() + 
+  facet_wrap(~ site) + 
+  geom_smooth()
 
-# Keep to add values from below
-all_performance <- zd_performance
-```
-# this one uses first year and zeta diversity is species in common between the first i years
-```{r}
-
-year.xy <- data.frame(x = 1:50, y = 0)
-
-year.xy <- year.xy[1:nrow(d1), ]
-
-zd <- Zeta.decline.mc(data.spec = d1, xy = year.xy, FPO = c(1, 0), DIR = FALSE, orders = 1:30, sam = 10)#sam not used
+filepath <- paste0(out_path, "/temporal_sites_eight_examples_richness.png")
+png(file = filepath)
+ggplot(d2, aes(year, richness)) + 
+  geom_point() + 
+  facet_wrap(~ site) + 
+  geom_smooth()
+dev.off()
 
 ```
-
-# This one uses a directed nearest neighbour approach, site.years are sampled in NN sets but not always starting at first year
-
-```{r}
-set.seed(1)
-zd <- Zeta.decline.mc(data.spec = d1, xy = year.xy, FPO = c(1, 0), DIR = TRUE, orders = 1:30, sam = 1000)
-
-set.seed(1)
-zd <- Zeta.decline.mc(data.spec = d1, xy = year.xy, FPO = c(1, 0), DIR = TRUE, orders = 1:10, sam = 1000)
-```
-
-
-
-```{r}
-set.seed(1) 
-
-zeta.ddecays <- Zeta.ddecays(xy = year.xy, data.spec = d1, sam = 1000, orders = 2:10,
-plot = TRUE, confint.level = 0.95)
-```
-
-```{r, warning = FALSE, label='Zeta Distance Decay GAMs'}
-set.seed(1) 
-zeta.ddecay.gam <- Zeta.ddecay(xy = year.xy, data.spec = d1, order = 2, 
-                                    reg.type="glm", sam = 5000)
-
-set.seed(1) 
-zeta.ddecay.gam <- Zeta.ddecay(xy = year.xy, data.spec = d1, order = 3, 
-                                    reg.type="glm", sam = 5000)
-length(zeta.ddecay.gam$distance)
-
-check <- data.frame(cbind(zeta.ddecay.gam$zeta.val, zeta.ddecay.gam$distance))
-set.seed(1) 
-zeta.ddecay.gam <- Zeta.ddecay(xy = year.xy, data.spec = d1, order = 5, 
-                                    reg.type="glm", sam = 5000)
-
-set.seed(1) 
-zeta.ddecay.gam <- Zeta.ddecay(xy = year.xy, data.spec = d1, order = 8, 
-                                    reg.type="glm", sam = 5000)
-
-set.seed(1) 
-zeta.ddecay.gam <- Zeta.ddecay(xy = year.xy, data.spec = d1, order = 10, 
-                                    reg.type="glm", sam = 5000)
-
-
-```
+# Get pairwise similarity or dissimilarity via gdm::formatsitepair
 
 ```{r}
+data(varespec)
+vare.dist <- vegdist(varespec)
 
+head(varespec)
+
+vare.dist[1:10]
+
+data(sipoo)
+m <- betadiver(sipoo)
+plot(m)
+## The indices
+betadiver(help=TRUE)
+## The basic Whittaker index
+d <- betadiver(sipoo, "w")
+
+
+x <- matrix(rnorm(100), nrow = 5)
+dist(x)
+dist(x, diag = TRUE)
+dist(x, upper = TRUE)
+m <- as.matrix(dist(x))
+
+v <- x %>%
+  dist() %>%
+  as.matrix() %>%
+  data.frame()
+
+(m2 <- matrix(1:20, 4, 5))
+m3 <- lower.tri(m2)
+ m2 *m3
+
+```
+```{r}
+#-----------------------------------------------
+# 1) Extract the lower triangular part (LTP)
+#    of matrix as a vector
+#-----------------------------------------------
+(mat <- matrix(1:25, nrow = 5))
+ 
+# column-wise
+(v_cw <- mat[lower.tri(mat, diag = FALSE)] )
+# row-wise
+(v_rw <- c(t(mat))[c(t(lower.tri(mat, diag = FALSE)))] )
+```
+
+
+```{r}
+
+
+ 
+cat("Input matrix:\n"); print(mat)
+ 
+# vector containing the LTP
+print(v_cw)
+print(v_rw)
+ 
+#-----------------------------------------------
+# 2) Insert a vector into 
+#    the lower triangular part of matrix
+#-----------------------------------------------
+A <- B <- matrix(0,3,3)
+ 
+# column-wise
+A[lower.tri(A, diag = TRUE)] <- v_cw
+# row-wise
+B[t(lower.tri(B, diag = TRUE))] <- v_rw; B <- t(B)
+ 
+# reconstructed lower triangular matrix 
+print(A) 
+print(B) 
+
+# I need to turn a triangle from distance matrix into a vector
+# I need years corresponding to rows and columns for each distance
+
+x1 <- 1:10
+M <- matrix(0,5,5)
+M[lower.tri(M, diag=FALSE)] <- x1
+
+
+t(combn(1:5, 2))
+```
+
+
+# format environmental data for gdm package
+```{r}
 split_factor <- str_split_i(rownames(site.by.species), "_", 2)
+
+set.seed(1)
+site.by.env <- data.frame(
+rand1 = runif(n = nrow(site.by.species)),
+rand2 = rnorm(n = nrow(site.by.species))
+)
+
+head(site.by.env)
+
+
+```
+
+# Format site by species count data for gdm
+```{r}
+site.by.species.counts <- site.by.species.counts %>%
+  mutate(x = as.numeric(str_split_i(rownames(site.by.species.counts), "_", 3)),
+         y = 0,
+         .before = species_100)
+  
+head(site.by.species.counts)    
+
+
+# for gdm
+# site.by.add.in <- cbind(site.by.env, site.by.xy) %>%
+#   mutate(site = str_split_i(rownames(site.by.add.in), "_", 2)) %>%
+#   select(site, year, x, y)
+#   
+# site.by.species.counts <- cbind(site.by.add.in, site.by.species.counts)
+
+```
+
+# Format site by species count data for msgdm
+```{r}
+site.by.species.presabs <- data$site.year.by.species.presabs %>%
+  mutate(site.year = rownames(site.by.species.counts), .before = species_100)
+ 
+
+head(site.by.species.counts)
+head(site.by.env)
+
+```
+
+
+# Split data
+```{r}
+
+# dataset will be split by year anyway
+env.list<- site.by.env %>% 
+  split(split_factor)
+
+# get data for gdm as lists just use example ones
+ counts.list <- split(
+  site.by.species.counts, split_factor)
+ 
+
+
+#counts.list <- counts.list[c("1", "10", "2", "3", "4", "6", "8", "9")]
+# env.list <- env.list[c("1", "10", "2", "3", "4", "6", "8", "9")]
+#rand_samp <- sample(1:nrow(site.by.env), 100, replace = FALSE)
+
+```
+
+
+#still need to check simpson distance calculated and appended as intended (right values, right order)
+
+# Note, estimated abundance indices are available and are supposed to be more accurate
+# here we get Bray Curtis
+
+# idea is to add other indices and have them available in same dataframe
+```{r}
+
+pairwise_list <- list()
+
+for (i in 1:length(counts.list)){  
+
+  site.by.env.i <- env.list[[1]]%>%
+    mutate(year.id = 1:nrow(.))
+
+  site.by.species.counts.i <- counts.list[[1]] %>%
+    mutate(year.id = 1:nrow(.), .before = species_100)
+
+# use formatsitepair() to get bray-curtis distanc
+  formatted.data.1 <- formatsitepair(bioData = site.by.species.counts.i, bioFormat = 1, dist = "bray", abundance = TRUE, 
+                       siteColumn = "year.id", XColumn = "x", YColumn = "y", predData = site.by.env.i)
+
+# use formatsitepair to get horn-morisita distance
+  formatted.data.2 <- formatsitepair(bioData = site.by.species.counts.i, bioFormat = 1, dist = "horn", abundance = TRUE, 
+                       siteColumn = "year.id", XColumn = "x", YColumn = "y", predData = site.by.env.i)
+
+# get simpson distance   
+ d <- designdist(site.by.species.counts.i, method = "1-(J)/(J = min(A+B))",
+         terms = c("binary"), 
+         abcd = FALSE, alphagamma = FALSE, "simpson_distance", maxdist = 1)
+   
+   # add other distances to the first data frame
+   formatted.data.1 <- formatted.data.1 %>%
+    rename(bc.distance = distance) %>%
+    mutate(
+     bc.similarity = 1 - bc.distance,
+     hm.distance = formatted.data.2$distance,
+     hm.similarity = 1 - hm.distance,
+     simpson.distance = d,
+     simpson.similarity = 1 - d,
+     time.distance = abs(s1.xCoord - s2.xCoord),
+     .before = weights)
+
+ pairwise_list[[i]] <- formatted.data.1
+ 
+}
+
+names(pairwise_list) <- unique(split_factor) #used as entries for site below
+
+pairwise_distances <- bind_rows(pairwise_list, .id = "site")
+
+head(pairwise_distances)
+
+```
+
+```{r}
+plot(bc.similarity ~ hm.similarity, data = pairwise_distances)
+plot(bc.similarity ~ simpson.similarity, data = pairwise_distances)
+```
+
+
+# check what is still needed below
+
+
+# get pairwise diversity
+```{r}
 
 site.species.list <- split(
   site.by.species, split_factor)
 
 zeta.time <- data.frame(
   site = factor(levels = unique(split_factor)),
-  zeta = numeric, 
+  zeta = numeric(), 
   time.diff = numeric())
 
-for (i in 1:length(site.species.list)){
-  year.by.species <- site.species.list[[i]]
+
+# for (i in 1:length(site.species.list)){
+#   year.by.species <- site.species.list[[i]]
+#   year.xy <- data.frame(x = 1:nrow(year.by.species), y = 0)
+#   site <- str_split_i(rownames(year.by.species[1,]), "_", 2)
+#   
+#   zeta.ddecay.sample <- Zeta.ddecay(
+#     xy = year.xy, 
+#     data.spec = year.by.species, 
+#     order = 2, 
+#     #normalize = "Simpson",
+#     reg.type="glm", 
+#     sam = 5000)
+#   out.data <- data.frame(
+#     site,
+#     zeta.ddecay.sample$zeta.val, 
+#     zeta.ddecay.sample$distance)
+#  zeta.time <- rbind(zeta.time, out.data)
+#   print(i)
+# }
+
+names(zeta.time) <- c("site", "zeta.val", "time.diff")
+zeta.time$site <- as.factor(zeta.time$site )
+
+
+head(site.by.species.counts)
+
+head(rich.data)
+
+
+```
+
+
+
+```{r}
+
+
+filepath <- paste0(out_path, "/examples_temporal_turnover.png")
+
+# to have the same sites as for richness example
+site.species.list.eight <- site.species.list[c("1", "10", "2", "3", "4", "6", "8", "9")]
+
+png(file = filepath)
+par(mfrow = c(3,3))
+for (i in 1:8){
+  year.by.species <- site.species.list.eight[[i]]
   year.xy <- data.frame(x = 1:nrow(year.by.species), y = 0)
   site <- str_split_i(rownames(year.by.species[1,]), "_", 2)
   
@@ -195,7 +505,7 @@ for (i in 1:length(site.species.list)){
     data.spec = year.by.species, 
     order = 2, 
     #normalize = "Simpson",
-    reg.type="glm", 
+    reg.type="gam", 
     sam = 5000)
   out.data <- data.frame(
     site,
@@ -205,11 +515,39 @@ for (i in 1:length(site.species.list)){
   print(i)
 }
 
-names(zeta.time) <- c("site", "zeta.val", "time.diff")
-zeta.time$site <- as.factor(zeta.time$site )
+
+
+filepath <- paste0(out_path, "/examples_temporal_turnover_simpson.png")
+
+# to have the same sites as for richness example
+site.species.list.eight <- site.species.list[c("1", "10", "2", "3", "4", "6", "8", "9")]
+
+png(file = filepath)
+par(mfrow = c(3,3))
+for (i in 1:8){
+  year.by.species <- site.species.list.eight[[i]]
+  year.xy <- data.frame(x = 1:nrow(year.by.species), y = 0)
+  site <- str_split_i(rownames(year.by.species[1,]), "_", 2)
+  
+  zeta.ddecay.sample <- Zeta.ddecay(
+    xy = year.xy, 
+    data.spec = year.by.species, 
+    order = 2, 
+    normalize = "Simpson",
+    reg.type="gam", 
+    sam = 5000)
+  out.data <- data.frame(
+    site,
+    zeta.ddecay.sample$zeta.val, 
+    zeta.ddecay.sample$distance)
+ zeta.time <- rbind(zeta.time, out.data)
+  print(i)
+}
+dev.off()
 
 
 ```
+
 
 ```{r}
 gls.rich <-gls(richness ~ year, method="REML",
@@ -219,6 +557,8 @@ summary(gls.rich)
 
 anova(gls.rich)
 ```
+
+
 ```{r}
 g2 <- ggplot(rich.data,aes(x = year,y = richness, colour = site))+ 
 		theme_classic() 
@@ -235,7 +575,6 @@ g2 + geom_line(
   
   theme(legend.position = "none")
 ```
-
 
 ```{r}
 gls.fit<-gls(zeta.val ~ time.diff, method="REML",
@@ -289,3 +628,260 @@ anova(m2)
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+## Zeta Declines
+
+```{r}
+head(site.by.species)
+```
+
+
+
+#### Get a site
+```{r}
+ d1 <- site.by.species %>%
+   rownames_to_column(var = "site.year") %>%
+   filter(grepl('site_16_', site.year))  %>% #filter to site 1
+   column_to_rownames(var = "site.year")
+
+ years <- str_split_i(rownames(d1), "_", 3) %>%
+   as.integer()
+```
+
+#### Orders 1:10
+```{r}
+
+
+zd <- Zeta.decline.ex(data.spec = d1, orders = 1:30)
+# "Power Law"
+summary(zd$zeta.pl)
+# Exponential")
+summary(zd$zeta.exp)
+# "AIC"
+# zd$aic has dollar signs in rownames, which messes up resulting table from kable
+# therefore I edit the rownames
+zd_performance <- zd$aic
+rownames(zd_performance) <- c("Exp_to_zeta_10", "PL_to_zeta_10")
+zd_performance$R.sq.multi <- c(summary(zd$zeta.exp)$r.squared, 
+                              summary(zd$zeta.pl)$r.squared)
+zd_performance$R.sq.adj <- c(summary(zd$zeta.exp)$adj.r.squared, 
+                              summary(zd$zeta.pl)$adj.r.squared)
+kable(zd_performance)
+
+# Keep to add values from below
+all_performance <- zd_performance
+```
+
+```{r}
+year.xy <- data.frame(x = 1:50, y = 0)
+```
+
+
+# this one uses first year and zeta diversity is species in common between the first i years
+```{r}
+
+
+zd <- Zeta.decline.mc(data.spec = d1, xy = year.xy, FPO = c(1, 0), DIR = FALSE, orders = 1:30, sam = 10)#sam not used
+
+```
+
+# This one uses a directed nearest neighbour approach, site.years are sampled in NN sets but not always starting at first year
+
+```{r}
+
+
+year.xy <- year.xy[1:nrow(d1), ]
+
+set.seed(1)
+zd <- Zeta.decline.mc(data.spec = d1, xy = year.xy, FPO = c(1, 0), DIR = TRUE, orders = 1:30, sam = 1000)
+
+set.seed(1)
+zd <- Zeta.decline.mc(data.spec = d1, xy = year.xy, FPO = c(1, 0), DIR = TRUE, orders = 1:10, sam = 1000)
+```
+
+
+
+```{r}
+set.seed(1) 
+
+zeta.ddecays <- Zeta.ddecays(xy = year.xy, data.spec = d1, sam = 1000, orders = 2:9,
+plot = TRUE, confint.level = 0.95)
+```
+
+```{r, warning = FALSE, label='Zeta Distance Decay GAMs'}
+set.seed(1) 
+zeta.ddecay.gam <- Zeta.ddecay(xy = year.xy, data.spec = d1, order = 2, 
+                                    reg.type="glm", sam = 5000)
+
+set.seed(1) 
+zeta.ddecay.gam <- Zeta.ddecay(xy = year.xy, data.spec = d1, order = 3, 
+                                    reg.type="glm", sam = 5000)
+length(zeta.ddecay.gam$distance)
+
+check <- data.frame(cbind(zeta.ddecay.gam$zeta.val, zeta.ddecay.gam$distance))
+set.seed(1) 
+zeta.ddecay.gam <- Zeta.ddecay(xy = year.xy, data.spec = d1, order = 5, 
+                                    reg.type="glm", sam = 5000)
+
+set.seed(1) 
+zeta.ddecay.gam <- Zeta.ddecay(xy = year.xy, data.spec = d1, order = 8, 
+                                    reg.type="glm", sam = 5000)
+
+set.seed(1) 
+zeta.ddecay.gam <- Zeta.ddecay(xy = year.xy, data.spec = d1, order = 10, 
+                                    reg.type="glm", sam = 5000)
+
+
+```
+
+```{r}
+
+data$site.by.env <- site.by.env
+
+# Write for Cang
+
+cang_path <- here("./Data/Processed_Data/Temporal/Cang/")
+
+
+site.by.xy <- site.by.xy %>%
+  mutate(site = rownames(site.by.xy), .before = x)
+
+site.by.xy <- merge(site.by.env, site.by.xy, by = "site")
+
+site.by.xy <- site.by.xy %>% 
+  mutate(site.year = paste0(site, "_" ,year), .before = site)
+
+site.by.xy <- site.by.xy %>%
+  select(site.year, site, year, x, y)
+
+write_csv(site.by.species.counts, file = paste0(cang_path, "/",   "site_by.species.counts.csv"))
+
+write_csv(site.by.species.presabs, file = paste0(cang_path, "/",   "site_by.species.presabs.csv"))
+
+
+write_csv(site.by.xy, file = paste0(cang_path, "/",   "site_by.xy.csv"))
+head(site.by.xy)
+
+site.by.env <- site.by.xy %>%
+  column_to_rownames(var = "site.year")%>%
+  select(year)
+
+site.by.xy <- site.by.xy %>%
+  column_to_rownames(var = "site.year")%>%
+  select(x, y)
+
+
+
+site.by.species.presabs <- as.integer(site.by.species.presabs)
+
+c1 <- data.frame(sapply(site.by.species.presabs, FUN = as.integer))
+
+c2 <- c1[1:500,]
+
+```
+
+
+```{r}
+set.seed(1)
+zm1 <- Zeta.msgdm(xy = site.by.xy, data.spec = c1, data.env = site.by.env,  order = 2, sam = 50000,
+  reg.type="ispline", normalize = "Simpson", family=binomial(link="log"),cons.inter = -1, glm.init = TRUE) 
+
+Plot.ispline(msgdm = zm1, data.env = site.by.env, distance = TRUE,  legend = TRUE)
+
+summary(zm1$model)
+
+```
+
+```{r}
+
+site.by.env2 <- select(site.by.env, year)
+set.seed(1)
+zm2 <- Zeta.msgdm(xy = site.by.xy, data.spec = c1, data.env = site.by.env2,  order = 2, sam = 50000,
+  reg.type="ispline", normalize = "Simpson", family=binomial(link="log"),cons.inter = -1, glm.init = TRUE) 
+
+Plot.ispline(msgdm = zm2, data.env = site.by.env2, distance = TRUE,  legend = TRUE)
+
+summary(zm2$model)
+
+```
+
+
+
+```{r}
+
+set.seed(1)
+zm3 <- Zeta.msgdm(xy = site.by.xy, data.spec = c1, data.env = site.by.env2,  order = 2, sam = 50000,
+  reg.type="ispline",  cons.inter = -1, glm.init = TRUE) 
+
+Plot.ispline(msgdm = zm3, data.env = site.by.env2, distance = TRUE,  legend = TRUE)
+
+summary(zm3$model)
+
+```
+# , use gdm package to get pairwise dissimilarity
+
+```{r}
+
+
+ggplot(bc1, aes(time.distance, BC_simillarity)) + 
+  geom_point() +
+  facet_wrap(~ site) + 
+  geom_smooth()
+
+
+filepath <- paste0(out_path, "/temporal_sites_eight_examples_bc.png")
+png(file = filepath)
+ggplot(bc1, aes(time.distance, BC_simillarity)) + 
+  geom_point() +
+  facet_wrap(~ site) + 
+  geom_smooth()
+dev.off()
+
+
+```
+# attempt at gdm, check predictors
+
+```{r}
+gdm.1 <- gdm(data = pairwise_list[[1]][, 1:12], geo=TRUE)
+ 
+ length(gdm.1$predictors) # get ideal of number of panels
+
+summary(gdm.1)
+plot(gdm.1, plot.layout=c(2,3))
+
+```
+
+
+#gdm example
+```{r}
+# start with the southwest data table
+
+ sppData <- southwest[c(1,2,13,14)]
+ envTab <- southwest[c(2:ncol(southwest))]
+ head(envTab)
+ head(sppData)
+ 
+#########table type 1
+## site-species table without coordinates
+testData1a <- reshape2::dcast(sppData, site~species)
+head(testData1a)
+##site-species table with coordinates
+coords <- unique(sppData[, 2:ncol(sppData)])
+testData1b <- merge(testData1a, coords, by="site")
+## site-species, table-table
+exFormat1a <- formatsitepair(testData1a, 1, siteColumn="site", XColumn="Long",
+YColumn="Lat", predData=envTab)
+head(testData1a)
+head(envTab)
+```
