@@ -46,15 +46,14 @@ if(!dir.exists(out_path)) dir.create(out_path)
 
 #### Datasets for gamms
 ```{r}
-
 all_species <- readRDS(here("./Data/Processed_Data/Spatial/all_species.rds"))
 wc <- readRDS(here("./Data/Processed_Data/Spatial/wc.rds"))
 hs <- readRDS(here("./Data/Processed_Data/Spatial/hs.rds"))
-hs_no_zeros <- readRDS(here("./Data/Processed_Data/Spatial/hs_no_zeros.rds"))
+#hs_no_zeros <- readRDS(here("./Data/Processed_Data/Spatial/hs_no_zeros.rds"))
 
 # get all datasets in a list
-datasets <- list(all_species, wc, hs, hs_no_zeros)
-names(datasets) <- c("all_species", "wc", "hs", "hs_no_zeros")
+datasets <- list(all_species, wc, hs)
+names(datasets) <- c("all_species", "wc", "hs")
 ```
 
 
@@ -152,6 +151,9 @@ gamm_list[[i]] <- my_gamm
 
 }
 
+names(gamm_list) <- c("gamm_corGaus", "gamm_corExp", "gamm_corLin",
+"gamm_corRatio", "gamm_corSpher")
+
 filedir <- paste0(here(out_path), "/GAMM_all_species")
 if(!dir.exists(filedir)) dir.create(filedir)
 filepath <- paste0(filedir, "/gamm_cor_struct_compare.rds")
@@ -189,6 +191,9 @@ print(Sys.time())
 gamm_list[[i]] <- my_gamm
 
 }
+
+names(gamm_list) <- c("gamm_corGaus", "gamm_corExp", "gamm_corLin",
+"gamm_corRatio", "gamm_corSpher")
 
 filedir <- paste0(here(out_path), "/GAMM_wc")
 if(!dir.exists(filedir)) dir.create(filedir)
@@ -228,6 +233,10 @@ print(Sys.time())
 gamm_list[[i]] <- my_gamm
 
 }
+
+
+names(gamm_list) <- c("gamm_corGaus", "gamm_corExp", "gamm_corLin",
+"gamm_corRatio", "gamm_corSpher")
 
 filedir <- paste0(here(out_path), "/GAMM_hs")
 if(!dir.exists(filedir)) dir.create(filedir)
@@ -290,6 +299,10 @@ gamm_list[[i]] <- my_gamm
 
 }
 
+
+names(gamm_list) <- c("gamm_corGaus", "gamm_corExp", "gamm_corLin",
+"gamm_corRatio", "gamm_corSpher")
+
 filedir <- paste0(here(out_path), "/GAMM_all_species")
 if(!dir.exists(filedir)) dir.create(filedir)
 filepath <- paste0(filedir, "/gamm_cor_struct_compare.rds")
@@ -327,6 +340,10 @@ print(Sys.time())
 gamm_list[[i]] <- my_gamm
 
 }
+
+
+names(gamm_list) <- c("gamm_corGaus", "gamm_corExp", "gamm_corLin",
+"gamm_corRatio", "gamm_corSpher")
 
 filedir <- paste0(here(out_path), "/GAMM_wc")
 if(!dir.exists(filedir)) dir.create(filedir)
@@ -366,6 +383,10 @@ print(Sys.time())
 gamm_list[[i]] <- my_gamm
 
 }
+
+
+names(gamm_list) <- c("gamm_corGaus", "gamm_corExp", "gamm_corLin",
+"gamm_corRatio", "gamm_corSpher")
 
 filedir <- paste0(here(out_path), "/GAMM_hs")
 if(!dir.exists(filedir)) dir.create(filedir)
@@ -411,6 +432,10 @@ gamm_list[[i]] <- my_gamm
 
 }
 
+
+names(gamm_list) <- c("gamm_corGaus", "gamm_corExp", "gamm_corLin",
+"gamm_corRatio", "gamm_corSpher")
+
 filedir <- paste0(here(out_path), "/GAMM_all_species")
 if(!dir.exists(filedir)) dir.create(filedir)
 filepath <- paste0(filedir, "/gamm_cor_struct_compare_reduced_mod.rds")
@@ -448,6 +473,10 @@ print(Sys.time())
 gamm_list[[i]] <- my_gamm
 
 }
+
+
+names(gamm_list) <- c("gamm_corGaus", "gamm_corExp", "gamm_corLin",
+"gamm_corRatio", "gamm_corSpher")
 
 filedir <- paste0(here(out_path), "/GAMM_wc")
 if(!dir.exists(filedir)) dir.create(filedir)
@@ -487,6 +516,10 @@ print(Sys.time())
 gamm_list[[i]] <- my_gamm
 
 }
+
+
+names(gamm_list) <- c("gamm_corGaus", "gamm_corExp", "gamm_corLin",
+"gamm_corRatio", "gamm_corSpher")
 
 filedir <- paste0(here(out_path), "/GAMM_hs")
 if(!dir.exists(filedir)) dir.create(filedir)
