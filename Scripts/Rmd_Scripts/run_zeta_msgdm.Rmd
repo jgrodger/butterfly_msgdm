@@ -47,6 +47,9 @@ render_report = function(analysis_script, params_list) {
                 } else if(analysis_script == "process_GAMM_analyses.Rmd"){  
                       paste0(here("Output/Spatial/GAM/GAMM_"), params_list$dataset, "/", 
                              params_list$analysis,  "//")
+                } else if(analysis_script == "process_GAMM_analyses_with_loops.Rmd"){  
+                      paste0(here("Output/Spatial/GAM/GAMM_"), params_list$dataset, "/", 
+                             params_list$analysis,  "//")
                 } else if(analysis_script == "process_GAMMS_single_result_output.Rmd"){  
                       paste0(here("Output/Spatial/GAM/GAMM_"), params_list$dataset, "/", 
                              params_list$analysis, "/", params_list$corStruct, "//")
@@ -163,9 +166,14 @@ render_report(analysis_script = "process_GAMM_analyses.Rmd",
 <!--                    corStruct = "corExp")) -->
 <!-- ``` -->
 
+### Reduced model
 
-
-
+#### All species
+```{r}
+render_report(analysis_script = "process_GAMM_analyses_with_loops.Rmd", 
+              list(dataset = "all_species", 
+                   analysis = "gamm_models_compare_drop1"))
+```
 
 ## Zeta declines and decays
 ##### By default, the time consuming zeta decay analysis does not run (in params list include "run_decay_analysis = TRUE" to make it run)
