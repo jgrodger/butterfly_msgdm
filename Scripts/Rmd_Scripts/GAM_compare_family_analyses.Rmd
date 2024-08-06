@@ -264,7 +264,7 @@ gam.check(gam_gaussian_reml)
 my.plot.gam(gam_gaussian_reml)
 ```
 
-### Gaussian with REML default k
+### Gaussian with REML k = 5
 ```{r}
 par(mfrow = c(2, 2))
 summary(gam_gaussian_reml_K_5)
