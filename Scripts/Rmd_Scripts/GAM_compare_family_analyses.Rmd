@@ -37,35 +37,7 @@ conflicts_prefer(knitrProgressBar::progress_estimated)
 
 #### Functions
 ```{r}
-# A function for plotting gam relationships with my preferences
-# IE shading for CI;partial residuals included; results on original scale
-
-my.plot.gam <- function(gam_object){
-plot(gam_object, residuals = TRUE, seWithMean = FALSE, shade = TRUE, 
-     shift = coef(gam_object)[1], pages = 2) 
-}
-
-# a function to make a table for checking if smooths might be zero
-check_smooths <- function(gam_obj, capt){
-vars <- c("mean.ann.temp", "log10.mean.ann.rain", "topographic.wetness", "ph", 
-          "total.n",  "tree.density", "log10.pesticide.risk",  "log10.humans") 
-  
-gam_obj <- data.frame(cbind(vars, summary(gam_tp)$s.pv))
-names(gam_obj) <- c("Var", "p")
-gam_obj$p <- as.numeric(gam_obj$p)
-gam_obj<- kable(gam_obj, digits = 3, align = "l", caption = capt)
-}
-
-# From https://stackoverflow.com/questions/71252509/is-there-a-way-to-get-progress-information-whan-a-chunk-is-running-in-rmarkdown
-
-slow_function <- function(i, .pb=NULL) {  
-  update_progress(.pb)  
-  Sys.sleep(0.5)  
-  i  
-}
-
-# create an R6 progress object for
-# the number of loops/iterations in the target chunk
+source(here("Scripts/R_scripts/butterfly_richness_turnover_functions.R"))
 ```
 
 #### File Paths
