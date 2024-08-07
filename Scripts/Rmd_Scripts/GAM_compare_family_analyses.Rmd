@@ -6,7 +6,7 @@ params:
   dataset: "all_species"
 ---
 
-## In this code, we explore relationships between environmental variables and richness, and compare GAMS for different distributions (family argument) 
+## Here we run GAMs for different distributions of response variable (family argument)
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
@@ -70,8 +70,6 @@ slow_function <- function(i, .pb=NULL) {
 # the number of loops/iterations in the target chunk
 ```
 
-
-
 #### File Paths
 ```{r}
 data_path <- paste0("./Data/Processed_Data/Spatial/", params$dataset, ".rds")
@@ -93,41 +91,7 @@ site.by.env <- data$site.by.env
 site.by.xy <- data$site.by.xy
 ```
 
-#### Parameters for this report
-```{r}
-print(params)
-```
-## Explore data
 
-#### Environmental variable, easting, northing and richness Pearson and Spearman correlations
-```{r}
-site.by.env.and.richness <- cbind(site.by.xy) %>%
-  cbind(site.by.env, rowSums(site.by.species)) %>% 
-  rename(species.richness = 'rowSums(site.by.species)')
-  
-
-t1 <- cor(site.by.env.and.richness)
-t2 <- cor(site.by.env.and.richness, method = "spearman")
-
-print("Pearson correlation")
-t1
-print("Spearman correlation")
-t2
-```
-
-#### Visualise relationships between x, y, predictors and richness
-```{r}
-pairs(site.by.env.and.richness[,3:11])
-pairs(site.by.env.and.richness[,c(1, 2, 11)])
-pairs(site.by.env.and.richness[, c(3, 4, 5, 11)])
-pairs(site.by.env.and.richness[,c(6, 7, 8, 11)])
-pairs(site.by.env.and.richness[c(9, 10, 11)])
-```
-
-#### Check species richness distribution
-```{r}
-hist(site.by.env.and.richness$species.richness)
-```
 ## GAMS
 
 ### Run GAMs with different distributions for the response variable
@@ -149,74 +113,113 @@ gam_tweedie <- update(gam_poisson, family = tw())# tweedie distribution with p p
 
 gam_ziP <- update(gam_poisson, family = ziP, link = "log") #ziP for zero inflated Poisson data, when the zero inflation rate depends simply on the Poisson mean.
 
+gam_list <- list(gam_gaussian, gam_poisson, gam_nb, gam_tweedie, gam_ziP)
+names(gam_list) <- c("gam_gaussian", "gam_poisson", "gam_nb", "gam_tweedie", "gam_ziP")
+
 ```
 
-
-### Gaussian
+### Compare residual plots and perform basis dimension checking
 ```{r}
-par(mfrow = c(2, 2))
-summary(gam_gaussian)
-gam.check(gam_gaussian)
-my.plot.gam(gam_gaussian)
-#### Moran's I
-# see also https://www.paulamoraga.com/book-spatial/spatial-autocorrelation.html
-
-print("Moran's test  with I value")
-moranfast(residuals(gam_gaussian, type = "deviance"), 
-          site.by.env.and.richness$x, site.by.env.and.richness$y)
+for (i in 1:length(gam_list)){
+  print(names(gam_list[i]))  
+  gam_i <- gam_list[[i]]
+  par(mfrow = c(2, 2))
+  gam.check(gam_gaussian)
+}
 ```
-
-
-### Poisson
+### Compare GAM summaries
 ```{r}
-par(mfrow = c(2, 2))
-summary(gam_poisson)
-gam.check(gam_poisson, type = "pearson")
-my.plot.gam(gam_poisson)
-print("Moran's test  with I value")
-moranfast(residuals(gam_poisson, type = "deviance"), 
-          site.by.env.and.richness$x, site.by.env.and.richness$y)
+for (i in 1:length(gam_list)){
+  print(names(gam_list[i]))  
+  gam_i <- gam_list[[i]]
+  summary(gam_i)
+}
 ```
 
-#### Negative Binomial
+### Compare GAM smooth plots
 ```{r}
-par(mfrow = c(2, 2))
-summary(gam_nb)
-gam.check(gam_nb)
-my.plot.gam(gam_nb)
-print("Moran's test  with I value")
-moranfast(residuals(gam_nb, type = "deviance"), 
-          site.by.env.and.richness$x, site.by.env.and.richness$y)
+for (i in 1:length(gam_list)){
+  print(names(gam_list[i]))  
+  gam_i <- gam_list[[i]]
+  par(mfrow = c(2, 2))
+  my.plot.gam(gam_i)
+}
 ```
 
-### Tweedie 
+### Compare Moran's tests
 ```{r}
-par(mfrow = c(2, 2))
-summary(gam_tweedie)
-gam.check(gam_tweedie)
-my.plot.gam(gam_tweedie) #Tweedie tends to  over-fit on pH at least
-print("Moran's test  with I value")
-moranfast(residuals(gam_tweedie, type = "deviance"), 
+for (i in 1:length(gam_list)){
+  print(names(gam_list[i]))  
+  gam_i <- gam_list[[i]]
+  print("Moran's test  with I value")
+  moranfast(residuals(gam_i, type = "deviance"), 
           site.by.env.and.richness$x, site.by.env.and.richness$y)
+}
 ```
 
-### Zero-inflated poisson
-```{r}
-par(mfrow = c(2, 2))
-summary(gam_ziP)
-gam.check(gam_ziP)
-my.plot.gam(gam_ziP) 
-print("Moran's test  with I value")
-moranfast(residuals(gam_ziP, type = "deviance"), 
-          site.by.env.and.richness$x, site.by.env.and.richness$y)
-```
+<!-- ### Gaussian -->
+<!-- ```{r} -->
+<!-- par(mfrow = c(2, 2)) -->
+<!-- summary(gam_gaussian) -->
+<!-- gam.check(gam_gaussian) -->
+<!-- my.plot.gam(gam_gaussian) -->
+<!-- #### Moran's I -->
+<!-- # see also https://www.paulamoraga.com/book-spatial/spatial-autocorrelation.html -->
+
+<!-- print("Moran's test  with I value") -->
+<!-- moranfast(residuals(gam_gaussian, type = "deviance"),  -->
+<!--           site.by.env.and.richness$x, site.by.env.and.richness$y) -->
+<!-- ``` -->
+
+
+<!-- ### Poisson -->
+<!-- ```{r} -->
+<!-- par(mfrow = c(2, 2)) -->
+<!-- summary(gam_poisson) -->
+<!-- gam.check(gam_poisson, type = "pearson") -->
+<!-- my.plot.gam(gam_poisson) -->
+<!-- print("Moran's test  with I value") -->
+<!-- moranfast(residuals(gam_poisson, type = "deviance"),  -->
+<!--           site.by.env.and.richness$x, site.by.env.and.richness$y) -->
+<!-- ``` -->
+
+<!-- #### Negative Binomial -->
+<!-- ```{r} -->
+<!-- par(mfrow = c(2, 2)) -->
+<!-- summary(gam_nb) -->
+<!-- gam.check(gam_nb) -->
+<!-- my.plot.gam(gam_nb) -->
+<!-- print("Moran's test  with I value") -->
+<!-- moranfast(residuals(gam_nb, type = "deviance"),  -->
+<!--           site.by.env.and.richness$x, site.by.env.and.richness$y) -->
+<!-- ``` -->
+
+<!-- ### Tweedie  -->
+<!-- ```{r} -->
+<!-- par(mfrow = c(2, 2)) -->
+<!-- summary(gam_tweedie) -->
+<!-- gam.check(gam_tweedie) -->
+<!-- my.plot.gam(gam_tweedie) #Tweedie tends to  over-fit on pH at least -->
+<!-- print("Moran's test  with I value") -->
+<!-- moranfast(residuals(gam_tweedie, type = "deviance"),  -->
+<!--           site.by.env.and.richness$x, site.by.env.and.richness$y) -->
+<!-- ``` -->
+
+<!-- ### Zero-inflated poisson -->
+<!-- ```{r} -->
+<!-- par(mfrow = c(2, 2)) -->
+<!-- summary(gam_ziP) -->
+<!-- gam.check(gam_ziP) -->
+<!-- my.plot.gam(gam_ziP)  -->
+<!-- print("Moran's test  with I value") -->
+<!-- moranfast(residuals(gam_ziP, type = "deviance"),  -->
+<!--           site.by.env.and.richness$x, site.by.env.and.richness$y) -->
+<!-- ``` -->
 
 #### Compare GAMs in terms of AIC
 ```{r}
-gam_fam_list <-list (gam_gaussian, gam_poisson, gam_nb, gam_tweedie, gam_ziP)
-
 aic_table <- AIC(gam_gaussian, gam_poisson, gam_nb, gam_tweedie, gam_ziP) %>%
-  arrange(AIC) %>%
+  arrange(AIC) %>% #order rows by AIC
   mutate(delta_AIC = AIC - min(AIC)) %>%
   rownames_to_column(var = "Family")
 
@@ -230,6 +233,7 @@ kable(aic_table, digits = 2, align = "l")
 # row.names(aic_table[index_best , ])
 # gam_tp <- gam_fam_list[[index_best]] 
 ```
+
 ```{r}
 # Gaussian
 gam_gaussian_reml <- update(gam_gaussian, method = "REML")
@@ -244,32 +248,30 @@ gam_gaussian_reml_K_5 <- update(
 
 ```
 
+<!-- ###  Print a table  -->
+<!-- ```{r} -->
+<!-- aic_table <- AIC(gam_gaussian_reml, gam_gaussian_reml_K_5) %>% -->
+<!--   arrange(AIC) %>% -->
+<!--   mutate(delta_AIC = AIC - min(AIC)) %>% -->
+<!--   rownames_to_column(var = "Family") -->
 
+<!-- kable(aic_table, digits = 2, align = "l") -->
+<!-- ``` -->
 
+<!-- ### Gaussian with REML default k -->
+<!-- ```{r} -->
+<!-- par(mfrow = c(2, 2)) -->
+<!-- summary(gam_gaussian_reml) -->
+<!-- gam.check(gam_gaussian_reml) -->
+<!-- my.plot.gam(gam_gaussian_reml) -->
+<!-- ``` -->
 
-```{r}
-aic_table <- AIC(gam_gaussian_reml, gam_gaussian_reml_K_5) %>%
-  arrange(AIC) %>%
-  mutate(delta_AIC = AIC - min(AIC)) %>%
-  rownames_to_column(var = "Family")
-
-kable(aic_table, digits = 2, align = "l")
-```
-
-### Gaussian with REML default k
-```{r}
-par(mfrow = c(2, 2))
-summary(gam_gaussian_reml)
-gam.check(gam_gaussian_reml)
-my.plot.gam(gam_gaussian_reml)
-```
-
-### Gaussian with REML k = 5
-```{r}
-par(mfrow = c(2, 2))
-summary(gam_gaussian_reml_K_5)
-gam.check(gam_gaussian_reml_K_5)
-my.plot.gam(gam_gaussian_reml_K_5)
-```
+<!-- ### Gaussian with REML k = 5 -->
+<!-- ```{r} -->
+<!-- par(mfrow = c(2, 2)) -->
+<!-- summary(gam_gaussian_reml_K_5) -->
+<!-- gam.check(gam_gaussian_reml_K_5) -->
+<!-- my.plot.gam(gam_gaussian_reml_K_5) -->
+<!-- ``` -->
 
 
