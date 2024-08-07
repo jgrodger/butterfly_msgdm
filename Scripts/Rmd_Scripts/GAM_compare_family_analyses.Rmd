@@ -61,6 +61,13 @@ site.by.env <- data$site.by.env
 site.by.xy <- data$site.by.xy
 ```
 
+#### Prepare data for analysis
+```{r}
+site.by.env.and.richness <- cbind(site.by.xy) %>%
+  cbind(site.by.env, rowSums(site.by.species)) %>% 
+  rename(species.richness = 'rowSums(site.by.species)')
+```
+
 ## GAMS
 
 ### Run GAMs with different distributions for the response variable
@@ -93,7 +100,7 @@ for (i in 1:length(gam_list)){
   print(names(gam_list[i]))  
   gam_i <- gam_list[[i]]
   par(mfrow = c(2, 2))
-  gam.check(gam_gaussian)
+  gam.check(gam_i)
 }
 ```
 ### Compare GAM summaries
