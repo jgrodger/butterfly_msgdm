@@ -125,7 +125,7 @@ for (i in 1:length(gam_list)){
 for (i in 1:length(gam_list)){
   print(names(gam_list[i]))  
   gam_i <- gam_list[[i]]
-  summary(gam_i)
+  print(summary(gam_i))
 }
 ```
 
@@ -137,29 +137,6 @@ for (i in 1:length(gam_list)){
   par(mfrow = c(2, 2))
   my.plot.gam(gam_i)
 }
-```
-
-### Compare Moran's tests
-```{r}
-for (i in 1:length(gam_list)){
-  print(names(gam_list[i]))  
-  gam_i <- gam_list[[i]]
-  print("Moran's test  with I value")
-  print(moranfast(residuals(gam_i, type = "deviance"), 
-          site.by.env.and.richness$x, site.by.env.and.richness$y))
-}
-```
-
-### Compare GAMs in terms of AIC
-```{r}
-aic_table <- AIC(gam_tp, gam_cr) %>%
-  arrange(AIC) %>% #order rows by AIC
-  mutate(delta_AIC = AIC - min(AIC)) %>%
-  rownames_to_column(var = "Family")
-
-write_csv(aic_table, file = paste0(out_path, "/", "spline_aic_table.csv"))
-
-kable(aic_table, digits = 2, align = "l")
 ```
 
 ### Compare Moran's tests
@@ -217,4 +194,16 @@ png(file = filepath)
 plot(v1, fit1)
 dev.off()
 }
+```
+
+### Compare GAMs in terms of AIC
+```{r}
+aic_table <- AIC(gam_tp, gam_cr) %>%
+  arrange(AIC) %>% #order rows by AIC
+  mutate(delta_AIC = AIC - min(AIC)) %>%
+  rownames_to_column(var = "Family")
+
+write_csv(aic_table, file = paste0(out_path, "/", "spline_aic_table.csv"))
+
+kable(aic_table, digits = 2, align = "l")
 ```

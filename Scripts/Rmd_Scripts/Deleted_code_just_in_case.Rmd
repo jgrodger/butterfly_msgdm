@@ -1,0 +1,237 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+This is an [R Markdown](http://rmarkdown.rstudio.com) Notebook. When you execute code within the notebook, the results appear beneath the code. 
+
+Try executing this chunk by clicking the *Run* button within the chunk or by placing your cursor inside it and pressing *Ctrl+Shift+Enter*. 
+
+```{r}
+plot(cars)
+```
+
+Add a new chunk by clicking the *Insert Chunk* button on the toolbar or by pressing *Ctrl+Alt+I*.
+
+When you save the notebook, an HTML file containing the code and output will be saved alongside it (click the *Preview* button or press *Ctrl+Shift+K* to preview the HTML file).
+
+The preview shows you a rendered HTML copy of the contents of the editor. Consequently, unlike *Knit*, *Preview* does not run any R code chunks. Instead, the output of the chunk when it was last run in the editor is displayed.
+
+
+
+
+
+
+
+## REML analyses from GAM compare family analyses, not sure why I tried this
+
+### Gaussian
+```{r}
+par(mfrow = c(2, 2))
+summary(gam_gaussian)
+gam.check(gam_gaussian)
+my.plot.gam(gam_gaussian)
+#### Moran's I
+# see also https://www.paulamoraga.com/book-spatial/spatial-autocorrelation.html
+
+print("Moran's test  with I value")
+moranfast(residuals(gam_gaussian, type = "deviance"),
+          site.by.env.and.richness$x, site.by.env.and.richness$y)
+```
+
+
+### Poisson
+```{r}
+par(mfrow = c(2, 2))
+summary(gam_poisson)
+gam.check(gam_poisson, type = "pearson")
+my.plot.gam(gam_poisson)
+print("Moran's test  with I value")
+moranfast(residuals(gam_poisson, type = "deviance"),
+          site.by.env.and.richness$x, site.by.env.and.richness$y)
+```
+
+#### Negative Binomial
+```{r}
+par(mfrow = c(2, 2))
+summary(gam_nb)
+gam.check(gam_nb)
+my.plot.gam(gam_nb)
+print("Moran's test  with I value")
+moranfast(residuals(gam_nb, type = "deviance"),
+          site.by.env.and.richness$x, site.by.env.and.richness$y)
+```
+
+### Tweedie
+```{r}
+par(mfrow = c(2, 2))
+summary(gam_tweedie)
+gam.check(gam_tweedie)
+my.plot.gam(gam_tweedie) #Tweedie tends to  over-fit on pH at least
+print("Moran's test  with I value")
+moranfast(residuals(gam_tweedie, type = "deviance"),
+          site.by.env.and.richness$x, site.by.env.and.richness$y)
+```
+
+### Zero-inflated poisson
+```{r}
+par(mfrow = c(2, 2))
+summary(gam_ziP)
+gam.check(gam_ziP)
+my.plot.gam(gam_ziP)
+print("Moran's test  with I value")
+moranfast(residuals(gam_ziP, type = "deviance"),
+          site.by.env.and.richness$x, site.by.env.and.richness$y)
+```
+
+
+
+```{r}
+ # Gaussian
+ gam_gaussian_reml <- update(gam_gaussian, method = "REML")
+ gam_gaussian_reml_K_5 <- update(
+   gam_gaussian_reml,
+   formula = species.richness ~  
+     s(mean.ann.temp, k = 5) + s(log10.mean.ann.rain, k = 5) + s(topographic.wetness, k = 5) + 
+     s(ph, k = 5) + s(total.n, k = 5) + s(tree.density, k = 5) +   s(log10.pesticide.risk, k = 5) + 
+     s(log10.humans, k = 5))
+ 
+ 
+ 
+```
+
+###  Print a table
+```{r}
+aic_table <- AIC(gam_gaussian_reml, gam_gaussian_reml_K_5) %>%
+  arrange(AIC) %>%
+  mutate(delta_AIC = AIC - min(AIC)) %>%
+  rownames_to_column(var = "Family")
+
+kable(aic_table, digits = 2, align = "l")
+```
+
+### Gaussian with REML default k
+```{r}
+par(mfrow = c(2, 2))
+summary(gam_gaussian_reml)
+gam.check(gam_gaussian_reml)
+my.plot.gam(gam_gaussian_reml)
+```
+
+### Gaussian with REML k = 5
+```{r}
+par(mfrow = c(2, 2))
+summary(gam_gaussian_reml_K_5)
+gam.check(gam_gaussian_reml_K_5)
+my.plot.gam(gam_gaussian_reml_K_5)
+```
+ 
+
+
+# Deleted from GAM compare spline analyses
+
+#### Residual against predictors 
+```{r}
+residuals <- resid(gam_tp)
+xy.res <- cbind(site.by.xy, residuals)
+
+site.by.env.and.richness <- cbind(site.by.xy) %>%
+  cbind(site.by.env, rowSums(site.by.species)) %>% 
+  rename(species.richness = 'rowSums(site.by.species)')
+
+env.and.res <- cbind(site.by.env.and.richness, residuals)
+
+pairs(env.and.res[,c(1, 2, 3, 12)]) #just look at bottom row
+pairs(env.and.res[, c(4, 5, 6, 12)]) #just look at bottom row
+pairs(env.and.res[, c(7, 8, 9, 12)]) #just look at bottom row
+pairs(env.and.res[, c(10, 11, 12)]) #just look at bottom row
+```
+
+
+
+
+#### Check p values that (APPROXIMATELY) test null hypothesis that smooth is actually zero
+#### if these seem likely zero (large p), can try and additional penalty on smooths
+```{r}
+check_tp <- check_smooths(gam_tp, "tp smooths")
+check_tp
+
+check_cr <- check_smooths(gam_cr, "cr smooths")
+check_cr
+```
+
+
+
+
+```{r, include = FALSE}
+#write_rds(gam_best, file = paste0(here(out_path), "/", params$dataset, "_best_gam.rds"))
+```
+
+
+
+```{r, include = FALSE}
+
+
+#Following gam.selection {mgcv}, we use automatic smoothness selection.
+
+# The second approach leaves the original smoothing penalty unchanged, but constructs an additional penalty for each smooth, which penalizes only functions in the null space of the original penalty (the ‘completely smooth’ functions). Hence, if all the smoothing parameters for a term tend to infinity, the term will be selected out of the model. This latter approach is more expensive computationally, but has the advantage that it can be applied automatically to any smooth term. The select argument to gam turns on this method.
+
+# thin plate spline with automatic smoothness selection
+#gam_tp_select <- update(gam_tp, select = TRUE)
+
+# cubic regression spline with automatic smoothness selection
+#gam_cr_select <- update(gam_cr, select = TRUE)
+```
+
+
+
+#### Play with mgcVis
+```{r, include = FALSE}
+# vis6 <- getViz(gam_best)
+# 
+# #adapted from https://cran.r-project.org/web/packages/mgcViz/vignettes/mgcviz.html
+# #We added the fitted smooth effect, rugs on the x and y axes, confidence lines at 95%, partial residual points and we changed the plotting theme to ggplot2::theme_classic. Functions such as l_fitLine or l_rug are effect-specific layers. To see all the layers available for each effect plot we do:
+# 
+# #mul = 2 means interval +- 2 SE shown, narrower than 95% CI of course (default here)
+# p1 <- plot(sm(vis6, 1))
+# p1 + l_fitLine(colour = "red") + l_rug(mapping = aes(x=x, y=y), alpha = 0.8) +
+#     l_ciLine(colour = "blue", linetype = 2) + 
+#     l_points(shape = 19, size = 1, alpha = 0.1) + theme_classic()
+# 
+# p2 <- plot(sm(vis6, 2))
+# p2 + l_fitLine(colour = "red") + l_rug(mapping = aes(x=x, y=y), alpha = 0.8) +
+#     l_ciLine(colour = "blue", linetype = 2) + 
+#     l_points(shape = 19, size = 1, alpha = 0.1) + theme_classic()
+# 
+# p3 <- plot(sm(vis6, 3))
+# p3 + l_fitLine(colour = "red") + l_rug(mapping = aes(x=x, y=y), alpha = 0.8) +
+#     l_ciLine(colour = "blue", linetype = 2) + 
+#     l_points(shape = 19, size = 1, alpha = 0.1) + theme_classic()
+# 
+# p4 <- plot(sm(vis6, 4))
+# p4 + l_fitLine(colour = "red") + l_rug(mapping = aes(x=x, y=y), alpha = 0.8) +
+#     l_ciLine(colour = "blue", linetype = 2) + 
+#     l_points(shape = 19, size = 1, alpha = 0.1) + theme_classic()
+# 
+# p5 <- plot(sm(vis6, 5))
+# p5 + l_fitLine(colour = "red") + l_rug(mapping = aes(x=x, y=y), alpha = 0.8) +
+#     l_ciLine(colour = "blue", linetype = 2) + 
+#     l_points(shape = 19, size = 1, alpha = 0.1) + theme_classic()
+# 
+# p6 <- plot(sm(vis6, 6))
+# p6 + l_fitLine(colour = "red") + l_rug(mapping = aes(x=x, y=y), alpha = 0.8) +
+#     l_ciLine(colour = "blue", linetype = 2) + 
+#     l_points(shape = 19, size = 1, alpha = 0.1) + theme_classic()
+# 
+# p7 <- plot(sm(vis6, 7))
+# p7 + l_fitLine(colour = "red") + l_rug(mapping = aes(x=x, y=y), alpha = 0.8) +
+#     l_ciLine(colour = "blue", linetype = 2) + 
+#     l_points(shape = 19, size = 1, alpha = 0.1) + theme_classic()
+# 
+# p8 <- plot(sm(vis6, 8))
+# p8 + l_fitLine(colour = "red") + l_rug(mapping = aes(x=x, y=y), alpha = 0.8) +
+#     l_ciLine(colour = "blue", linetype = 2) + 
+#     l_points(shape = 19, size = 1, alpha = 0.1) + theme_classic()
+
+```
+

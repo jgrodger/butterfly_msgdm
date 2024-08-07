@@ -380,7 +380,37 @@ ggpairs(site.by.env,
         upper = list(continuous = "smooth_loess"))
 ```
 
+## 3 chunks below should be put at appropriate places in this notebook and for pairplots, update to use ggpairs and add loess fit
 
+#### Environmental variable, easting, northing and richness Pearson and Spearman correlations
+```{r}
+site.by.env.and.richness <- cbind(site.by.xy) %>%
+  cbind(site.by.env, rowSums(site.by.species)) %>% 
+  rename(species.richness = 'rowSums(site.by.species)')
+  
+
+t1 <- cor(site.by.env.and.richness)
+t2 <- cor(site.by.env.and.richness, method = "spearman")
+
+print("Pearson correlation")
+t1
+print("Spearman correlation")
+t2
+```
+
+#### Visualise relationships between x, y, predictors and richness
+```{r}
+pairs(site.by.env.and.richness[,3:11])
+pairs(site.by.env.and.richness[,c(1, 2, 11)])
+pairs(site.by.env.and.richness[, c(3, 4, 5, 11)])
+pairs(site.by.env.and.richness[,c(6, 7, 8, 11)])
+pairs(site.by.env.and.richness[c(9, 10, 11)])
+```
+
+#### Check species richness distribution
+```{r}
+hist(site.by.env.and.richness$species.richness)
+```
 
 ## Obtain versions of dataset for analysis (i.e. all species, 
 ## wider countryside species, habitat specialists)

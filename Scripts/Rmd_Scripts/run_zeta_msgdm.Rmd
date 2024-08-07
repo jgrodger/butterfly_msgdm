@@ -72,24 +72,38 @@ if(!dir.exists(out_path)) dir.create(out_path, recursive = TRUE)
 
 ```{r}
 render_report(analysis_script = "GAM_compare_family_analyses.Rmd", list(dataset = "all_species"))
+Sys.Date()
 ```
 
 ```{r}
 render_report(analysis_script = "GAM_compare_family_analyses.Rmd", list(dataset = "wc"))
+Sys.Date()
 ```
-
-```{r}
-#render_report(analysis_script = "GAM_compare_family_analyses.Rmd", list(dataset = "hs_no_zeros"))
-```
-
 
 ```{r}
 render_report(analysis_script = "GAM_compare_family_analyses.Rmd", list(dataset = "hs"))
+Sys.Date()
+```
+#### GAMS comparing different splines
+
+```{r}
+render_report(analysis_script = "GAM_compare_spline_analyses.Rmd", list(dataset = "all_species"))
+```
+
+```{r}
+render_report(analysis_script = "GAM_compare_spline_analyses.Rmd", list(dataset = "wc"))
+```
+
+```{r}
+render_report(analysis_script = "GAM_compare_spline_analyses.Rmd", list(dataset = "hs", family = "nb"))
 ```
 
 
+
+
+
 ## GAMMS
-Note, GAMMS conducted in GAMM_analyses.Rmd notebook
+Note, GAMMS conducted in GAMM_compare_corstructs_analyses.Rmd notebook
 
 ### Full Model
 

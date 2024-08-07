@@ -42,7 +42,11 @@ butterfly_richness_turnover_functions.R
 			•"Output/Spatial/filtering//sites_filtering_summary.csv" only with 
 			sites kept after data filtered to 2015-2019 period, for inclusion in
 			methods.
-			
+
+
+To do
+	•Plots not printing in report, check!		
+	• Update Data exploration below
 2) butterflies_combine_env_data.Rmd
 	•What this does:
 		•Data synthsis and processing: 
@@ -65,6 +69,8 @@ butterfly_richness_turnover_functions.R
 			•Histograms of environmental variables for all grid squares in UK 
 			versus our sites to eyeball	bias in site selection wrt environmental 
 			variables
+			•Plots richness against environmental variables
+			•Calculates correlation between environmental variables
 	•Inputs
 		•Data
 			•Butterfly Data
@@ -193,15 +199,22 @@ butterfly_richness_turnover_functions.R
 	•Inputs: msgdm outpus from files "~zeta_msgdms.rds"
 	•Outputs	
 	
-9)GAM_analyses.Rmd
+9) GAM_compare_family_analyses.Rmd
 	•What this does: Called by run_zeta_msgdm.Rmd;
-		•Exploration
-			•Plots richness against environmental variables
-			•Calculates correlation between environmental variables
-		•Analyses
-			•GAM analyses for different familes
-				•Compares AIC.
-				•Plots residuals
+		•Analyses with different distribution assumptions
+			•GAM analyses for different familes: compare
+				•Residual Plots
+				•Basis dimension checks
+				•Smooth plots
+				•Moran's I test
+				•AIC
+	•Inputs: 
+		•Datasets produced by butterflies_combine_env_data.Rmd
+		•Basemap "./Data./Maps./gb_multipolygon_simplified.rds"
+	•Outputs: 
+		•GAM_compare_family_analyses.csv: Report to inspect and choose best distribution (family argument) to use.
+		•family_aic_table.csv: AIC table
+9A) GAM_comare_spline_analyses.Rmd
 			•GAM analyses, using family with lowest AIC and comparing spline 
 			methods
 				•Compares AIC.

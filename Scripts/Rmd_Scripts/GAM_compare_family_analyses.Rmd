@@ -74,7 +74,7 @@ site.by.env.and.richness <- cbind(site.by.xy) %>%
 ```{r}
 # Gaussian
 gam_gaussian <- gam(species.richness ~ s(mean.ann.temp) + s(log10.mean.ann.rain) + 
-                s(topographic.wetness) + s(ph) + s(total.n) + s(tree.density) + 
+                s(topographic.wetness) + s(ph, k = 4) + s(total.n) + s(tree.density) + 
                 s(log10.pesticide.risk) + s(log10.humans),  
                 data = site.by.env.and.richness, method= "ML")
 
@@ -108,7 +108,7 @@ for (i in 1:length(gam_list)){
 for (i in 1:length(gam_list)){
   print(names(gam_list[i]))  
   gam_i <- gam_list[[i]]
-  summary(gam_i)
+  print(summary(gam_i))
 }
 ```
 
