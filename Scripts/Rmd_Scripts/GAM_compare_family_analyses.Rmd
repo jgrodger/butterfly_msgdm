@@ -122,16 +122,7 @@ for (i in 1:length(gam_list)){
 }
 ```
 
-### Compare Moran's tests
-```{r}
-for (i in 1:length(gam_list)){
-  print(names(gam_list[i]))  
-  gam_i <- gam_list[[i]]
-  print("Moran's test  with I value")
-  print(moranfast(residuals(gam_i, type = "deviance"), 
-          site.by.env.and.richness$x, site.by.env.and.richness$y))
-}
-```
+
 
 ### Compare GAMs in terms of AIC
 ```{r}

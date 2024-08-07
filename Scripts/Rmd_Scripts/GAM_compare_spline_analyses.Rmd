@@ -3,7 +3,7 @@ title: "Gam compare splines"
 output: html_document
 
 params:
-  dataset: "all_species"
+  dataset: "wc"
   family: "gaussian"
 ---
 
