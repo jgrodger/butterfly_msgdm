@@ -214,17 +214,27 @@ write_rds(gamm_list ,
 #filedir
 #write_rds
 
+options(mgcv.vc.logrange = 5)
+
+
 gamm_list <- list()
 # Loop through the gamms saving output in list
-# Nugget allows non-zero autocorrelation at 0 distance
+
+
+lmeCtlList=lmeControl(niterEM = 50)
+
+
+#try with tp splines
+print(Sys.time())
 for (i in 1:length(corStructs)) {
 my_gamm <- gamm(
-  species.richness ~ s(mean.ann.temp, k = 6, bs = "cr") + s(log10.mean.ann.rain, k = 6, bs = "cr") + 
-  s(topographic.wetness, k = 6, bs = "cr") + s(ph, k = 4, bs = "cr") + s(total.n, k = 6, bs = "cr") + s(tree.density, k = 6, bs = "cr") + 
-  s(log10.pesticide.risk, k = 6, bs = "cr") + s(log10.humans, k = 6, bs = "cr"), 
+  species.richness ~ s(mean.ann.temp, k = 6) + s(log10.mean.ann.rain, k = 6) + 
+  s(topographic.wetness, k = 6) + s(ph, k = 4) + s(total.n, k = 6) + s(tree.density, k = 6) + 
+  s(log10.pesticide.risk, k = 6) + s(log10.humans, k = 6), 
   method = "REML", 
-  family = negbin(theta = 4.679), 
-  correlation = corStructs[[i]], 
+  family = negbin(theta = 4.77), 
+  correlation = corStructs[[i]],
+  control=lmeCtlList , 
   data = datasets$hs$gamm_input)
 
 print(i)
@@ -244,8 +254,50 @@ filepath <- paste0(filedir, "/gamm_cor_struct_compare.rds")
 filepath
 write_rds(gamm_list , 
           file = filepath)
+
+
+# print(Sys.time())
+# for (i in 1:length(corStructs)) {
+# my_gamm <- gamm(
+#   species.richness ~ s(mean.ann.temp, k = 6, bs = "cr") + s(log10.mean.ann.rain, k = 6, bs = "cr") + 
+#   s(topographic.wetness, k = 6, bs = "cr") + s(ph, k = 4, bs = "cr") + s(total.n, k = 6, bs = "cr") + s(tree.density, k = 6, bs = "cr") + 
+#   s(log10.pesticide.risk, k = 6, bs = "cr") + s(log10.humans, k = 6, bs = "cr"), 
+#   method = "REML", 
+#   family = negbin(theta = 4.77), 
+#   correlation = corStructs[[i]],
+#   control=lmeCtlList , 
+#   data = datasets$hs$gamm_input)
+# 
+# print(i)
+# print(Sys.time())
+# 
+# gamm_list[[i]] <- my_gamm
+# 
+# }
 ```
 
+
+#try increasing niterEM from 25 to 50 for corExp
+```{r}
+options(mgcv.vc.logrange = 5)
+
+print(Sys.time())
+
+lmeCtlList=lmeControl(niterEM = 50)
+
+my_gamm <- gamm(
+  species.richness ~ s(mean.ann.temp, k = 6, bs = "cr") + s(log10.mean.ann.rain, k = 6, bs = "cr") + 
+  s(topographic.wetness, k = 6, bs = "cr") + s(ph, k = 4, bs = "cr") + s(total.n, k = 6, bs = "cr") + s(tree.density, k = 6, bs = "cr") + 
+  s(log10.pesticide.risk, k = 6, bs = "cr") + s(log10.humans, k = 6, bs = "cr"), 
+  method = "REML", 
+  family = negbin(theta = 4.77), 
+  correlation = corStructs[[2]],
+  control=lmeCtlList ,
+  data = datasets$hs$gamm_input)
+
+
+print(Sys.time())
+```
 
 
 # Reduced model without rainfall, pesticide, trees to reduce concurvity

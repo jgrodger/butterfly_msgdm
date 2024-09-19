@@ -227,8 +227,10 @@ To do
 	•Inputs: 
 		•Datasets produced by butterflies_combine_env_data.Rmd
 		•Basemap "./Data./Maps./gb_multipolygon_simplified.rds"
-	•Outputs: For each dataset, output of best GAM
-	"~[dataset]_best_gam.rds"
+	•Outputs: 
+		•GAM_compare_spline_analyses.csv: Report to inspect and choose best distribution (family argument) to use.
+		•spline_aic_table.csv: AIC table
+		• variograms
 	
 10)GAMM_analyses.Rmd
 	•NB, these are very time consuming

@@ -189,6 +189,22 @@ render_report(analysis_script = "process_GAMM_analyses_with_loops.Rmd",
                    analysis = "gamm_models_compare_drop1"))
 ```
 
+#### Habitat specialists
+```{r}
+render_report(analysis_script = "process_GAMM_analyses_with_loops.Rmd", 
+              list(dataset = "hs", 
+                   analysis = "gamm_models_compare_drop1"))
+```
+
+#### Wider countryside
+```{r}
+render_report(analysis_script = "process_GAMM_analyses_with_loops.Rmd", 
+              list(dataset = "wc", 
+                   analysis = "gamm_models_compare_drop1"))
+```
+
+
+
 ## Zeta declines and decays
 ##### By default, the time consuming zeta decay analysis does not run (in params list include "run_decay_analysis = TRUE" to make it run)
 ```{r}

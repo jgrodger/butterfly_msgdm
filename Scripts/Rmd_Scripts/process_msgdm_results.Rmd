@@ -137,6 +137,10 @@ all_coef <- list()
 for(i in 1:length(my_orders)){
   temp_summary <- summary(my_msgdms[[i]]$model)
   
+  # info needed to assign values below
+  coef_rows <- nrow(temp_summary$coefficients)
+  number_of_colours <- 1 + (nrow(temp_summary$coefficients) -1 )/3
+  
   temp_coef <- rep(paste0("zeta_order", i), nrow(temp_summary$coefficients)) %>%
     data.frame() %>%
     rename(zeta_order = ".") %>%
@@ -149,8 +153,8 @@ for(i in 1:length(my_orders)){
     zeta_order = paste0("zeta_", my_orders[i]),#adding zeta_order as a column
       Lower = Estimate - 1.96*Std_Error, #CL
       Upper = Estimate + 1.96*Std_Error,
-      colours = factor(c(1, rep(2:10, each = 3))), #To generalise, this will need to be changed
-      y_height = as.numeric(rev(seq(1,28))))
+      colours = factor(c(1, rep(2:number_of_colours, each = 3))),
+      y_height = as.numeric(rev(seq(1,coef_rows))))
   
   all_coef[[i]] <- temp_coef
 }
