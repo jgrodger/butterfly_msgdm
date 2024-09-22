@@ -3,7 +3,7 @@ title: "R Notebook"
 output: html_notebook
 ---
 
-# This makes Figure 3
+# This makes Figure 3. Update from GAM_plot_test!
 
 ```{r}
 here::i_am("Scripts/Rmd_Scripts/process_GAMMS_single.Rmd")
