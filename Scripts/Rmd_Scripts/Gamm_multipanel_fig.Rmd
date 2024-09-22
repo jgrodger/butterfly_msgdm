@@ -2,21 +2,23 @@
 title: "R Notebook"
 output: html_notebook
 ---
+`
+# This makes figure 3
 
-# This makes Figure 3. Update from GAM_plot_test!
+#geom_rug not working so well, can check the other functions and see how the handle overplotting
 
 ```{r}
-here::i_am("Scripts/Rmd_Scripts/process_GAMMS_single.Rmd")
+here::i_am("Scripts/Rmd_Scripts/GAM_plot_test.Rmd")
 library(tidyverse)
+library(ggpubr)
 library(mgcv)
 library(mgcViz)
-library(ggpubr)
 library(here)
 library(conflicted)
+
 conflicts_prefer(dplyr::filter)
 conflicts_prefer(dplyr::select)
 ```
-
 
 # load gamm objects
 ```{r}
@@ -33,283 +35,228 @@ hs_mods <- readRDS(here("./Output/Spatial/GAM/GAMM_hs/gamm_cor_struct_compare_re
 hs_gamm <- hs_mods[[2]]
 ```
 
+
+```{r}
+
+
+prepare.clfit <- function(shift, plot_data){
+
+  outlist <- list()
+ 
+for (i in 1:length(plot_data)){
+  input <- plot_data[[i]]
+  output <-  data.frame(cbind(
+  input$x, 
+  input$fit + shift, 
+  input$se)) #note, se already multiplied by 1.96
+  names(output) <- c("x", "fit", "se.fit")
+  output <- output %>%
+  mutate(hi.cl = fit + se.fit, lo.cl = fit - se.fit)
+  outlist[[i]] <- output
+  } 
+return(outlist)  
+}
+
+# a function to plot fit and ci from plot.gam
+plot.clfit <- function(df){
+df %>%
+ggplot(aes(x)) +
+geom_line(aes(y = fit), colour = "red", linetype = 1) +
+geom_line(aes(y = hi.cl), colour = "blue", linetype = 2) +
+geom_line(aes(y = lo.cl), colour = "blue", linetype = 2)  + 
+geom_rug(sides="b")  + 
+  theme_classic()  
+}
+
+```
+
+
 ```{r}
 out_path <-  here("Output/Spatial/GAM/GAMM_fig//")
 if(!dir.exists(out_path)) dir.create(out_path)
 ```
 
-
+# get predicted values and sE for smooths from gam.plot
 ```{r}
 
-as_viz <-  getViz(as_gamm$gam)
-as_plots <- plot(as_viz, allTerms = TRUE) + 
-  l_fitLine(colour = "red") + 
-  l_rug(mapping = aes(x=x), alpha = 0.8) +
-  l_ciLine(mul = 1.96, colour = "blue", linetype = 2) + 
-  l_points(shape = 19, size = 1, alpha = 0.1) + 
-  theme_classic()
-print(as_plots, pages = 1)
+as_plot_data <- plot(as_gamm$gam, shift = coef(as_gamm$gam)[1], pages = 1, seWithMean = FALSE, se = 1.96) # in the output se is already multiplied by 1.96
 
-wc_viz <-  getViz(wc_gamm$gam)
-wc_plots <- plot(wc_viz, allTerms = TRUE) + 
-  l_fitLine(colour = "red") + 
-  l_rug(mapping = aes(x=x), alpha = 0.8) +
-  l_ciLine(mul = 1.96, colour = "blue", linetype = 2) + 
-  l_points(shape = 19, size = 1, alpha = 0.1) + 
-  theme_classic()
+wc_plot_data <- plot(wc_gamm$gam, shift = coef(wc_gamm$gam)[1], pages = 1, seWithMean = FALSE, se = 1.96) # in the output se is already multiplied by 1.96
 
-print(wc_plots, pages = 1)
-
-hs_viz <-  getViz(hs_gamm$gam)
-hs_plots <- plot(hs_viz, allTerms = TRUE) + 
-  l_fitLine(colour = "red") + 
-  l_rug(mapping = aes(x=x), alpha = 0.8) +
-  l_ciLine(mul = 1.96, colour = "blue", linetype = 2) + 
-  l_points(shape = 19, size = 1, alpha = 0.1) + 
-  theme_classic()
-print(hs_plots, pages = 1)
-
+hs_plot_data <- plot(hs_gamm$gam, shift = coef(hs_gamm$gam)[1], pages = 1, seWithMean = FALSE, se = 1.96) # in the output se is already multiplied by 1.96
 
 ```
 
-# plot with points and rug, doesn't look so good when panels are small
+# preare data from gam.plot to make a custom plot with geom_line()
 ```{r}
-# p1 <- plot(sm(as_viz, 1)) +
-#   ylab(NULL) +
-#   l_fitLine(colour = "red") +
-#   l_rug(mapping = aes(x=x), alpha = 0.8) +
-#   l_ciLine(mul = 1.96, colour = "blue", linetype = 2) +
-#   l_points(shape = 19, size = 1, alpha = 0.1) +
-#   theme_classic() +
-#   theme(axis.title.x = element_text(size = 7),
-#         axis.text = element_text(size = 4))
+as_plot_data2 <- prepare.clfit(coef(as_gamm$gam)[1], as_plot_data)
+wc_plot_data2 <- prepare.clfit(coef(wc_gamm$gam)[1], wc_plot_data)
+hs_plot_data2 <- prepare.clfit(coef(hs_gamm$gam)[1], hs_plot_data)
 ```
 
+#make custom plots of predicted values and CI from gam.plot
 ```{r}
 # create 
-p1a <- plot(sm(as_viz, 1))
-p4a <- plot(sm(as_viz, 2))
-p7a <- plot(sm(as_viz, 3))
-p10a <- plot(sm(as_viz, 4))
-p13a <- plot(sm(as_viz, 5))
+p1a <- plot.clfit(as_plot_data2[[1]])
+p4a <- plot.clfit(as_plot_data2[[2]])
+p7a <- plot.clfit(as_plot_data2[[3]])
+p10a <- plot.clfit(as_plot_data2[[4]])
+p13a <- plot.clfit(as_plot_data2[[5]])
 
-p2a <- plot(sm(wc_viz, 1))
-p5a <- plot(sm(wc_viz, 2))
-p8a <- plot(sm(wc_viz, 3))
-p11a <- plot(sm(wc_viz, 4))
-p14a <- plot(sm(wc_viz, 5))
+p2a <- plot.clfit(wc_plot_data2[[1]])
+p5a <- plot.clfit(wc_plot_data2[[2]])
+p8a <- plot.clfit(wc_plot_data2[[3]])
+p11a <- plot.clfit(wc_plot_data2[[4]])
+p14a <- plot.clfit(wc_plot_data2[[5]])
 
-p3a <- plot(sm(hs_viz, 1))
-p6a <- plot(sm(hs_viz, 2))
-p9a <- plot(sm(hs_viz, 3))
-p12a <- plot(sm(hs_viz, 4))
-p15a <- plot(sm(hs_viz, 5))
-```
+p3a <- plot.clfit(hs_plot_data2[[1]])
+p6a <- plot.clfit(hs_plot_data2[[2]])
+p9a <- plot.clfit(hs_plot_data2[[3]])
+p12a <- plot.clfit(hs_plot_data2[[4]])
+p15a <- plot.clfit(hs_plot_data2[[5]])
 
-# for copy and paste (part 1)
-```{r}
-# p1 <- p1a
-# p2 <- p2a
-# p3 <- p3a
-# p4 <- p4a
-# p5 <- p5a
-#
-# p6 <- p6a
-# p7 <- p7a
-# p8 <- p8a
-# p9 <- p1a
-# p10 <- p10a
-#
-# p11 <- p11a
-# p12 <- p12a
-# p13 <- p13a
-# p14 <- p14a
-# p15 <- p15a
+#inspect
+ gridPrint(p1a, p2a, p3a, 
+          p4a, p5a, p6a,
+          p7a, p8a, p9a,
+          p10a, p11a, p12a,
+          p13a, p14a, p15a,
+          respect=TRUE,
+          ncol = 3)
 
 ```
 
-
-# Experiment on one plot
-
-```{r}
-p1a <- plot(sm(as_viz, 1))
-
-p1 <- p1a +
-  ylab("") +
-  xlab("") +
-  l_fitLine(colour = "red") +
-  l_ciLine(mul = 1.96, colour = "blue", linetype = 2) +
-  theme_classic() +
-  theme(axis.title = element_text(size = 5),
-        axis.text = element_text(size = 4)) +
-  annotation_custom(grid::textGrob("A", 0.2, 0.95, gp = grid::gpar(fontsize = 7)))
-p1
-```
-
-# part 2 for copy and paste
-```{r}
- # +
- #  ylab("") +
- #  xlab("") +
- #  l_fitLine(colour = "red") +
- #  l_ciLine(mul = 1.96, colour = "blue", linetype = 2) +
- #  theme_classic() +
- #  theme(axis.title = element_text(size = 5),
- #        axis.text = element_text(size = 4)) +
- #  annotation_custom(grid::textGrob("", 0.2, 0.95, gp = grid::gpar(fontsize = 7)))
-
-
-```
-```{r}
-
-```
-
-##### Steps to make this: 1) paste part 1 and uncomment, 2) paste part 2, 3) insert letter annotations and  axis labels (y for plot 7, x for plots 2,5,8,11,14)
-
+# add annotation and set y axis limits as well as text size
 ```{r}
 p1 <- p1a +
   ylab("") +
   xlab("") +
-  l_fitLine(colour = "red") +
-  l_ciLine(mul = 1.96, colour = "blue", linetype = 2) +
-  theme_classic() +
   theme(axis.title = element_text(size = 5),
         axis.text = element_text(size = 4)) +
-  annotation_custom(grid::textGrob("A", 0.2, 0.95, gp = grid::gpar(fontsize = 7)))
+  annotation_custom(grid::textGrob("A", 0.2, 0.95, gp = grid::gpar(fontsize = 7))) +
+  coord_cartesian(ylim = c(14, 23))
+
 p2 <- p2a +
   ylab("") +
   xlab("Temperature") +
-  l_fitLine(colour = "red") +
-  l_ciLine(mul = 1.96, colour = "blue", linetype = 2) +
-  theme_classic() +
   theme(axis.title = element_text(size = 5),
         axis.text = element_text(size = 4)) +
-  annotation_custom(grid::textGrob("B", 0.2, 0.95, gp = grid::gpar(fontsize = 7)))
+  annotation_custom(grid::textGrob("B", 0.2, 0.95, gp = grid::gpar(fontsize = 7))) +
+  coord_cartesian(ylim = c(10, 18))
+
 p3 <- p3a +
   ylab("") +
   xlab("") +
-  l_fitLine(colour = "red") +
-  l_ciLine(mul = 1.96, colour = "blue", linetype = 2) +
-  theme_classic() +
-  theme(axis.title = element_text(size = 5),
+ theme(axis.title = element_text(size = 5),
         axis.text = element_text(size = 4)) +
-  annotation_custom(grid::textGrob("C", 0.2, 0.95, gp = grid::gpar(fontsize = 7)))
+  annotation_custom(grid::textGrob("C", 0.2, 0.95, gp = grid::gpar(fontsize = 7))) +
+  coord_cartesian(ylim = c(-0.55, 1.75))
+
+
 p4 <- p4a +
   ylab("") +
   xlab("") +
-  l_fitLine(colour = "red") +
-  l_ciLine(mul = 1.96, colour = "blue", linetype = 2) +
-  theme_classic() +
   theme(axis.title = element_text(size = 5),
         axis.text = element_text(size = 4)) +
-  annotation_custom(grid::textGrob("D", 0.2, 0.95, gp = grid::gpar(fontsize = 7)))
+  annotation_custom(grid::textGrob("D", 0.2, 0.95, gp = grid::gpar(fontsize = 7))) +
+  coord_cartesian(ylim = c(14, 23))
+
 p5 <- p5a +
   ylab("") +
   xlab("Top. Wet.") +
-  l_fitLine(colour = "red") +
-  l_ciLine(mul = 1.96, colour = "blue", linetype = 2) +
-  theme_classic() +
-  theme(axis.title = element_text(size = 5),
+ theme(axis.title = element_text(size = 5),
         axis.text = element_text(size = 4)) +
-  annotation_custom(grid::textGrob("E", 0.2, 0.95, gp = grid::gpar(fontsize = 7)))
+  annotation_custom(grid::textGrob("E", 0.2, 0.95, gp = grid::gpar(fontsize = 7))) +
+  coord_cartesian(ylim = c(10, 18))
 
 p6 <- p6a +
   ylab("") +
   xlab("") +
-  l_fitLine(colour = "red") +
-  l_ciLine(mul = 1.96, colour = "blue", linetype = 2) +
-  theme_classic() +
   theme(axis.title = element_text(size = 5),
         axis.text = element_text(size = 4)) +
-  annotation_custom(grid::textGrob("F", 0.2, 0.95, gp = grid::gpar(fontsize = 7)))
+  annotation_custom(grid::textGrob("F", 0.2, 0.95, gp = grid::gpar(fontsize = 7))) +
+  coord_cartesian(ylim = c(-0.55, 1.75))
+
+
 p7 <- p7a +
   ylab("Species Richness (stdized)") +
   xlab("") +
-  l_fitLine(colour = "red") +
-  l_ciLine(mul = 1.96, colour = "blue", linetype = 2) +
-  theme_classic() +
   theme(axis.title = element_text(size = 5),
         axis.text = element_text(size = 4)) +
-  annotation_custom(grid::textGrob("G", 0.2, 0.95, gp = grid::gpar(fontsize = 7)))
+  annotation_custom(grid::textGrob("G", 0.2, 0.95, gp = grid::gpar(fontsize = 7))) +
+  coord_cartesian(ylim = c(14, 23))
+
 p8 <- p8a +
   ylab("") +
   xlab("pH") +
-  l_fitLine(colour = "red") +
-  l_ciLine(mul = 1.96, colour = "blue", linetype = 2) +
-  theme_classic() +
   theme(axis.title = element_text(size = 5),
         axis.text = element_text(size = 4)) +
-  annotation_custom(grid::textGrob("H", 0.2, 0.95, gp = grid::gpar(fontsize = 7)))
-p9 <- p1a +
+  annotation_custom(grid::textGrob("H", 0.2, 0.95, gp = grid::gpar(fontsize = 7))) +
+  coord_cartesian(ylim = c(10, 18))
+
+p9 <- p9a +
   ylab("") +
   xlab("") +
-  l_fitLine(colour = "red") +
-  l_ciLine(mul = 1.96, colour = "blue", linetype = 2) +
-  theme_classic() +
   theme(axis.title = element_text(size = 5),
         axis.text = element_text(size = 4)) +
-  annotation_custom(grid::textGrob("I", 0.2, 0.95, gp = grid::gpar(fontsize = 7)))
+  annotation_custom(grid::textGrob("I", 0.2, 0.95, gp = grid::gpar(fontsize = 7))) +
+  coord_cartesian(ylim = c(-0.55, 1.75))
+
+
 p10 <- p10a +
   ylab("") +
   xlab("") +
-  l_fitLine(colour = "red") +
-  l_ciLine(mul = 1.96, colour = "blue", linetype = 2) +
-  theme_classic() +
   theme(axis.title = element_text(size = 5),
         axis.text = element_text(size = 4)) +
-  annotation_custom(grid::textGrob("J", 0.2, 0.95, gp = grid::gpar(fontsize = 7)))
+  annotation_custom(grid::textGrob("J", 0.2, 0.95, gp = grid::gpar(fontsize = 7))) +
+  coord_cartesian(ylim = c(14, 23))
 
 p11 <- p11a +
   ylab("") +
   xlab("Nitro. Dep.") +
-  l_fitLine(colour = "red") +
-  l_ciLine(mul = 1.96, colour = "blue", linetype = 2) +
-  theme_classic() +
   theme(axis.title = element_text(size = 5),
         axis.text = element_text(size = 4)) +
-  annotation_custom(grid::textGrob("K", 0.2, 0.95, gp = grid::gpar(fontsize = 7)))
+  annotation_custom(grid::textGrob("K", 0.2, 0.95, gp = grid::gpar(fontsize = 7))) +
+  coord_cartesian(ylim = c(10, 18))
+
 p12 <- p12a +
   ylab("") +
   xlab("") +
-  l_fitLine(colour = "red") +
-  l_ciLine(mul = 1.96, colour = "blue", linetype = 2) +
-  theme_classic() +
-  theme(axis.title = element_text(size = 5),
+ theme(axis.title = element_text(size = 5),
         axis.text = element_text(size = 4)) +
-  annotation_custom(grid::textGrob("L", 0.2, 0.95, gp = grid::gpar(fontsize = 7)))
+  annotation_custom(grid::textGrob("L", 0.2, 0.95, gp = grid::gpar(fontsize = 7))) +
+  coord_cartesian(ylim = c(-0.55, 1.75))
+
+
 p13 <- p13a +
   ylab("") +
   xlab("") +
-  l_fitLine(colour = "red") +
-  l_ciLine(mul = 1.96, colour = "blue", linetype = 2) +
-  theme_classic() +
   theme(axis.title = element_text(size = 5),
         axis.text = element_text(size = 4)) +
-  annotation_custom(grid::textGrob("M", 0.2, 0.95, gp = grid::gpar(fontsize = 7)))
+  annotation_custom(grid::textGrob("M", 0.2, 0.95, gp = grid::gpar(fontsize = 7))) +
+  coord_cartesian(ylim = c(14, 23))
+
 p14 <- p14a +
   ylab("") +
   xlab("Log Humans") +
-  l_fitLine(colour = "red") +
-  l_ciLine(mul = 1.96, colour = "blue", linetype = 2) +
-  theme_classic() +
-  theme(axis.title = element_text(size = 5),
+ theme(axis.title = element_text(size = 5),
         axis.text = element_text(size = 4)) +
-  annotation_custom(grid::textGrob("N", 0.2, 0.95, gp = grid::gpar(fontsize = 7)))
+  annotation_custom(grid::textGrob("N", 0.2, 0.95, gp = grid::gpar(fontsize = 7))) +
+  coord_cartesian(ylim = c(10, 18))
+
 p15 <- p15a +
   ylab("") +
   xlab("") +
-  l_fitLine(colour = "red") +
-  l_ciLine(mul = 1.96, colour = "blue", linetype = 2) +
-  theme_classic() +
   theme(axis.title = element_text(size = 5),
         axis.text = element_text(size = 4)) +
-  annotation_custom(grid::textGrob("O", 0.2, 0.95, gp = grid::gpar(fontsize = 7)))
+  annotation_custom(grid::textGrob("O", 0.2, 0.95, gp = grid::gpar(fontsize = 7))) +
+  coord_cartesian(ylim = c(-0.55, 1.75))
 ```
 
-
+# print the multipanel plot
 
 ```{r}
-
+# tjhis is a function from mgcViz
 gridPrint(p1, p2, p3, 
           p4, p5, p6,
           p7, p8, p9,
@@ -318,16 +265,21 @@ gridPrint(p1, p2, p3,
           respect=TRUE,
           ncol = 3)
 
-png(file = paste0(out_path, "gam_multiplot.png"), pointsize=10, width=960, height=1400, res=300)
+#png(file = paste0(out_path, "gam_multiplot.png"), pointsize=10, width=960, height=1400, res=300)
  
- gridPrint(p1, p2, p3, 
-          p4, p5, p6,
-          p7, p8, p9,
-          p10, p11, p12,
-          p13, p14, p15,
-          respect=TRUE,
-          ncol = 3)
+# gridPrint(p1, p2, p3, 
+#           p4, p5, p6,
+#           p7, p8, p9,
+#           p10, p11, p12,
+#           p13, p14, p15,
+#           respect=TRUE,
+#           ncol = 3)
 
- dev.off() 
+# dev.off() 
 ```
+
+
+
+
+
 
