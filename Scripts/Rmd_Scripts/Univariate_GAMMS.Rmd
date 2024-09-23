@@ -42,45 +42,73 @@ get.single.var.gamms <- function(gamm_input, kays, family){
       correlation = corExp, 
       data = gamm_input)   
     gamm_list[[i]]<- my_gamm
-    toc()
   }
+ toc() 
  names(gamm_list) <- depvars
  return(gamm_list)
 } 
 ```
 
-
 # run and save gamms
+#### input needed
 ```{r}
 corExp <- corExp(form = ~x+y, nugget = TRUE)
 k_vec <- c(6, 6, 6, 4, 6, 6, 6, 6)
-
-as.single.gamms <- get.single.var.gamms(all_species, kays = k_vec, family = "gaussian")
-wc.single.gamms <- get.single.var.gamms(wc, kays = k_vec,  family = "gaussian")
-hs.single.gamms <- get.single.var.gamms(hs,kays = k_vec,  family = negbin(theta = 4.663))  
-
 out_path <-  here("Output/Spatial/GAM")
+```
 
-
+#### all species, done, no convergence problems
+```{r}
+as.single.gamms <- get.single.var.gamms(all_species, kays = k_vec, family = "gaussian")
 filedir <- paste0(here(out_path), "/GAMM_all_species/univariate")
 if(!dir.exists(filedir)) dir.create(filedir)
 write_rds(as.single.gamms , 
           file = paste0(filedir, "/single_GAMMS.rds"))
+```
 
+# wc, done, only gamm with temperature did not converge
+```{r}
 
-
+wc.single.gamms <- get.single.var.gamms(wc, kays = k_vec,  family = "gaussian")
 filedir <- paste0(here(out_path), "/GAMM_wc/univariate")
 if(!dir.exists(filedir)) dir.create(filedir)
 write_rds(wc.single.gamms , 
           file = paste0(filedir, "/single_GAMMS.rds"))
+```
 
 
+#hs, not yet run (tried without the options and lmeControl below, had convergence issues. This may well take 24 hours to run)
 
+```{r}
+# hs
+options(mgcv.vc.logrange = 5)
+print(Sys.time())
+lmeCtlList=lmeControl(niterEM = 50)
+hs.single.gamms <- get.single.var.gamms(hs, kays = k_vec,  family = negbin(theta = 4.663))  
 filedir <- paste0(here(out_path), "/GAMM_hs/univariate")
 if(!dir.exists(filedir)) dir.create(filedir)
 write_rds(hs.single.gamms , 
           file = paste0(filedir, "/single_GAMMS.rds"))
 ```
+
+```{r}
+for(i in 1:length(as.single.gamms)){
+  print(names(as.single.gamms[i]))
+  print(summary(as.single.gamms[[i]]$gam))
+  plot(as.single.gamms[[i]]$gam)
+}
+```
+
+
+
+```{r}
+for(i in 1:length(wc.single.gamms)){
+  print(names(wc.single.gamms[i]))
+  print(summary(wc.single.gamms[[i]]$gam))
+  plot(wc.single.gamms[[i]]$gam)
+}
+```
+
 
 #failed attempts, could not get formula right
 ```{r}
