@@ -11,7 +11,7 @@ knitr::opts_chunk$set(echo = TRUE)
 ```{r}
 here::i_am("Scripts/Rmd_Scripts/GAMM_compare_corstructs_analyses.Rmd")
 library(tidyverse)
-library(tmap)
+#library(tmap)
 library(mgcv)
 library(gstat)
 library(knitr)
@@ -123,43 +123,43 @@ corStructs <- list(corGaus(form = ~x+y, nugget = TRUE), corExp(form = ~x+y, nugg
 
 #### All species, cubic regression splines, gaussian family
 ```{r}
-
-#check list to modify after copy past
-
-#formula
-#family
-#data
-#filedir
-
-gamm_list <- list()
-# Loop through the gamms saving output in list
-# Nugget allows non-zero autocorrelation at 0 distance
-for (i in 1:length(corStructs)) {
-my_gamm <- gamm(
-  species.richness ~ s(mean.ann.temp, k = 6, bs = "cr") + s(log10.mean.ann.rain, k = 6, bs = "cr") + 
-  s(topographic.wetness, k = 6, bs = "cr") + s(ph, k = 4, bs = "cr") + s(total.n, k = 6, bs = "cr") + s(tree.density, k = 6, bs = "cr") + 
-  s(log10.pesticide.risk, k = 6, bs = "cr") + s(log10.humans, k = 6, bs = "cr"), 
-  method = "REML", 
-  family = "gaussian", 
-  correlation = corStructs[[i]], 
-  data = datasets$all_species$gamm_input)
-
-print(i)
-print(Sys.time())
-
-gamm_list[[i]] <- my_gamm
-
-}
-
-names(gamm_list) <- c("gamm_corGaus", "gamm_corExp", "gamm_corLin",
-"gamm_corRatio", "gamm_corSpher")
-
-filedir <- paste0(here(out_path), "/GAMM_all_species")
-if(!dir.exists(filedir)) dir.create(filedir)
-filepath <- paste0(filedir, "/gamm_cor_struct_compare.rds")
-filepath
-write_rds(gamm_list , 
-          file = filepath)
+# 
+# #check list to modify after copy past
+# 
+# #formula
+# #family
+# #data
+# #filedir
+# 
+# gamm_list <- list()
+# # Loop through the gamms saving output in list
+# # Nugget allows non-zero autocorrelation at 0 distance
+# for (i in 1:length(corStructs)) {
+# my_gamm <- gamm(
+#   species.richness ~ s(mean.ann.temp, k = 6, bs = "cr") + s(log10.mean.ann.rain, k = 6, bs = "cr") + 
+#   s(topographic.wetness, k = 6, bs = "cr") + s(ph, k = 4, bs = "cr") + s(total.n, k = 6, bs = "cr") + s(tree.density, k = 6, bs = "cr") + 
+#   s(log10.pesticide.risk, k = 6, bs = "cr") + s(log10.humans, k = 6, bs = "cr"), 
+#   method = "REML", 
+#   family = "gaussian", 
+#   correlation = corStructs[[i]], 
+#   data = datasets$all_species$gamm_input)
+# 
+# print(i)
+# print(Sys.time())
+# 
+# gamm_list[[i]] <- my_gamm
+# 
+# }
+# 
+# names(gamm_list) <- c("gamm_corGaus", "gamm_corExp", "gamm_corLin",
+# "gamm_corRatio", "gamm_corSpher")
+# 
+# filedir <- paste0(here(out_path), "/GAMM_all_species")
+# if(!dir.exists(filedir)) dir.create(filedir)
+# filepath <- paste0(filedir, "/gamm_cor_struct_compare.rds")
+# filepath
+# write_rds(gamm_list , 
+#           file = filepath)
 ```
 
 #### Wider countryside, cubic regression splines, gaussian family
@@ -171,6 +171,10 @@ write_rds(gamm_list ,
 #family
 #data
 #filedir
+
+options(mgcv.vc.logrange = 5)
+lmeCtlList=lmeControl(niterEM = 50)
+print(Sys.time())
 
 gamm_list <- list()
 # Loop through the gamms saving output in list
@@ -203,101 +207,102 @@ write_rds(gamm_list ,
           file = filepath)
 ```
 
-
-#### Habitat specialist, cubic regression splines, nb
-```{r}
-#checklist to modify after copy past
-
-#formula
-#family
-#data
-#filedir
-#write_rds
-
-options(mgcv.vc.logrange = 5)
+#Habitat Specialists
 
 
-gamm_list <- list()
-# Loop through the gamms saving output in list
 
-
-lmeCtlList=lmeControl(niterEM = 50)
-
-
-#try with tp splines
-print(Sys.time())
-for (i in 1:length(corStructs)) {
-my_gamm <- gamm(
-  species.richness ~ s(mean.ann.temp, k = 6) + s(log10.mean.ann.rain, k = 6) + 
-  s(topographic.wetness, k = 6) + s(ph, k = 4) + s(total.n, k = 6) + s(tree.density, k = 6) + 
-  s(log10.pesticide.risk, k = 6) + s(log10.humans, k = 6), 
-  method = "REML", 
-  family = negbin(theta = 4.77), 
-  correlation = corStructs[[i]],
-  control=lmeCtlList , 
-  data = datasets$hs$gamm_input)
-
-print(i)
-print(Sys.time())
-
-gamm_list[[i]] <- my_gamm
-
-}
-
-
-names(gamm_list) <- c("gamm_corGaus", "gamm_corExp", "gamm_corLin",
-"gamm_corRatio", "gamm_corSpher")
-
-filedir <- paste0(here(out_path), "/GAMM_hs")
-if(!dir.exists(filedir)) dir.create(filedir)
-filepath <- paste0(filedir, "/gamm_cor_struct_compare.rds")
-filepath
-write_rds(gamm_list , 
-          file = filepath)
-
-
-# print(Sys.time())
-# for (i in 1:length(corStructs)) {
-# my_gamm <- gamm(
-#   species.richness ~ s(mean.ann.temp, k = 6, bs = "cr") + s(log10.mean.ann.rain, k = 6, bs = "cr") + 
-#   s(topographic.wetness, k = 6, bs = "cr") + s(ph, k = 4, bs = "cr") + s(total.n, k = 6, bs = "cr") + s(tree.density, k = 6, bs = "cr") + 
-#   s(log10.pesticide.risk, k = 6, bs = "cr") + s(log10.humans, k = 6, bs = "cr"), 
-#   method = "REML", 
-#   family = negbin(theta = 4.77), 
-#   correlation = corStructs[[i]],
-#   control=lmeCtlList , 
-#   data = datasets$hs$gamm_input)
-# 
-# print(i)
-# print(Sys.time())
-# 
-# gamm_list[[i]] <- my_gamm
-# 
-# }
-```
 
 
 #try increasing niterEM from 25 to 50 for corExp
 ```{r}
 options(mgcv.vc.logrange = 5)
-
-print(Sys.time())
-
 lmeCtlList=lmeControl(niterEM = 50)
+print(Sys.time())
+gamm_list <- list()
+# Loop through the gamms saving output in list
+
+
+
+# Nugget allows non-zero autocorrelation at 0 distance
+for (i in 1:length(corStructs)) {
 
 my_gamm <- gamm(
   species.richness ~ s(mean.ann.temp, k = 6, bs = "cr") + s(log10.mean.ann.rain, k = 6, bs = "cr") + 
   s(topographic.wetness, k = 6, bs = "cr") + s(ph, k = 4, bs = "cr") + s(total.n, k = 6, bs = "cr") + s(tree.density, k = 6, bs = "cr") + 
   s(log10.pesticide.risk, k = 6, bs = "cr") + s(log10.humans, k = 6, bs = "cr"), 
   method = "REML", 
-  family = negbin(theta = 4.77), 
-  correlation = corStructs[[2]],
+  family = negbin(theta = 4.663), 
+  correlation = corStructs[[i]],
   control=lmeCtlList ,
   data = datasets$hs$gamm_input)
+print(i)
+print(Sys.time())
+gamm_list[[i]] <- my_gamm
+}
+
+names(gamm_list) <- c("gamm_corGaus", "gamm_corExp", "gamm_corLin",
+"gamm_corRatio", "gamm_corSpher")
+
+filedir <- paste0(here(out_path), "/GAMM_wc")
+if(!dir.exists(filedir)) dir.create(filedir)
+filepath <- paste0(filedir, "/gamm_cor_struct_compare.rds")
+filepath
+write_rds(gamm_list , 
+          file = filepath)
+
+filedir <- paste0(here(out_path), "/GAMM_hs")
+if(!dir.exists(filedir)) dir.create(filedir)
+filepath <- paste0(filedir, "/gamm_corExp.rds")
+filepath
+write_rds(my_gamm , 
+          file = filepath)
 
 
 print(Sys.time())
 ```
+
+
+
+
+
+# See how above goes, revise below
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 # Reduced model without rainfall, pesticide, trees to reduce concurvity

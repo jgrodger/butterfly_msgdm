@@ -43,7 +43,7 @@ render_report = function(analysis_script, params_list) {
                 } else if(analysis_script == "GAM_compare_family_analyses.Rmd") {
                       paste0(here("Output/Spatial/GAM"), "/","GAM", "_" , params_list$dataset,  "/")  
                 } else if(analysis_script == "GAM_compare_spline_analyses.Rmd") {
-                      paste0(here("Output/Spatial/GAM"), "/","GAM", "_" , params_list$dataset,  "/") 
+                      paste0(here("Output/Spatial/GAM"), "/","GAM", "_" , params_list$dataset,  "/")
                 } else if(analysis_script == "process_GAMM_analyses.Rmd"){  
                       paste0(here("Output/Spatial/GAM/GAMM_"), params_list$dataset, "/", 
                              params_list$analysis,  "//")
