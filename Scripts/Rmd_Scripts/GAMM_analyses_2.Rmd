@@ -158,7 +158,7 @@ try(gamm_hs <- gamm(
   method = "REML", 
   correlation = corStructs[[3]], #corLin
   data = datasets$hs$gamm_input,
-  family = negbin(theta = 4.679)))#value from gam
+  family = negbin(theta = 4.663)))#value from gam
 
 
 filedir <- paste0(here(out_path), "/GAMM_hs")
