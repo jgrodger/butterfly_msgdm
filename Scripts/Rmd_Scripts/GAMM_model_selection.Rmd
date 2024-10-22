@@ -3,16 +3,358 @@ title: "R Notebook"
 output: html_notebook
 ---
 
-This is an [R Markdown](http://rmarkdown.rstudio.com) Notebook. When you execute code within the notebook, the results appear beneath the code. 
-
-Try executing this chunk by clicking the *Run* button within the chunk or by placing your cursor inside it and pressing *Ctrl+Shift+Enter*. 
-
-```{r}
-plot(cars)
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
 ```
 
-Add a new chunk by clicking the *Insert Chunk* button on the toolbar or by pressing *Ctrl+Alt+I*.
+#### Packages
+```{r}
+here::i_am("Scripts/Rmd_Scripts/GAMM_compare_corstructs_analyses.Rmd")
+library(tidyverse)
+#library(tmap)
+library(mgcv)
+library(gstat)
+library(knitr)
+library(knitrProgressBar)
+library(tictoc)
+library(here)
+library(conflicted)
+conflicts_prefer(dplyr::filter)
+conflicts_prefer(dplyr::select)
+conflicts_prefer(knitrProgressBar::progress_estimated)
+# there is a same-named function in dplyr, check it out
+```
 
-When you save the notebook, an HTML file containing the code and output will be saved alongside it (click the *Preview* button or press *Ctrl+Shift+K* to preview the HTML file).
+# Model selection
 
-The preview shows you a rendered HTML copy of the contents of the editor. Consequently, unlike *Knit*, *Preview* does not run any R code chunks. Instead, the output of the chunk when it was last run in the editor is displayed.
+#### This might go somewhere else but I am carrying on here for convenience. The next step is to drop one variable
+
+#change to method = "ML"
+
+
+```{r}
+#cor_gamms_as <- readRDS("E:/James_on_HPC1/R_Projects/butterfly_msgdm/Output/Spatial/GAM/GAMM_all_species/gamm_cor_struct_compare.rds")
+
+gamm_selection_as <- list()
+
+full_model_gamm <- gamm(
+  species.richness ~ s(mean.ann.temp, k = 6, bs = "cr") + s(log10.mean.ann.rain, k = 6, bs = "cr") +
+  s(topographic.wetness, k = 6, bs = "cr") + s(ph, k = 4, bs = "cr") + 
+  s(total.n, k = 6, bs = "cr") + s(tree.density, k = 6, bs = "cr") +
+  s(log10.pesticide.risk, k = 6, bs = "cr") + s(log10.humans, k = 6, bs = "cr"),
+  method = "ML",
+  family = "gaussian",
+  correlation = corStructs[[2]],
+  data = datasets$all_species$gamm_input)
+gamm_selection_as[[1]] <- full_model_gamm
+
+
+# while edf of zero means smooths could be made parametric terms, it makes little difference when they are not significant. Rather just drop entirely
+
+drop_trees_gamm <- gamm(
+  species.richness ~ s(mean.ann.temp, k = 6, bs = "cr") + s(log10.mean.ann.rain, k = 6, bs = "cr") +
+  s(topographic.wetness, k = 6, bs = "cr") + s(ph, k = 4, bs = "cr") + s(total.n, k = 6, bs = "cr")  +
+  s(log10.pesticide.risk, k = 6, bs = "cr") + s(log10.humans, k = 6, bs = "cr"),
+  method = "ML",
+  family = "gaussian",
+  correlation = corStructs[[2]],
+  data = datasets$all_species$gamm_input)
+gamm_selection_as[[2]] <- drop_trees_gamm
+
+
+drop_trees_pesticide_gamm <- gamm(
+  species.richness ~  s(mean.ann.temp, k = 6, bs = "cr") + s(log10.mean.ann.rain, k = 6, bs = "cr") +
+  s(topographic.wetness, k = 6, bs = "cr") + s(ph, k = 4, bs = "cr") + s(total.n, k = 6, bs = "cr")  +
+  s(log10.humans, k = 6, bs = "cr"),
+  method = "ML",
+  family = "gaussian",
+  correlation = corStructs[[2]],
+  data = datasets$all_species$gamm_input)
+gamm_selection_as[[3]] <- drop_trees_pesticide_gamm
+
+
+drop_trees_pesticide_prec_gamm <- gamm(
+  species.richness ~  s(mean.ann.temp, k = 6, bs = "cr")  +
+  s(topographic.wetness, k = 6, bs = "cr") + s(ph, k = 4, bs = "cr") + s(total.n, k = 6, bs = "cr")  +
+  s(log10.humans, k = 6, bs = "cr"),
+  method = "ML",
+  family = "gaussian",
+  correlation = corStructs[[2]],
+  data = datasets$all_species$gamm_input)
+gamm_selection_as[[4]] <- drop_trees_pesticide_prec_gamm
+
+
+drop_trees_pesticide_temp_gamm <- gamm(
+  species.richness ~  s(log10.mean.ann.rain, k = 6, bs = "cr") +
+  s(topographic.wetness, k = 6, bs = "cr") + s(ph, k = 4, bs = "cr") + s(total.n, k = 6, bs = "cr")  +
+  s(log10.humans, k = 6, bs = "cr"),
+  method = "ML",
+  family = "gaussian",
+  correlation = corStructs[[2]],
+  data = datasets$all_species$gamm_input)
+gamm_selection_as[[5]] <- drop_trees_pesticide_temp_gamm
+
+filedir <- paste0(here(out_path), "/GAMM_all_species")
+if(!dir.exists(filedir)) dir.create(filedir)
+filepath <- paste0(filedir, "/gamm_model_select_as.rds")
+filepath
+write_rds(gamm_selection_as , 
+          file = filepath)
+
+```
+
+
+```{r}
+
+# If already saved, load again to make figures and output
+gamm_selection_as <- readRDS("E:/butterfly_msgdm/Output/Spatial/GAM/GAMM_all_species/gamm_model_select_as.rds")
+full_model_gamm <- gamm_selection_as[[1]]
+drop_trees_gamm <- gamm_selection_as[[2]]
+drop_trees_pesticide_gamm <- gamm_selection_as[[3]]
+drop_trees_pesticide_prec_gamm <- gamm_selection_as[[4]]
+drop_trees_pesticide_temp_gamm <- gamm_selection_as[[5]]
+
+gam.check(full_model_gamm$gam)
+summary(full_model_gamm$gam)
+plot(full_model_gamm$gam, pages = 2)
+
+gam.check(drop_trees_gamm$gam)
+summary(drop_trees_gamm$gam)
+plot(drop_trees_gamm$gam, pages = 2)
+
+gam.check(drop_trees_pesticide_gamm$gam)
+summary(drop_trees_pesticide_gamm$gam)
+plot(drop_trees_pesticide_gamm$gam, pages = 2)
+
+gam.check(drop_trees_pesticide_prec_gamm$gam)
+summary(drop_trees_pesticide_prec_gamm$gam)
+plot(drop_trees_pesticide_prec_gamm$gam, pages = 2)
+
+gam.check(drop_trees_pesticide_temp_gamm$gam)
+summary(drop_trees_pesticide_temp_gamm$gam)
+plot(drop_trees_pesticide_temp_gamm$gam, pages = 2)
+
+```
+
+
+
+
+```{r}
+#cor_gamms_wc <- readRDS("E:/James_on_HPC1/R_Projects/butterfly_msgdm/Output/Spatial/GAM/GAMM_wc/gamm_cor_struct_compare.rds")
+
+#to reach convergence
+options(mgcv.vc.logrange = 5)
+lmeCtlList=lmeControl(niterEM = 50)
+
+gamm_selection_wc <- list()
+
+full_model_gamm <- gamm(
+  species.richness ~ s(mean.ann.temp, k = 6, bs = "cr") + s(log10.mean.ann.rain, k = 6, bs = "cr") +
+  s(topographic.wetness, k = 6, bs = "cr") + s(ph, k = 4, bs = "cr") + 
+  s(total.n, k = 6, bs = "cr") + s(tree.density, k = 6, bs = "cr") +
+  s(log10.pesticide.risk, k = 6, bs = "cr") + s(log10.humans, k = 6, bs = "cr"),
+  method = "ML",
+  family = "gaussian",
+  correlation = corStructs[[2]],
+  data = datasets$wc$gamm_input)
+gamm_selection_wc[[1]] <- full_model_gamm
+
+
+drop_trees_gamm <- gamm(
+  species.richness ~ s(mean.ann.temp, k = 6, bs = "cr") + s(log10.mean.ann.rain, k = 6, bs = "cr") +
+  s(topographic.wetness, k = 6, bs = "cr") + s(ph, k = 4, bs = "cr") + s(total.n, k = 6, bs = "cr")  +
+  s(log10.pesticide.risk, k = 6, bs = "cr") + s(log10.humans, k = 6, bs = "cr"),
+  method = "ML",
+  family = "gaussian",
+  correlation = corStructs[[2]],
+  data = datasets$wc$gamm_input)
+gamm_selection_wc[[2]] <- drop_trees_gamm
+
+
+drop_trees_pesticide_gamm <- gamm(
+  species.richness ~ s(mean.ann.temp, k = 6, bs = "cr") + s(log10.mean.ann.rain, k = 6, bs = "cr") +
+  s(topographic.wetness, k = 6, bs = "cr") + s(ph, k = 4, bs = "cr") + s(total.n, k = 6, bs = "cr")  + 
+    s(log10.humans, k = 6, bs = "cr"),
+  method = "ML",
+  family = "gaussian",
+  correlation = corStructs[[2]],
+  data = datasets$wc$gamm_input)
+gamm_selection_wc[[3]] <- drop_trees_pesticide_gamm
+
+drop_trees_pesticide_prec_gamm <- gamm(
+  species.richness ~ s(mean.ann.temp, k = 6, bs = "cr") +
+  s(topographic.wetness, k = 6, bs = "cr") + s(ph, k = 4, bs = "cr") + s(total.n, k = 6, bs = "cr")  + 
+    s(log10.humans, k = 6, bs = "cr"),
+  method = "ML",
+  family = "gaussian",
+  correlation = corStructs[[2]],
+  data = datasets$wc$gamm_input)
+gamm_selection_wc[[4]] <- drop_trees_pesticide_prec_gamm
+
+drop_trees_pesticide_temp_gamm <- gamm(
+  species.richness ~ s(log10.mean.ann.rain, k = 6, bs = "cr") +
+  s(topographic.wetness, k = 6, bs = "cr") + s(ph, k = 4, bs = "cr") + s(total.n, k = 6, bs = "cr")  + 
+    s(log10.humans, k = 6, bs = "cr"),
+  method = "ML",
+  family = "gaussian",
+  correlation = corStructs[[2]],
+  data = datasets$wc$gamm_input)
+gamm_selection_wc[[5]] <- drop_trees_pesticide_temp_gamm
+
+
+
+filedir <- paste0(here(out_path), "/GAMM_wc")
+if(!dir.exists(filedir)) dir.create(filedir)
+filepath <- paste0(filedir, "/gamm_model_select_wc.rds")
+filepath
+write_rds(gamm_selection_wc , 
+          file = filepath)
+```
+
+```{r}
+# If already saved
+gamm_selection_wc <- readRDS("E:/butterfly_msgdm/Output/Spatial/GAM/GAMM_wc/gamm_model_select_wc.rds")
+full_model_gamm <- gamm_selection_wc[[1]]
+drop_trees_gamm <- gamm_selection_wc[[2]]
+drop_trees_pesticide_gamm <- gamm_selection_wc[[3]]
+drop_trees_pesticide_prec_gamm <- gamm_selection_wc[[4]]
+drop_trees_pesticide_temp_gamm <- gamm_selection_wc[[5]]
+
+gam.check(full_model_gamm$gam)
+summary(full_model_gamm$gam)
+plot(full_model_gamm$gam, pages = 2)
+
+gam.check(drop_trees_gamm$gam)
+summary(drop_trees_gamm$gam)
+plot(drop_trees_gamm$gam, pages = 2)
+
+gam.check(drop_trees_pesticide_gamm$gam)
+summary(drop_trees_pesticide_gamm$gam)
+plot(drop_trees_pesticide_gamm$gam, pages = 2)
+
+
+gam.check(drop_trees_pesticide_prec_gamm$gam)
+summary(drop_trees_pesticide_prec_gamm$gam)
+plot(drop_trees_pesticide_prec_gamm$gam, pages = 2)
+
+gam.check(drop_trees_pesticide_temp_gamm$gam)
+summary(drop_trees_pesticide_temp_gamm$gam)
+plot(drop_trees_pesticide_temp_gamm$gam, pages = 2)
+```
+
+
+
+#using corGaus instead of corExp as for this, it had lower AIC
+
+```{r}
+#cor_gamms_hs <- readRDS("E:/James_on_HPC1/R_Projects/butterfly_msgdm/Output/Spatial/GAM/GAMM_hs/gamm_cor_struct_compare.rds")
+
+gamm_selection_hs <- list()
+
+#corGaus favoured by AIC
+
+
+
+full_model_gamm <- gamm(
+  species.richness ~ s(mean.ann.temp, k = 6, bs = "cr") + s(log10.mean.ann.rain, k = 6, bs = "cr") +
+  s(topographic.wetness, k = 6, bs = "cr") + s(ph, k = 4, bs = "cr") + 
+  s(total.n, k = 6, bs = "cr") + s(tree.density, k = 6, bs = "cr") +
+  s(log10.pesticide.risk, k = 6, bs = "cr") + s(log10.humans, k = 6, bs = "cr"),
+  method = "ML",
+  family = negbin(theta = 4.663), 
+  control=lmeCtlList,
+  correlation = corStructs[[1]],
+  data = datasets$hs$gamm_input)
+
+gamm_selection_hs[[1]] <- full_model_gamm
+
+drop_pesticide_gamm <- gamm(
+  species.richness ~ s(mean.ann.temp, k = 6, bs = "cr") + s(log10.mean.ann.rain, k = 6, bs = "cr") +
+  s(topographic.wetness, k = 6, bs = "cr") + s(ph, k = 4, bs = "cr") + s(total.n, k = 6, bs = "cr")  + s(tree.density, k = 6, bs = "cr") + s(log10.humans, k = 6, bs = "cr"),
+  method = "ML",
+  family = negbin(theta = 4.663), 
+  control=lmeCtlList,
+  correlation = corStructs[[1]],
+  data = datasets$hs$gamm_input)
+
+gamm_selection_hs[[2]] <- drop_pesticide_gamm
+
+
+drop_pesticide_trees_gamm <- gamm(
+  species.richness ~ s(mean.ann.temp, k = 6, bs = "cr") + s(log10.mean.ann.rain, k = 6, bs = "cr") +
+  s(topographic.wetness, k = 6, bs = "cr") + s(ph, k = 4, bs = "cr") + s(total.n, k = 6, bs = "cr")  +
+    s(log10.humans, k = 6, bs = "cr"),
+  method = "ML",
+  family = negbin(theta = 4.663), 
+  control=lmeCtlList,
+  correlation = corStructs[[1]],
+  data = datasets$hs$gamm_input)
+gamm_selection_hs[[3]] <- drop_pesticide_trees_gamm
+
+drop_pesticide_trees_prec_gamm <- gamm(
+  species.richness ~ s(mean.ann.temp, k = 6, bs = "cr") +
+  s(topographic.wetness, k = 6, bs = "cr") + s(ph, k = 4, bs = "cr") + s(total.n, k = 6, bs = "cr")  +
+    s(log10.humans, k = 6, bs = "cr"),
+  method = "ML",
+  family = negbin(theta = 4.663), 
+  control=lmeCtlList,
+  correlation = corStructs[[1]],
+  data = datasets$hs$gamm_input)
+gamm_selection_hs[[4]] <- drop_pesticide_trees_prec_gamm
+
+drop_pesticide_trees_temp_gamm <- gamm(
+  species.richness ~ s(log10.mean.ann.rain, k = 6, bs = "cr") +
+  s(topographic.wetness, k = 6, bs = "cr") + s(ph, k = 4, bs = "cr") + s(total.n, k = 6, bs = "cr")  +
+    s(log10.humans, k = 6, bs = "cr"),
+  method = "ML",
+  family = negbin(theta = 4.663), 
+  control=lmeCtlList,
+  correlation = corStructs[[1]],
+  data = datasets$hs$gamm_input)
+gamm_selection_hs[[5]] <- drop_pesticide_trees_temp_gamm
+
+filedir <- paste0(here(out_path), "/GAMM_hs")
+if(!dir.exists(filedir)) dir.create(filedir)
+filepath <- paste0(filedir, "/gamm_model_select_hs.rds")
+filepath
+write_rds(gamm_selection_hs , 
+          file = filepath)
+```
+
+
+
+```{r}
+#if already saved
+# gamm_selection_hs <- readRDS("E:/butterfly_msgdm/Output/Spatial/GAM/GAMM_hs/gamm_model_select_hs.rds")
+# full_model_gamm <- gamm_selection_hs[[1]]
+# drop_pesticide_gamm <- gamm_selection_hs[[2]]
+# drop_pesticide_trees_gamm <- gamm_selection_hs[[3]]
+# drop_trees_pesticide_prec_gamm <- gamm_selection_hs[[4]]
+# drop_trees_pesticide_temp_gamm <- gamm_selection_hs[[5]]
+
+gam.check(full_model_gamm$gam)
+summary(full_model_gamm$gam)
+plot(full_model_gamm$gam, pages = 2)
+
+gam.check(drop_pesticide_gamm$gam)
+summary(drop_pesticide_gamm$gam)
+plot(drop_pesticide_gamm$gam, pages = 2)
+
+gam.check(drop_pesticide_trees_gamm$gam)
+summary(drop_pesticide_trees_gamm$gam)
+plot(drop_pesticide_trees_gamm$gam, pages = 2)
+
+
+gam.check(drop_pesticide_trees_prec_gamm$gam)
+summary(drop_pesticide_trees_prec_gamm$gam)
+plot(drop_pesticide_trees_prec_gamm$gam, pages = 2)
+
+gam.check(drop_pesticide_trees_temp_gamm$gam)
+summary(drop_pesticide_trees_temp_gamm$gam)
+plot(drop_pesticide_trees_temp_gamm$gam, pages = 2)
+
+#not working
+#AIC(full_model_gamm$gam, drop_pesticide_gamm$gam, drop_pesticide_trees_gamm$gam)
+```
+
+
