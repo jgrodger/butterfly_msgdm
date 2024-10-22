@@ -3,7 +3,7 @@ title: ""
 output: pdf_document
 
 params:
-  analysis: "gamm_cor_struct_compare_reduced_mod"
+  analysis: "gamm_model_select_as"
   dataset: "all_species"
   corStruct: "corExp"
 ---
@@ -16,7 +16,7 @@ knitr::opts_chunk$set(echo = FALSE, message = FALSE)
 
 #### Packages
 ```{r }
-here::i_am("Scripts/Rmd_Scripts/process_GAMMS_single.Rmd")
+here::i_am("Scripts/Rmd_Scripts/process_GAMMS_single_result_output.Rmd")
 library(tidyverse)
 library(mgcv)
 library(mgcViz)
@@ -42,22 +42,14 @@ if(!dir.exists(out_path)) dir.create(out_path)
 
 #### Load GAMM output 
 ```{r}
+gamm_list <- readRDS(paste0(gamm_path, params$analysis, ".rds"))
 
-#### Get the specified GAMM
-gamm_cor_struct_list <- readRDS(paste0(gamm_path, params$analysis, ".rds"))
-names(gamm_cor_struct_list) <- c("gamm_corGaus", "gamm_corExp", "gamm_corLin",
-"gamm_corRatio", "gamm_corSpher")
-
-#extract all the GAMMS
-gamm_corGaus <- gamm_cor_struct_list[[1]]
-gamm_corExp <- gamm_cor_struct_list[[2]]
-gamm_corLin <- gamm_cor_struct_list[[3]]
-gamm_corRatio <- gamm_cor_struct_list[[4]]
-gamm_corSpher <- gamm_cor_struct_list[[5]]
+# this happens to work for my analyses. I haven't allowed for choosing another analysis from model selection
+my_gamm <- gamm_list[[3]]
 
 #choose the one specified in params
 # get() finds object with name specified as a character string
-my_gamm <- get(paste0("gamm_", params$corStruct))
+#my_gamm <- get(paste0("gamm_", params$corStruct))
 
 ```
 
@@ -115,7 +107,7 @@ kable(par_sum, digits = 2)
 ```{r}
 names(gam_sum) <- ("column")
 
-#keep rows with "s(" but not "+ as the latter is in rows for the formula
+#keep rows with "s(" but not "=" as the latter is in rows for the formula
 smooth_sum <- gam_sum %>%
   filter(
       str_detect(column, "s\\(")
@@ -123,7 +115,7 @@ smooth_sum <- gam_sum %>%
 
 smooth_sum <- smooth_sum %>%
   filter(
-      !str_detect(column, "\\+")
+      !str_detect(column, "\\=")
   )
 
 #add missing "ns" entries to stars column
