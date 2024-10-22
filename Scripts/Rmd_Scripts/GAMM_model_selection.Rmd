@@ -9,7 +9,7 @@ knitr::opts_chunk$set(echo = TRUE)
 
 #### Packages
 ```{r}
-here::i_am("Scripts/Rmd_Scripts/GAMM_compare_corstructs_analyses.Rmd")
+here::i_am("Scripts/Rmd_Scripts/GAMM_model_selection.Rmd")
 library(tidyverse)
 #library(tmap)
 library(mgcv)
@@ -27,14 +27,21 @@ conflicts_prefer(knitrProgressBar::progress_estimated)
 
 # Model selection
 
-#### This might go somewhere else but I am carrying on here for convenience. The next step is to drop one variable
+### load files from correlation structure analyses
+```{r}
+cor_gamms_as <- readRDS(here("Output/Spatial/GAM/GAMM_all_species/gamm_cor_struct_compare.rds"))
 
-#change to method = "ML"
+cor_gamms_wc <- readRDS(here("Output/Spatial/GAM/GAMM_wc/gamm_cor_struct_compare.rds"))
+
+cor_gamms_hs <- readRDS(here("Output/Spatial/GAM/GAMM_hs/gamm_cor_struct_compare.rds"))
+
+```
+
+
+# NB method = "ML"
 
 
 ```{r}
-#cor_gamms_as <- readRDS("E:/James_on_HPC1/R_Projects/butterfly_msgdm/Output/Spatial/GAM/GAMM_all_species/gamm_cor_struct_compare.rds")
-
 gamm_selection_as <- list()
 
 full_model_gamm <- gamm(
@@ -107,7 +114,8 @@ write_rds(gamm_selection_as ,
 ```{r}
 
 # If already saved, load again to make figures and output
-gamm_selection_as <- readRDS("E:/butterfly_msgdm/Output/Spatial/GAM/GAMM_all_species/gamm_model_select_as.rds")
+gamm_selection_as <- readRDS(here("Output/Spatial/GAM/GAMM_all_species/gamm_model_select_as.rds"))
+
 full_model_gamm <- gamm_selection_as[[1]]
 drop_trees_gamm <- gamm_selection_as[[2]]
 drop_trees_pesticide_gamm <- gamm_selection_as[[3]]
@@ -140,8 +148,6 @@ plot(drop_trees_pesticide_temp_gamm$gam, pages = 2)
 
 
 ```{r}
-#cor_gamms_wc <- readRDS("E:/James_on_HPC1/R_Projects/butterfly_msgdm/Output/Spatial/GAM/GAMM_wc/gamm_cor_struct_compare.rds")
-
 #to reach convergence
 options(mgcv.vc.logrange = 5)
 lmeCtlList=lmeControl(niterEM = 50)
@@ -213,7 +219,7 @@ write_rds(gamm_selection_wc ,
 
 ```{r}
 # If already saved
-gamm_selection_wc <- readRDS("E:/butterfly_msgdm/Output/Spatial/GAM/GAMM_wc/gamm_model_select_wc.rds")
+gamm_selection_wc <- readRDS(here("Output/Spatial/GAM/GAMM_wc/gamm_model_select_wc.rds"))
 full_model_gamm <- gamm_selection_wc[[1]]
 drop_trees_gamm <- gamm_selection_wc[[2]]
 drop_trees_pesticide_gamm <- gamm_selection_wc[[3]]
@@ -247,7 +253,7 @@ plot(drop_trees_pesticide_temp_gamm$gam, pages = 2)
 #using corGaus instead of corExp as for this, it had lower AIC
 
 ```{r}
-#cor_gamms_hs <- readRDS("E:/James_on_HPC1/R_Projects/butterfly_msgdm/Output/Spatial/GAM/GAMM_hs/gamm_cor_struct_compare.rds")
+
 
 gamm_selection_hs <- list()
 
@@ -325,12 +331,12 @@ write_rds(gamm_selection_hs ,
 
 ```{r}
 #if already saved
-# gamm_selection_hs <- readRDS("E:/butterfly_msgdm/Output/Spatial/GAM/GAMM_hs/gamm_model_select_hs.rds")
-# full_model_gamm <- gamm_selection_hs[[1]]
-# drop_pesticide_gamm <- gamm_selection_hs[[2]]
-# drop_pesticide_trees_gamm <- gamm_selection_hs[[3]]
-# drop_trees_pesticide_prec_gamm <- gamm_selection_hs[[4]]
-# drop_trees_pesticide_temp_gamm <- gamm_selection_hs[[5]]
+gamm_selection_hs <- readRDS(here("Output/Spatial/GAM/GAMM_hs/gamm_model_select_hs.rds"))
+full_model_gamm <- gamm_selection_hs[[1]]
+drop_pesticide_gamm <- gamm_selection_hs[[2]]
+drop_pesticide_trees_gamm <- gamm_selection_hs[[3]]
+drop_pesticide_trees_prec_gamm <- gamm_selection_hs[[4]]
+drop_pesticide_trees_temp_gamm <- gamm_selection_hs[[5]]
 
 gam.check(full_model_gamm$gam)
 summary(full_model_gamm$gam)
