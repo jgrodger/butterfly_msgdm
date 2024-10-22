@@ -128,30 +128,7 @@ render_report(analysis_script = "process_GAMM_analyses.Rmd",
                    analysis = "gamm_cor_struct_compare"))
 ```
 
-### Reduced model
-
-#### All species
-```{r}
-render_report(analysis_script = "process_GAMM_analyses.Rmd", 
-              list(dataset = "all_species", 
-                   analysis = "gamm_cor_struct_compare_reduced_mod"))
-```
-
-#### wider countryside
-```{r}
-render_report(analysis_script = "process_GAMM_analyses.Rmd", 
-              list(dataset = "wc", 
-                   analysis = "gamm_cor_struct_compare_reduced_mod"))
-```
-
-#### Habitat Specialists
-```{r}
-render_report(analysis_script = "process_GAMM_analyses.Rmd", 
-              list(dataset = "wc", 
-                   analysis = "gamm_cor_struct_compare_reduced_mod"))
-```
-
-### Generate output to report
+# GAMM model selection
 
 # sink() didn't work this way so instead I changed the param in process_GAMMS_single_result_output.Rmd and ran it
 

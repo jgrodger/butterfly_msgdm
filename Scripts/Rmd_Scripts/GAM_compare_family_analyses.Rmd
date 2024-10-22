@@ -24,6 +24,7 @@ here::i_am("Scripts/Rmd_Scripts/GAM_compare_family_analyses.Rmd")
 library(tidyverse)
 library(mgcv)
 library(moranfast)
+library(gstat)
 library(knitr)
 library(knitrProgressBar)
 library(here)
@@ -135,3 +136,34 @@ write_csv(aic_table, file = paste0(out_path, "/", "family_aic_table.csv"))
 
 kable(aic_table, digits = 2, align = "l")
 ```
+### Moran's tests
+```{r}
+for (i in 1:length(gam_list)){
+  print(names(gam_list[i]))  
+  gam_i <- gam_list[[i]]
+  print("Moran's test  with I value")
+  print(moranfast(residuals(gam_i, type = "deviance"), 
+          site.by.env.and.richness$x, site.by.env.and.richness$y))
+}
+```
+# do as loop
+
+```{r}
+
+
+residuals  <- residuals(gam_list[[i]])
+
+xy.res <- cbind(site.by.xy, residuals)
+
+v1 <-   variogram(residuals ~ 1, loc= ~ x+y, data = xy.res)
+fit1 <- fit.variogram(v1, vgm(c("Sph", "Exp"))); 
+plot(v1, fit1)
+
+filepath <- here("Output/Spatial/GAM/GAM_all_species/semivariogram.png")
+unlink(filepath, recursive = FALSE, force = FALSE) #deletes previous version with the same name
+
+png(file = filepath)
+plot(v1, fit1)
+dev.off()
+```
+
