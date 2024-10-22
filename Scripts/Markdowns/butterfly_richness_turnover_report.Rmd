@@ -10,13 +10,15 @@ output: html_document
 knitr::opts_chunk$set(
   echo = FALSE)
 
+here::i_am("Scripts/Markdowns/butterfly_richness_turnover_report.Rmd")
+
 library(knitr)
 library(rmarkdown)
 library(readr)
 library(conflicted)
 library(here)
 
-here::i_am("Scripts/Markdowns/butterfly_richness_turnover_report.Rmd")
+
 
 
 

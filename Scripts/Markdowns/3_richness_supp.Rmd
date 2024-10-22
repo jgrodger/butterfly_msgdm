@@ -35,14 +35,14 @@ print_csv(tab_no = "SG3",
 
 ```{r , message=FALSE}
 print_csv(tab_no = "SG4",
-          csv_path = "Output/Spatial/GAM/GAMM_all_species/gamm_cor_struct_compare_reduced_mod/corExp/gamm_info.csv",
+          csv_path = "Output/Spatial/GAM/GAMM_all_species/gamm_model_select_as/corExp/gamm_info.csv",
           tab_cap = "Key information for GAMM for All Species")
 
 ```
 
 ```{r , message=FALSE}
 print_csv(tab_no = "SG5",
-          csv_path = "Output/Spatial/GAM/GAMM_all_species/gamm_cor_struct_compare_reduced_mod/corExp/parametric_p_value_table.csv",
+          csv_path = "Output/Spatial/GAM/GAMM_all_species/gamm_model_select_as/corExp/parametric_p_value_table.csv",
           tab_cap = "Significance of parametric and smooth terms in GAMM for All Species")
 
 print_csv(csv_path = "Output/Spatial/GAM/GAMM_all_species/gamm_cor_struct_compare_reduced_mod/corExp/smooth_p_value_table.csv")
@@ -53,15 +53,15 @@ print_csv(csv_path = "Output/Spatial/GAM/GAMM_all_species/gamm_cor_struct_compar
 ```
 
 ```{r , message=FALSE}
-print_csv(tab_no = "SG4",
-          csv_path = "Output/Spatial/GAM/GAMM_wc/gamm_cor_struct_compare_reduced_mod/corExp/gamm_info.csv",
+print_csv(tab_no = "SG6",
+          csv_path = "Output/Spatial/GAM/GAMM_wc/gamm_model_select_wc/corExp/gamm_info.csv",
           tab_cap = "Key information for GAMM for Wider Countryside Species")
 
 ```
 
 ```{r , message=FALSE}
-print_csv(tab_no = "SG5",
-          csv_path = "Output/Spatial/GAM/GAMM_wc/gamm_cor_struct_compare_reduced_mod/corExp/parametric_p_value_table.csv",
+print_csv(tab_no = "SG7",
+          csv_path = "Output/Spatial/GAM/GAMM_wc/gamm_model_select_wc/corExp/parametric_p_value_table.csv",
           tab_cap = "Significance of parametric and smooth terms in GAMM for Wider Counrysided Species")
 
 print_csv(csv_path = "Output/Spatial/GAM/GAMM_wc/gamm_cor_struct_compare_reduced_mod/corExp/smooth_p_value_table.csv")
@@ -72,15 +72,15 @@ print_csv(csv_path = "Output/Spatial/GAM/GAMM_wc/gamm_cor_struct_compare_reduced
 ```
 
 ```{r , message=FALSE}
-print_csv(tab_no = "SG4",
-          csv_path = "Output/Spatial/GAM/GAMM_hs/gamm_cor_struct_compare_reduced_mod/corExp/gamm_info.csv",
+print_csv(tab_no = "SG8",
+          csv_path = "Output/Spatial/GAM/GAMM_hs/gamm_model_select_hs/corGaus/gamm_info.csv",
           tab_cap = "Key information for GAMM for Habitat Specialists")
 
 ```
 
 ```{r , message=FALSE}
-print_csv(tab_no = "SG5",
-          csv_path = "Output/Spatial/GAM/GAMM_hs/gamm_cor_struct_compare_reduced_mod/corExp/parametric_p_value_table.csv",
+print_csv(tab_no = "SG9",
+          csv_path = "Output/Spatial/GAM/GAMM_hs/gamm_model_select_hs/corGaus/parametric_p_value_table.csv",
           tab_cap = "Significance of parametric and smooth terms in GAMM for Habitat Specialists")
 
 print_csv(csv_path = "Output/Spatial/GAM/GAMM_hs/gamm_cor_struct_compare_reduced_mod/corExp/smooth_p_value_table.csv")
