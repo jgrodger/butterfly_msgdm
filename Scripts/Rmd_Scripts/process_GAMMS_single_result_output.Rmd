@@ -53,19 +53,17 @@ my_gamm <- gamm_list[[3]]
 
 ```
 
-
+#### save gamm$gam summary output as text
 ```{r}
-sink(paste0(out_path, "gam_summ.txt"))
-summary(my_gamm$gam)
-sink()
-
+out<-capture.output(summary(my_gamm$gam))
+cat(out,file = paste0(out_path, "gam_summ.txt"),sep="\n",append=TRUE)
 ```
 
 
 #### read the text file and edit to create summary tables for presentation
 
 ```{r}
-gam_sum <- read.delim(paste0(out_path, "gam_summ.txt")) # it comes in as a dataframe with one column
+gam_sum <- read.delim2(paste0(out_path, "gam_summ.txt")) # it comes in as a dataframe with one column
 names(gam_sum) <- "column"
 ```
 
@@ -101,7 +99,6 @@ par_sum <- par_sum %>%
 write_csv(par_sum, file = paste0(out_path, "/", "parametric_p_value_table.csv"))
 kable(par_sum, digits = 2)
 ```
-
 #### Then the smooths
 ##### add missing entries to Stars column
 ```{r}
@@ -125,6 +122,8 @@ smooth_sum <- smooth_sum %>%
     str_detect(column, pattern = " \\.") ~ column,
     .default = paste0(column, " ns")))
 ```
+
+
 ##### separate into variables etc
 ```{r}
 #This is mostly a copy and paste of the code above
@@ -155,7 +154,6 @@ smooth_sum <- smooth_sum %>%
 write_csv(smooth_sum, file = paste0(out_path, "/", "smooth_p_value_table.csv"))
 kable(smooth_sum, digits = 2)
 ```
-
 # extract and paste together other relevant summary info
 ```{r}
 my_summary <- summary(my_gamm$gam)
@@ -183,32 +181,6 @@ write_csv(info_sum, file = paste0(out_path, "/", "gamm_info.csv"))
 kable(info_sum)
 
 ```
-
-#### Save the gam plots
-```{r , fig.show='hide'}
-png(file = paste0(out_path, "gam_plot.png"))
-
-par(mfrow = c(5, 1),
-    mar = c(1, 1, 1, 1))
-plot(my_gamm$gam, 
-     shade = TRUE, 
-     shift = coef(my_gamm$gam)[1],
-     asp = 1)
-dev.off()  
-```
-#mgcv plot
-
-```{r}
-# obtain gam_Viz object
-my_viz <-  getViz(my_gamm$gam)
-
-my_o_my <- plot( my_viz, allTerms = TRUE, shift = coef(my_gamm$gam)[1])
-my_o_my <- my_o_my + l_fitLine(colour = "red") + l_rug(mapping = aes(x=x), alpha = 0.8) +
-    l_ciLine(mul = 1.96, colour = "blue", linetype = 2) + 
-    l_points(shape = 19, size = 1, alpha = 0.1) + theme_classic()
-print(my_o_my, pages = 1)
-```
-
 
 
 

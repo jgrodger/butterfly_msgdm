@@ -147,7 +147,7 @@ render_report(analysis_script = "process_GAMM_analyses.Rmd",
 #### Habitat Specialists
 ```{r}
 render_report(analysis_script = "process_GAMM_analyses.Rmd", 
-              list(dataset = "hs", 
+              list(dataset = "wc", 
                    analysis = "gamm_cor_struct_compare_reduced_mod"))
 ```
 
@@ -155,30 +155,31 @@ render_report(analysis_script = "process_GAMM_analyses.Rmd",
 
 # sink() didn't work this way so instead I changed the param in process_GAMMS_single_result_output.Rmd and ran it
 
-<!-- #### All species -->
-<!-- ```{r} -->
 
-<!-- render_report(analysis_script = "process_GAMMS_single_result_output.Rmd",  -->
-<!--               list(dataset = "all_species",  -->
-<!--                    analysis = "gamm_cor_struct_compare_reduced_mod", -->
-<!--                    corStruct = "corExp")) -->
-<!-- ``` -->
-<!-- #### Wider Countryside -->
-<!-- ```{r} -->
+#### All species
+```{r}
 
-<!-- render_report(analysis_script = "process_GAMMS_single_result_output.Rmd",  -->
-<!--               list(dataset = "wc",  -->
-<!--                    analysis = "gamm_cor_struct_compare_reduced_mod", -->
-<!--                    corStruct = "corExp")) -->
-<!-- ``` -->
-<!-- #### Habitat Specialists corExp -->
-<!-- ```{r} -->
+render_report(analysis_script = "process_GAMMS_single_result_output.Rmd",
+              list(dataset = "all_species",
+                   analysis = "gamm_model_select_as",
+                   corStruct = "corExp"))
+```
+#### Wider Countryside
+```{r}
 
-<!-- render_report(analysis_script = "process_GAMMS_single_result_output.Rmd",  -->
-<!--               list(dataset = "hs",  -->
-<!--                    analysis = "gamm_cor_struct_compare_reduced_mod", -->
-<!--                    corStruct = "corExp")) -->
-<!-- ``` -->
+render_report(analysis_script = "process_GAMMS_single_result_output.Rmd",
+              list(dataset = "wc",
+                   analysis = "gamm_model_select_wc",
+                   corStruct = "corExp"))
+```
+#### Habitat Specialists corGaus
+```{r}
+
+render_report(analysis_script = "process_GAMMS_single_result_output.Rmd",
+              list(dataset = "hs",
+                   analysis = "gamm_model_select_hs",
+                   corStruct = "corGaus"))
+```
 
 ### Reduced model
 
