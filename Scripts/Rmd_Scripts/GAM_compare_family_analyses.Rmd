@@ -150,20 +150,21 @@ for (i in 1:length(gam_list)){
 
 ```{r}
 
+for (i in 1:length(gam_list)){
+  print(names(gam_list[i])) 
+  residuals  <- residuals(gam_list[[i]])
+  xy.res <- cbind(site.by.xy, residuals)
+  v1 <-   variogram(residuals ~ 1, loc= ~ x+y, data = xy.res)
+  fit1 <- fit.variogram(v1, vgm(c("Sph", "Exp"))); 
+  print(plot(v1, fit1))
+}
 
-residuals  <- residuals(gam_list[[i]])
 
-xy.res <- cbind(site.by.xy, residuals)
+#filepath <- here("Output/Spatial/GAM/GAM_all_species/semivariogram.png")
+#unlink(filepath, recursive = FALSE, force = FALSE) #deletes previous version with the same name
 
-v1 <-   variogram(residuals ~ 1, loc= ~ x+y, data = xy.res)
-fit1 <- fit.variogram(v1, vgm(c("Sph", "Exp"))); 
-plot(v1, fit1)
-
-filepath <- here("Output/Spatial/GAM/GAM_all_species/semivariogram.png")
-unlink(filepath, recursive = FALSE, force = FALSE) #deletes previous version with the same name
-
-png(file = filepath)
-plot(v1, fit1)
-dev.off()
+#png(file = filepath)
+#plot(v1, fit1)
+#dev.off()
 ```
 
