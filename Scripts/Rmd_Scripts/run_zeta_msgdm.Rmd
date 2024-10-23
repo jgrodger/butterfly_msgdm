@@ -40,14 +40,13 @@ render_report = function(analysis_script, params_list) {
                     paste0(here("Output/Spatial/zeta_declines_decays"), "/", params_list$dataset,  "/")
                 } else if(analysis_script == "Zeta_msgdm_analyses.Rmd") {
                     paste0(here("Output/Spatial/msgdms/"), "/", params_list$dataset, "_" , params_list$normalize_msgdm)
+                } else if(analysis_script == "Zeta_msgdm_change_seed.Rmd") {
+                    paste0(here("Output/Spatial/msgdms/"), "/", params_list$dataset, "_" , params_list$normalize_msgdm, "_" , params_list$my_seed)                 
                 } else if(analysis_script == "GAM_compare_family_analyses.Rmd") {
                       paste0(here("Output/Spatial/GAM"), "/","GAM", "_" , params_list$dataset,  "/")  
                 } else if(analysis_script == "GAM_compare_spline_analyses.Rmd") {
                       paste0(here("Output/Spatial/GAM"), "/","GAM", "_" , params_list$dataset,  "/")
                 } else if(analysis_script == "process_GAMM_analyses.Rmd"){  
-                      paste0(here("Output/Spatial/GAM/GAMM_"), params_list$dataset, "/", 
-                             params_list$analysis,  "//")
-                } else if(analysis_script == "process_GAMM_analyses_with_loops.Rmd"){  
                       paste0(here("Output/Spatial/GAM/GAMM_"), params_list$dataset, "/", 
                              params_list$analysis,  "//")
                 } else if(analysis_script == "process_GAMMS_single_result_output.Rmd"){  
@@ -157,32 +156,6 @@ render_report(analysis_script = "process_GAMMS_single_result_output.Rmd",
                    analysis = "gamm_model_select_hs",
                    corStruct = "corGaus"))
 ```
-
-### Reduced model
-
-#### All species
-```{r}
-render_report(analysis_script = "process_GAMM_analyses_with_loops.Rmd", 
-              list(dataset = "all_species", 
-                   analysis = "gamm_models_compare_drop1"))
-```
-
-#### Habitat specialists
-```{r}
-render_report(analysis_script = "process_GAMM_analyses_with_loops.Rmd", 
-              list(dataset = "hs", 
-                   analysis = "gamm_models_compare_drop1"))
-```
-
-#### Wider countryside
-```{r}
-render_report(analysis_script = "process_GAMM_analyses_with_loops.Rmd", 
-              list(dataset = "wc", 
-                   analysis = "gamm_models_compare_drop1"))
-```
-
-
-
 ## Zeta declines and decays
 ##### By default, the time consuming zeta decay analysis does not run (in params list include "run_decay_analysis = TRUE" to make it run)
 ```{r}
@@ -237,6 +210,18 @@ render_report(analysis_script = "Zeta_msgdm_analyses.Rmd", list(dataset = "hs_no
 toc()
 
 ```
+
+MSGDMS with different seeds 
+```{r}
+tic()
+render_report(analysis_script = "Zeta_msgdm_change_seed.Rmd", list(dataset = "all_species",
+              orders_msgdm =  c(2, 4, 20), sam_msgdm = 500, normalize_msgdm = "Simpson", my_seed = 2))
+toc()
+
+
+```
+
+
 
 #### Generate tables and figures for msgdms
 ##### Note, using zeta = 50 also produces similar results
