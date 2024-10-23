@@ -239,14 +239,15 @@ toc()
 ```
 
 #### Generate tables and figures for msgdms
+##### Note, using zeta = 50 also produces similar results
 ```{r}
 render_report(analysis_script = "process_msgdm_results.Rmd", 
               list(dataset = "all_species", normalize_msgdm = "Simpson",
-                   orders_msgdm =  c(2, 6, 10)))
+                   orders_msgdm =  c(2, 4, 20)))
 
 render_report(analysis_script = "process_msgdm_results.Rmd", 
               list(dataset = "wc", normalize_msgdm = "Simpson",
-                   orders_msgdm =  c(2, 6, 10)))
+                   orders_msgdm =  c(2, 4, 20)))
 
 render_report(analysis_script = "process_msgdm_results.Rmd", 
               list(dataset = "hs_no_zeros", normalize_msgdm = "Simpson",
@@ -254,11 +255,11 @@ render_report(analysis_script = "process_msgdm_results.Rmd",
 
 render_report(analysis_script = "process_msgdm_results.Rmd", 
               list(dataset = "all_species", normalize_msgdm = "Sorensen",
-                   orders_msgdm =  c(2, 6, 10)))
+                   orders_msgdm =  c(2, 4, 20)))
 
 render_report(analysis_script = "process_msgdm_results.Rmd", 
               list(dataset = "wc", normalize_msgdm = "Sorensen",
-                   orders_msgdm =  c(2, 6, 10)))
+                   orders_msgdm =  c(2, 4, 10)))
 
 render_report(analysis_script = "process_msgdm_results.Rmd", 
               list(dataset = "hs_no_zeros", normalize_msgdm = "Sorensen",
