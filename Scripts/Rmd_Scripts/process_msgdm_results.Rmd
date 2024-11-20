@@ -9,6 +9,7 @@ params:
    - 2
    - 6
    - 10
+  seed: 4
 ---
 
 ```{r}
@@ -43,11 +44,12 @@ conflicts_prefer(dplyr::rename)
 data_path <- paste0("./Data/Processed_Data/Spatial/", params$dataset, ".rds")
 
 # Path to output of the msgdm analysis
-msgdm_path <-  paste0("./Output/Spatial/msgdms", "/", params$dataset, "_" , params$normalize_msgdm, "/", 
-                      params$dataset, "_" , params$normalize_msgdm, "_zeta_msgdms.rds")
+msgdm_path <-    paste0("./Output/Spatial/msgdms", "/", params$dataset, "_" , 
+                        params$normalize_msgdm,  "_" , params$seed, "/", 
+                        params$dataset, "_" , params$normalize_msgdm, "_zeta_msgdms.rds")
 
 # Path to folder to save output of this script
-out_path <- here(paste0("./Output/Spatial/msgdms", "/", params$dataset, "_" , params$normalize_msgdm, "/", 
+out_path <- here(paste0("./Output/Spatial/msgdms", "/", params$dataset, "_" , params$normalize_msgdm,  "_" , params$seed, "/", 
                        "/figs_tables//"))
 
 if(!dir.exists(out_path)) dir.create(out_path, recursive = TRUE)
@@ -155,9 +157,16 @@ for(i in 1:length(my_orders)){
       Upper = Estimate + 1.96*Std_Error,
       colours = factor(c(1, rep(2:number_of_colours, each = 3))),
       y_height = as.numeric(rev(seq(1,coef_rows))))
+  # tried to add a row so this aligns with forest plot, will change text colour to white later
+  #blank <- temp_coef[1,]
+  #blank$Effect <- "blank"
+  #temp_coef <- rbind(blank, temp_coef)
+  
   
   all_coef[[i]] <- temp_coef
 }
+
+
 
 check<- bind_rows(all_coef)
 ```
@@ -241,7 +250,7 @@ effects_table2 <- table_base +
                 x = 0, 
                 colour = colours,
                 label = Effect), 
-            size = 3.1, hjust = 1, vjust = -0.5) +
+            size = 3.1, hjust = 1, vjust = -0.55) +
             xlim(-2,0) +
             ggtitle("Effect")
 ```

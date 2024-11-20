@@ -7,81 +7,42 @@ output: html_document
 
 # Main Text Display Items
 
-```{r fig.cap = "Figure 1. Geographic distribution and density of the 1149 UKBMS transects used in this study (A) and geographic patterns in species richness of All Species (B), Wider Countryside species (C) and Habitat Specialists (D)", out.width = "100%"}
+```{r fig.cap = "Figure 1. Geographic distribution and density of the 1149 UKBMS transects used in this study (A) and geographic patterns in species richness of All Species (B), Habitat Generalists (C) and Habitat Specialists (D)", out.width = "100%"}
 include_graphics(here("Output/Spatial/Figures/Hex_dens_transects_richness.png/"))
 ```
-
-
-##### Figure 1 To do: prettify legends and layout; save at higher resolution
-
 
 
 ```{r fig.cap = "Figure 2. Environmental variables assessed for relationships with richness and turnover of butterflies in Great Britain", out.width = "100%"}
 include_graphics(here("./Output/Spatial/Figures/all_env_vars.png"))
 ```
 
-##### Figure 2 To do: prettify legends and layout 
-
 ```{r fig.cap = "Figure 3 A-E. Effects of environemental variables on speccies richness of All Species from GAMM analyses", out.width = "100%"}
 include_graphics(here("Output/Spatial/GAM/GAMM_fig/gam_multiplot.png"))
 ```
 
-##### Figure 3 To do: reduce whitespace, improve annoation positioning, add p-values, add heading for AS, WC, HS
 
-##### Above to be combined into 3 by 5 layout
-
-#### All Butterfly Species, Simpson
 ```{r, out.width = "100%"}
-include_graphics(here("./Output/Spatial/msgdms/all_species_Simpson/figs_tables/forest_plot.png"))
+include_graphics(here("./Output/Spatial/msgdms/all_species_Simpson_4/figs_tables/forest_plot.png"))
 ```
+
+
 ```{r fig.cap = "Figure 4A. Effect sizes and p-values for splines of predictor variables and the intercept for All Butterfly Species, Simpson", out.width = "100%"}
-include_graphics(here("./Output/Spatial/msgdms/all_species_Simpson/figs_tables/forest_plot_p_values.png"))
+include_graphics(here("./Output/Spatial/msgdms/all_species_Simpson_4/figs_tables/forest_plot_p_values.png"))
 ```
 
-#### Wider Countryside Species, Simpson
+
 ```{r, out.width = "100%"}
-include_graphics(here("./Output/Spatial/msgdms/wc_Simpson/figs_tables/forest_plot.png"))
-```
-```{r fig.cap = "Figure 4B. Effect sizes and p-values for splines of predictor variables and the intercept for Wider Countryside Species, Simpson", out.width = "100%"}
-include_graphics(here("./Output/Spatial/msgdms/wc_Simpson/figs_tables/forest_plot_p_values.png"))
+include_graphics(here("./Output/Spatial/msgdms/wc_Simpson_4/figs_tables/forest_plot.png"))
 ```
 
-#### Habitat Specialists, Simpson
+```{r fig.cap = "Figure 4B. Effect sizes and p-values for splines of predictor variables and the intercept for Habitat Generalists, Simpson", out.width = "100%"}
+include_graphics(here("./Output/Spatial/msgdms/wc_Simpson_4/figs_tables/forest_plot_p_values.png"))
+```
+
 ```{r, out.width = "100%"}
-include_graphics(here("./Output/Spatial/msgdms/hs_no_zeros_Simpson/figs_tables/forest_plot.png"))
+include_graphics(here("./Output/Spatial/msgdms/hs_no_zeros_Simpson_4/figs_tables/forest_plot.png"))
 ```
 ```{r fig.cap = "Figure 4C. Effect sizes and p-values for splines of predictor variables and the intercept for Habitat Specialists, Simpson", out.width = "100%"}
-include_graphics(here("./Output/Spatial/msgdms/hs_no_zeros_Simpson/figs_tables/forest_plot_p_values.png"))
+include_graphics(here("./Output/Spatial/msgdms/hs_no_zeros_Simpson_4/figs_tables/forest_plot_p_values.png"))
 ```
 
-
-
-## MSGDMS
-
-### Forest Plots
-
-
-#### All Butterfly Species, Simpson
-```{r, out.width = "100%"}
-include_graphics(here("./Output/Spatial/msgdms/all_species_Simpson/figs_tables/forest_plot.png"))
-```
-```{r fig.cap = "Figure S16. Effect sizes and p-values for splines of predictor variables and the intercept for All Butterfly Species, Simpson", out.width = "100%"}
-include_graphics(here("./Output/Spatial/msgdms/all_species_Simpson/figs_tables/forest_plot_p_values.png"))
-```
-
-#### Wider Countryside Species, Simpson
-```{r, out.width = "100%"}
-include_graphics(here("./Output/Spatial/msgdms/wc_Simpson/figs_tables/forest_plot.png"))
-```
-```{r fig.cap = "Figure S17. Effect sizes and p-values for splines of predictor variables and the intercept for Wider Countryside Species, Simpson", out.width = "100%"}
-include_graphics(here("./Output/Spatial/msgdms/wc_Simpson/figs_tables/forest_plot_p_values.png"))
-```
-
-#### Habitat Specialists, Simpson
-```{r, out.width = "100%"}
-include_graphics(here("./Output/Spatial/msgdms/hs_no_zeros_Simpson/figs_tables/forest_plot.png"))
-```
-
-```{r fig.cap = "Figure S18. Effect sizes and p-values for splines of predictor variables and the intercept for Habitat Specialists, Simpson", out.width = "100%"}
-include_graphics(here("./Output/Spatial/msgdms/hs_no_zeros_Simpson/figs_tables/forest_plot_p_values.png"))
-```

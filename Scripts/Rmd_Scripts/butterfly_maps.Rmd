@@ -26,7 +26,7 @@ butterfly_data <- readRDS(here("./Data/Processed_Data/Spatial/all_species.rds"))
 sites <- butterfly_data$sites %>%
   rename(as.richness = richness)
 
-# Wider countryside
+# Habitat generalists
 wc_data <- readRDS(here("./Data/Processed_Data/Spatial/wc.rds"))
 
 
@@ -50,7 +50,7 @@ sites <- sites %>%
 rect_dens <- ggplot() + 
     geom_sf(data = gb) +
   geom_bin2d(bins=30, data = sites, aes(x = x, y = y)) +
-    scale_fill_viridis(name="Transects", 
+    scale_fill_viridis(name="Sites", 
       breaks = c(0, 1,2, 5,10,15,20, 25, 30)) + 
   labs(x = "", y = "") + 
   theme(
@@ -62,7 +62,7 @@ rect_dens <- ggplot() +
 hex_dens <- ggplot() + 
     geom_sf(data = gb) +
   geom_hex(bins=30, data = sites, aes(x = x, y = y)) +
-    scale_fill_viridis_b(name="Transects", 
+    scale_fill_viridis_b(name="Sites", 
       breaks = c(0,2, 5,10,15,20, 25, 30)) + 
   labs(x = "", y = "") + 
   theme(
@@ -71,7 +71,7 @@ hex_dens <- ggplot() +
   axis.ticks = element_blank(), 
   legend.direction = "horizontal", 
   legend.position = "bottom") +
-  guides(fill = guide_colorbar(title = "Transects", 
+  guides(fill = guide_colorbar(title = "Sites", 
                              theme(legend.title.position = "top",
                                   legend.text.position = "bottom")))
 
@@ -129,7 +129,7 @@ wc_richness <- ggplot() +
     bins=30,
     data = sites, 
     aes(x = x, y = y, z = wc.richness)) + #the mean is taken by default
-    scale_fill_viridis_b(name="WC",
+    scale_fill_viridis_b(name="HG",
     breaks = c(5, 10, 15, 20, 25, 30, 35)) + 
   labs(x = "", y = "") + 
   theme(
@@ -138,7 +138,7 @@ wc_richness <- ggplot() +
   axis.ticks = element_blank(), 
   legend.direction = "horizontal", 
   legend.position = "bottom") +
-  guides(fill = guide_colorbar(title = "WC", 
+  guides(fill = guide_colorbar(title = "HG", 
                              theme(legend.title.position = "top",
                                   legend.text.position = "bottom")))
 
@@ -244,14 +244,14 @@ temp_rast <- comb3 %>%
 
 temp_plot <- ggplot() +
   geom_spatraster(data = temp_rast) +
-  scale_fill_viridis_c(name="Temp.")  + 
+  scale_fill_viridis_c(name="Mean Annual Temperature")  + 
   theme(
   axis.text.x = element_blank(),
   axis.text.y = element_blank(),
   axis.ticks = element_blank(), 
   legend.direction = "horizontal", 
   legend.position = "bottom") +
-  guides(fill = guide_colorbar(title = "Temp.", 
+  guides(fill = guide_colorbar(title = "Mean Annual Temperature", 
                              theme(legend.title.position = "top",
                                   legend.text.position = "bottom")))
 
@@ -263,14 +263,14 @@ wet_rast <- comb3 %>%
 
 wet_plot <- ggplot() +
   geom_spatraster(data = wet_rast) +
-  scale_fill_viridis_c(name="Top. Wet.") + 
+  scale_fill_viridis_c(name="Topographical Wetness") + 
   theme(
   axis.text.x = element_blank(),
   axis.text.y = element_blank(),
   axis.ticks = element_blank(), 
   legend.direction = "horizontal", 
   legend.position = "bottom") +
-  guides(fill = guide_colorbar(title = "Top. Wet.", 
+  guides(fill = guide_colorbar(title = "Topographical Wetness", 
                              theme(legend.title.position = "top",
                                   legend.text.position = "bottom")))
 
@@ -300,14 +300,14 @@ n_rast <- comb3 %>%
 
 n_plot <- ggplot() +
   geom_spatraster(data = n_rast) +
-  scale_fill_viridis_c(name="Total N.")  + 
+  scale_fill_viridis_c(name="Total Nitrogen Deposition")  + 
   theme(
   axis.text.x = element_blank(),
   axis.text.y = element_blank(),
   axis.ticks = element_blank(), 
   legend.direction = "horizontal", 
   legend.position = "bottom") +
-  guides(fill = guide_colorbar(title = "Total N.", 
+  guides(fill = guide_colorbar(title = "Total Nitrogen Deposition", 
                              theme(legend.title.position = "top",
                                   legend.text.position = "bottom")))
 
@@ -319,14 +319,14 @@ prec_rast <- comb3 %>%
 
 prec_plot <- ggplot() +
   geom_spatraster(data = prec_rast) +
-  scale_fill_viridis_c(name="Log Prec.") + 
+  scale_fill_viridis_c(name="Log Annual Precipitation") + 
   theme(
   axis.text.x = element_blank(),
   axis.text.y = element_blank(),
   axis.ticks = element_blank(), 
   legend.direction = "horizontal", 
   legend.position = "bottom") +
-  guides(fill = guide_colorbar(title = "Log Prec.", 
+  guides(fill = guide_colorbar(title = "Log Annual Precipitation", 
                              theme(legend.title.position = "top",
                                   legend.text.position = "bottom")))
 
@@ -337,14 +337,14 @@ tree_rast <- comb3 %>%
 
 tree_plot <- ggplot() +
   geom_spatraster(data = tree_rast) +
-  scale_fill_viridis_c(name="Tree Dens.")  + 
+  scale_fill_viridis_c(name="Tree Density")  + 
   theme(
   axis.text.x = element_blank(),
   axis.text.y = element_blank(),
   axis.ticks = element_blank(), 
   legend.direction = "horizontal", 
   legend.position = "bottom") +
-  guides(fill = guide_colorbar(title = "Tree Dens.", 
+  guides(fill = guide_colorbar(title = "Tree Density", 
                              theme(legend.title.position = "top",
                                   legend.text.position = "bottom")))
 
@@ -355,14 +355,14 @@ pest_rast <- comb3 %>%
 
 pest_plot <- ggplot() +
   geom_spatraster(data = pest_rast) +
-  scale_fill_viridis_c(name="Log Pest.")  + 
+  scale_fill_viridis_c(name="Log Pesticide Risk Quotient")  + 
   theme(
   axis.text.x = element_blank(),
   axis.text.y = element_blank(),
   axis.ticks = element_blank(), 
   legend.direction = "horizontal", 
   legend.position = "bottom") +
-  guides(fill = guide_colorbar(title = "Log Pest.", 
+  guides(fill = guide_colorbar(title = "Log Pesticide Risk Quotient", 
                              theme(legend.title.position = "top",
                                   legend.text.position = "bottom")))
 
@@ -373,14 +373,14 @@ humans_rast <- comb3 %>%
 
 humans_plot <- ggplot() +
   geom_spatraster(data = humans_rast) +
-  scale_fill_viridis_c(name="Log Humans")  + 
+  scale_fill_viridis_c(name="Log Human Density")  + 
   theme(
   axis.text.x = element_blank(),
   axis.text.y = element_blank(),
   axis.ticks = element_blank(), 
   legend.direction = "horizontal", 
   legend.position = "bottom") +
-  guides(fill = guide_colorbar(title = "Log Humans", 
+  guides(fill = guide_colorbar(title = "Log Human Density", 
                              theme(legend.title.position = "top",
                                   legend.text.position = "bottom")))
 

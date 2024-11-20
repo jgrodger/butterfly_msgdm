@@ -134,29 +134,37 @@ p18a <- plot.clfit(hs_plot_data2[[6]])
 
 # add annotation and set y axis limits as well as text size
 ```{r}
+# Could use labs(tag = "A"), etc and include "All Species" etc below as separate elements
+
 p1 <- p1a +
   ylab("") +
   xlab("") +
+  labs(title = "All Species") +
   theme(axis.title = element_text(size = 5),
         axis.text = element_text(size = 4)) +
-  annotation_custom(grid::textGrob("A", 0.2, 0.95, gp = grid::gpar(fontsize = 7))) +
-  coord_cartesian(ylim = c(14, 23))
+  annotation_custom(grid::textGrob("A", 0.2, 0.95, gp = grid::gpar(fontsize = 6))) +
+  coord_cartesian(ylim = c(14, 23)) +
+  theme(plot.title = element_text(size = 5.5))
 
 p2 <- p2a +
   ylab("") +
-  xlab("Temperature") +
+  xlab("Mean Annual Temperature") +
+  labs(title = "Habitat Generalists") +
   theme(axis.title = element_text(size = 5),
         axis.text = element_text(size = 4)) +
-  annotation_custom(grid::textGrob("B", 0.2, 0.95, gp = grid::gpar(fontsize = 7))) +
-  coord_cartesian(ylim = c(10, 18))
+  annotation_custom(grid::textGrob("B", 0.2, 0.95, gp = grid::gpar(fontsize = 6))) +
+  coord_cartesian(ylim = c(10, 18)) +
+  theme(plot.title = element_text(size = 5.5))
 
 p3 <- p3a +
   ylab("") +
   xlab("") +
+  labs(title = "Habitat Specialists") +
  theme(axis.title = element_text(size = 5),
         axis.text = element_text(size = 4)) +
-  annotation_custom(grid::textGrob("C", 0.2, 0.95, gp = grid::gpar(fontsize = 7))) +
-  coord_cartesian(ylim = c(-0.55, 1.75))
+  annotation_custom(grid::textGrob("C", 0.2, 0.95, gp = grid::gpar(fontsize = 6))) +
+  coord_cartesian(ylim = c(-0.55, 1.75)) +
+  theme(plot.title = element_text(size = 5.5))
 
 
 p4 <- p4a +
@@ -164,15 +172,15 @@ p4 <- p4a +
   xlab("") +
   theme(axis.title = element_text(size = 5),
         axis.text = element_text(size = 4)) +
-  annotation_custom(grid::textGrob("D", 0.2, 0.95, gp = grid::gpar(fontsize = 7))) +
+  annotation_custom(grid::textGrob("D", 0.2, 0.95, gp = grid::gpar(fontsize = 6))) +
   coord_cartesian(ylim = c(14, 23))
 
 p5 <- p5a +
   ylab("") +
-  xlab("Precipitation") +
+  xlab("Mean Annual Precipitation") +
  theme(axis.title = element_text(size = 5),
         axis.text = element_text(size = 4)) +
-  annotation_custom(grid::textGrob("E", 0.2, 0.95, gp = grid::gpar(fontsize = 7))) +
+  annotation_custom(grid::textGrob("E", 0.2, 0.95, gp = grid::gpar(fontsize = 6))) +
   coord_cartesian(ylim = c(10, 18))
 
 p6 <- p6a +
@@ -180,24 +188,24 @@ p6 <- p6a +
   xlab("") +
   theme(axis.title = element_text(size = 5),
         axis.text = element_text(size = 4)) +
-  annotation_custom(grid::textGrob("F", 0.2, 0.95, gp = grid::gpar(fontsize = 7))) +
+  annotation_custom(grid::textGrob("F", 0.2, 0.95, gp = grid::gpar(fontsize = 6))) +
   coord_cartesian(ylim = c(-0.55, 1.75))
 
 
 p7 <- p7a +
-  ylab("Species Richness (stdized)") +
+  ylab("Species Richness") +
   xlab("") +
   theme(axis.title = element_text(size = 5),
         axis.text = element_text(size = 4)) +
-  annotation_custom(grid::textGrob("G", 0.2, 0.95, gp = grid::gpar(fontsize = 7))) +
+  annotation_custom(grid::textGrob("G", 0.2, 0.95, gp = grid::gpar(fontsize = 6))) +
   coord_cartesian(ylim = c(14, 23))
 
 p8 <- p8a +
   ylab("") +
-  xlab("Top. Wet.") +
+  xlab("Topographical Wetness") +
   theme(axis.title = element_text(size = 5),
         axis.text = element_text(size = 4)) +
-  annotation_custom(grid::textGrob("H", 0.2, 0.95, gp = grid::gpar(fontsize = 7))) +
+  annotation_custom(grid::textGrob("H", 0.2, 0.95, gp = grid::gpar(fontsize = 6))) +
   coord_cartesian(ylim = c(10, 18))
 
 p9 <- p9a +
@@ -205,7 +213,7 @@ p9 <- p9a +
   xlab("") +
   theme(axis.title = element_text(size = 5),
         axis.text = element_text(size = 4)) +
-  annotation_custom(grid::textGrob("I", 0.2, 0.95, gp = grid::gpar(fontsize = 7))) +
+  annotation_custom(grid::textGrob("I", 0.2, 0.95, gp = grid::gpar(fontsize = 6))) +
   coord_cartesian(ylim = c(-0.55, 1.75))
 
 
@@ -214,7 +222,7 @@ p10 <- p10a +
   xlab("") +
   theme(axis.title = element_text(size = 5),
         axis.text = element_text(size = 4)) +
-  annotation_custom(grid::textGrob("J", 0.2, 0.95, gp = grid::gpar(fontsize = 7))) +
+  annotation_custom(grid::textGrob("J", 0.2, 0.95, gp = grid::gpar(fontsize = 6))) +
   coord_cartesian(ylim = c(14, 23))
 
 p11 <- p11a +
@@ -222,7 +230,7 @@ p11 <- p11a +
   xlab("pH") +
   theme(axis.title = element_text(size = 5),
         axis.text = element_text(size = 4)) +
-  annotation_custom(grid::textGrob("K", 0.2, 0.95, gp = grid::gpar(fontsize = 7))) +
+  annotation_custom(grid::textGrob("K", 0.2, 0.95, gp = grid::gpar(fontsize = 6))) +
   coord_cartesian(ylim = c(10, 18))
 
 p12 <- p12a +
@@ -230,7 +238,7 @@ p12 <- p12a +
   xlab("") +
  theme(axis.title = element_text(size = 5),
         axis.text = element_text(size = 4)) +
-  annotation_custom(grid::textGrob("L", 0.2, 0.95, gp = grid::gpar(fontsize = 7))) +
+  annotation_custom(grid::textGrob("L", 0.2, 0.95, gp = grid::gpar(fontsize = 6))) +
   coord_cartesian(ylim = c(-0.55, 1.75))
 
 
@@ -239,15 +247,15 @@ p13 <- p13a +
   xlab("") +
   theme(axis.title = element_text(size = 5),
         axis.text = element_text(size = 4)) +
-  annotation_custom(grid::textGrob("M", 0.2, 0.95, gp = grid::gpar(fontsize = 7))) +
+  annotation_custom(grid::textGrob("M", 0.2, 0.95, gp = grid::gpar(fontsize = 6))) +
   coord_cartesian(ylim = c(14, 23))
 
 p14 <- p14a +
   ylab("") +
-  xlab("Nitro. Dep.") +
+  xlab("Total Nitrogen Deposition") +
  theme(axis.title = element_text(size = 5),
         axis.text = element_text(size = 4)) +
-  annotation_custom(grid::textGrob("N", 0.2, 0.95, gp = grid::gpar(fontsize = 7))) +
+  annotation_custom(grid::textGrob("N", 0.2, 0.95, gp = grid::gpar(fontsize = 6))) +
   coord_cartesian(ylim = c(10, 18))
 
 p15 <- p15a +
@@ -255,7 +263,7 @@ p15 <- p15a +
   xlab("") +
   theme(axis.title = element_text(size = 5),
         axis.text = element_text(size = 4)) +
-  annotation_custom(grid::textGrob("O", 0.2, 0.95, gp = grid::gpar(fontsize = 7))) +
+  annotation_custom(grid::textGrob("O", 0.2, 0.95, gp = grid::gpar(fontsize = 6))) +
   coord_cartesian(ylim = c(-0.55, 1.75))
 
 
@@ -264,15 +272,15 @@ p16 <- p16a +
   xlab("") +
   theme(axis.title = element_text(size = 5),
         axis.text = element_text(size = 4)) +
-  annotation_custom(grid::textGrob("P", 0.2, 0.95, gp = grid::gpar(fontsize = 7))) +
+  annotation_custom(grid::textGrob("P", 0.2, 0.95, gp = grid::gpar(fontsize = 6))) +
   coord_cartesian(ylim = c(14, 23))
 
 p17 <- p17a +
   ylab("") +
-  xlab("Log Humans") +
+  xlab("Log Human Density") +
  theme(axis.title = element_text(size = 5),
         axis.text = element_text(size = 4)) +
-  annotation_custom(grid::textGrob("Q", 0.2, 0.95, gp = grid::gpar(fontsize = 7))) +
+  annotation_custom(grid::textGrob("Q", 0.2, 0.95, gp = grid::gpar(fontsize = 6))) +
   coord_cartesian(ylim = c(10, 18))
 
 p18 <- p18a +
@@ -280,7 +288,7 @@ p18 <- p18a +
   xlab("") +
   theme(axis.title = element_text(size = 5),
         axis.text = element_text(size = 4)) +
-  annotation_custom(grid::textGrob("R", 0.2, 0.95, gp = grid::gpar(fontsize = 7))) +
+  annotation_custom(grid::textGrob("R", 0.2, 0.95, gp = grid::gpar(fontsize = 6))) +
   coord_cartesian(ylim = c(-0.55, 1.75))
 
 
@@ -290,7 +298,7 @@ p18 <- p18a +
 # print the multipanel plot
 
 ```{r}
-# tjhis is a function from mgcViz
+# this is a function from mgcViz
 gridPrint(p1, p2, p3, 
           p4, p5, p6,
           p7, p8, p9,

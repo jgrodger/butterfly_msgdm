@@ -1,0 +1,117 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+#### Packages
+```{r}
+here::i_am("Scripts/Rmd_Scripts/Univariate_GAMMS.Rmd")
+library(tidyverse)
+library(mgcv)
+library(knitr)
+library(tictoc)
+library(here)
+library(conflicted)
+conflicts_prefer(dplyr::filter)
+conflicts_prefer(dplyr::select)
+conflicts_prefer(knitrProgressBar::progress_estimated)
+# there is a same-named function in dplyr, check it out
+```
+
+
+```{r}
+all_species <- readRDS(here("./Data/Processed_Data/Spatial/all_species.rds"))
+wc <- readRDS(here("./Data/Processed_Data/Spatial/wc.rds"))
+hs <- readRDS(here("./Data/Processed_Data/Spatial/hs.rds"))
+#hs_no_zeros <- readRDS(here("./Data/Processed_Data/Spatial/hs_no_zeros.rds"))
+
+# get all datasets in a list
+datasets <- list(all_species, wc, hs)
+names(datasets) <- c("all_species", "wc", "hs")
+
+
+
+```
+
+
+# a function to loop through predictors to do univariate gamms
+```{r}
+get.single.var.gamms <- function(gamm_input, kays, family){
+  gamm_list <- list()
+  depvars <- names(gamm_input[, 1:8])
+  for (i in 1:8){
+    print(depvars[i])
+    dep <- gamm_input[,i]
+    my_gamm <- gamm(
+      species.richness ~ s(dep, k = 6, bs = "cr"),
+      method = "REML", 
+      family = family, 
+      correlation = corExp, 
+      data = datasets$all_species$gamm_input)   
+    gammlist[[i]]<- my_gamm  
+    names(gammlist) <- depvars
+  }
+} 
+```
+
+
+
+```{r}
+corExp <- corExp(form = ~x+y, nugget = TRUE)
+k_vec <- c(6, 6, 6, 4, 6, 6, 6, 6)
+
+as.single.gamms <- get.single.var.gamms(datasets$all_species$gamm_input, kays = kvec, family = "gaussian")
+wc.single.gamms <- get.single.var.gamms(datasets$wc$gamm_input, kays = kvec, family = "gaussian")
+hs.single.gamms <- get.single.var.gamms(datasets$hs$gamm_input, kays = kvec, family = negbin(theta = 4.663))  
+
+out_path <-  here("Output/Spatial/GAM")
+
+
+filedir <- paste0(here(out_path), "/GAMM_all_species/univariate")
+if(!dir.exists(filedir)) dir.create(filedir)
+write_rds(as.single.gamms , 
+          file = paste0(filedir, "/single_GAMMS.rds"))
+
+
+
+filedir <- paste0(here(out_path), "/GAMM_wc/univariate")
+if(!dir.exists(filedir)) dir.create(filedir)
+write_rds(wc.single.gamms , 
+          file = paste0(filedir, "/single_GAMMS.rds"))
+
+
+
+filedir <- paste0(here(out_path), "/GAMM_hs/univariate")
+if(!dir.exists(filedir)) dir.create(filedir)
+write_rds(hs.single.gamms , 
+          file = paste0(filedir, "/single_GAMMS.rds"))
+
+
+
+```
+
+#failed attempts, could not get formula right
+```{r}
+
+
+#Works
+# depvars <- names(gamm_input[, 1:2])
+# allModels = lapply(depvars, function(x){
+#   summary(lm(formula = paste0("species.richness ~ ", "`", x, "`"), 
+#      data = gamm_input ,na.action = na.omit))
+# })
+# 
+
+
+#Could not make this work
+  
+# gamsummaries = lapply(depvars, function(x){
+#   summary(gamm(
+#     formula = paste0("species.richness ~ s(", "`", x,"`", ", k = 6, bs = \"cr\")"),
+#     method = "REML", 
+#   family = "gaussian", 
+#   correlation = corExp, 
+#      data = gamm_input))
+#   })
+
+```
+

@@ -178,7 +178,7 @@ toc()
 ```{r}
 tic()
 render_report(analysis_script = "Zeta_msgdm_analyses.Rmd", list(dataset = "all_species",
-              orders_msgdm =  c(2, 3, 4, 6, 10, 15, 20, 50), sam_msgdm = 50000, normalize_msgdm = "Simpson"))
+              orders_msgdm =  c(2, 3, 4, 6, 10, 15, 20, 50), sam_msgdm = 500000, normalize_msgdm = "Simpson"))
 toc()
 
 tic()
@@ -213,11 +213,59 @@ toc()
 
 MSGDMS with different seeds 
 ```{r}
+
 tic()
 render_report(analysis_script = "Zeta_msgdm_change_seed.Rmd", list(dataset = "all_species",
-              orders_msgdm =  c(2, 4, 20), sam_msgdm = 500, normalize_msgdm = "Simpson", my_seed = 2))
+              orders_msgdm =  c(2, 4), sam_msgdm = 500000, normalize_msgdm = "Simpson", my_seed = 1))
 toc()
 
+tic()
+render_report(analysis_script = "Zeta_msgdm_change_seed.Rmd", list(dataset = "all_species",
+              orders_msgdm =  c(2, 4), sam_msgdm = 500000, normalize_msgdm = "Simpson", my_seed = 2))
+toc()
+
+
+
+tic()
+render_report(analysis_script = "Zeta_msgdm_change_seed.Rmd", list(dataset = "all_species",
+              orders_msgdm =  c(2, 4, 20), sam_msgdm = 500000, normalize_msgdm = "Simpson", my_seed = 4))
+toc()
+
+
+tic()
+render_report(analysis_script = "Zeta_msgdm_change_seed.Rmd", list(dataset = "hs_no_zeros",
+              orders_msgdm =  c(2, 4, 20), sam_msgdm = 500000, normalize_msgdm = "Simpson", my_seed = 4))
+toc()
+
+
+tic()
+render_report(analysis_script = "Zeta_msgdm_change_seed.Rmd", list(dataset = "wc",
+              orders_msgdm =  c(2, 4, 20), sam_msgdm = 500000, normalize_msgdm = "Simpson", my_seed = 4))
+toc()
+
+
+
+
+
+
+
+
+
+
+tic()
+render_report(analysis_script = "Zeta_msgdm_change_seed.Rmd", list(dataset = "all_species",
+              orders_msgdm =  c(2, 4, 20), sam_msgdm = 50000, normalize_msgdm = "Simpson", my_seed = 3))
+toc()
+
+tic()
+render_report(analysis_script = "Zeta_msgdm_change_seed.Rmd", list(dataset = "all_species",
+              orders_msgdm =  c(2, 4, 20), sam_msgdm = 50000, normalize_msgdm = "Simpson", my_seed = 4))
+toc()
+
+tic()
+render_report(analysis_script = "Zeta_msgdm_change_seed.Rmd", list(dataset = "all_species",
+              orders_msgdm =  c(2, 4, 20), sam_msgdm = 50000, normalize_msgdm = "Simpson", my_seed = 5))
+toc()
 
 ```
 
@@ -249,5 +297,20 @@ render_report(analysis_script = "process_msgdm_results.Rmd",
 render_report(analysis_script = "process_msgdm_results.Rmd", 
               list(dataset = "hs_no_zeros", normalize_msgdm = "Sorensen",
                    orders_msgdm =  c(2, 3, 4)))
+```
+
+
+```{r}
+render_report(analysis_script = "process_msgdm_results.Rmd", 
+              list(dataset = "all_species", normalize_msgdm = "Simpson",
+                   orders_msgdm =  c(2, 4, 20), seed = 4))
+
+render_report(analysis_script = "process_msgdm_results.Rmd", 
+              list(dataset = "hs_no_zeros", normalize_msgdm = "Simpson",
+                   orders_msgdm =  c(2, 4, 20), seed = 4))
+
+render_report(analysis_script = "process_msgdm_results.Rmd", 
+              list(dataset = "wc", normalize_msgdm = "Simpson",
+                   orders_msgdm =  c(2, 4, 20), seed = 4))
 ```
 

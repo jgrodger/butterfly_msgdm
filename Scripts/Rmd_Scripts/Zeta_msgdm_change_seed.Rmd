@@ -85,7 +85,7 @@ output0 <- list()
 
 for (i in 1:length(params$orders_msgdm)) {
 slow_function(i, .pb=pb)
-set.seed(my_seed)
+set.seed(params$my_seed)
 my.msgdm <-  Zeta.msgdm(xy = site.by.xy, data.spec = site.by.species, data.env = site.by.env,  order = params$orders_msgdm[[i]], sam = params$sam_msgdm,
   reg.type="ispline", normalize=params$normalize_msgdm, family=binomial(link="log"),cons.inter = -1, glm.init = TRUE) 
 output0[[i]] <- my.msgdm
