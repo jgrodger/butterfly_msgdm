@@ -42,6 +42,7 @@ include_graphics(here("./Output/Spatial/msgdms/wc_Simpson_4/figs_tables/forest_p
 ```{r, out.width = "100%"}
 include_graphics(here("./Output/Spatial/msgdms/hs_no_zeros_Simpson_4/figs_tables/forest_plot.png"))
 ```
+
 ```{r fig.cap = "Figure 4C. Effect sizes and p-values for splines of predictor variables and the intercept for Habitat Specialists, Simpson", out.width = "100%"}
 include_graphics(here("./Output/Spatial/msgdms/hs_no_zeros_Simpson_4/figs_tables/forest_plot_p_values.png"))
 ```
