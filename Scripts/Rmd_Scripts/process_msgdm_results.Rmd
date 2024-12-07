@@ -7,8 +7,8 @@ params:
   normalize_msgdm: "Simpson"
   orders_msgdm: 
    - 2
-   - 6
-   - 10
+   - 4
+   - 20
   seed: 4
 ---
 
@@ -22,6 +22,8 @@ library(knitr)
 library(knitrProgressBar)
 library(tictoc)
 library(gridExtra)
+library(ggpubr)
+library(mgcViz)
 library(conflicted)
 library(here)
 
@@ -95,7 +97,7 @@ for(i in 1:length(my_orders)){
 all_isplines <- bind_rows(all_isplines) 
 ```
 
-#### I haven not yet managed to get plots of isplines against environmental data 
+#### I have not yet managed to get plots of isplines against environmental data 
 #### on the original scale
 ```{r}
 # to do this, check downloaded code. If that doesn't help, add to questions for Guillaume
@@ -132,6 +134,85 @@ for(i in 1:(ncol(my_env_data) + 1)){
 }
 ```
 
+### get data to to make multipanel plot for BES using only zeta = 4
+```{r}
+
+#subset to zeta = 4 and get maximum y axis for value for ispline plots
+subs_isplines <- all_isplines %>%
+  filter(zeta_order == "zeta_4") %>%
+  rename(Temperature = mean.ann.temp,
+         Log_Prec. = log10.mean.ann.rain,
+         Top_Wet. = topographic.wetness,
+         pH = ph,
+         Nit_Dep. = total.n,
+         Tree_Dens. = tree.density,
+         Log_Pestic. = log10.pesticide.risk,
+         Log_Humans = log10.humans,
+         Geog_Dist = distance
+  )
+
+names(subs_isplines)
+
+check <- subs_isplines[,3:11]
+
+# make the y axis a little taller than largest value over all variables
+
+#I have decided to leave distance off the plot for BES
+max_y <- 1.05*max(subs_isplines[, 3:10])
+```
+
+#### Make ispline plots for each variable and store in a list
+```{r}
+
+# see explanation for code to store ggplot objects in list here: https://stackoverflow.com/questions/31993704/storing-ggplot-objects-in-a-list-from-within-loop-in-r
+
+my_plots <- vector('list', (ncol(my_env_data) + 1))
+names(my_plots) <- c("p1","p2" ,"p3", "p4","p5" ,"p6" ,"p7" ,"p8" ,"p9")
+
+for (i in 1:(ncol(my_env_data) + 1)) {
+    message(i)
+    my_plots[[i]] <- local({
+      i <- i
+      plot_i <- ggplot(data = subs_isplines, aes(x = subs_isplines[, (i + 11)], 
+                                  y = subs_isplines[,(i + 2)])) +
+      geom_line(colour = "red") +
+  ylab("") +
+  xlab(names(subs_isplines)[i + 11]) + 
+  theme_classic()  +
+  theme(axis.title = element_text(size = 5),
+        axis.text = element_text(size = 4),
+        axis.text.y = element_blank()) + 
+  coord_cartesian(ylim = c(0, max_y)) +
+  theme(plot.title = element_text(size = 5.5))
+      print(plot_i)
+
+   
+    })
+}
+
+
+
+```
+# Make a multipanel plot
+```{r}
+print(c("max y = ", max_y))
+# Export plots from the list to the global environment
+list2env(my_plots, envir = .GlobalEnv)
+
+# mgcViz function for multipanel plots
+gridPrint(p1, p2, p3, p4, p5, p6, p7, p8,
+          respect=TRUE,
+          ncol = 8)
+
+# as above, write to file
+png(file = paste0(out_path, "msgdm_multiplot1.png"), pointsize=10, width=9000, height=1000, res=600)
+gridPrint(p1, p2, p3, p4, p5, p6, p7, p8, p9,
+          respect=TRUE,
+          ncol = 8)
+dev.off()
+
+
+```
 #### Extract coefficients for each zeta order
 ```{r}
 # Extract coefficients for each zeta order into a list
