@@ -1,5 +1,7 @@
 # Readme for Butterfly MSGDM project
 
+## Note, this needs much updating
+
 Template for file documentation
 
 X)Filename
