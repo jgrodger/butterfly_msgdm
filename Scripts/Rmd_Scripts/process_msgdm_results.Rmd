@@ -206,7 +206,7 @@ gridPrint(p1, p2, p3, p4, p5, p6, p7, p8,
 
 # as above, write to file
 png(file = paste0(out_path, "msgdm_multiplot1.png"), pointsize=10, width=9000, height=1000, res=600)
-gridPrint(p1, p2, p3, p4, p5, p6, p7, p8, p9,
+gridPrint(p1, p2, p3, p4, p5, p6, p7, p8,
           respect=TRUE,
           ncol = 8)
 dev.off()
