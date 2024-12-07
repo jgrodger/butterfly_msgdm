@@ -3,7 +3,7 @@ title: "R Notebook"
 output: html_notebook
 ---
 `
-# This makes figure 3
+# This makes figure 3 and equivalent for BES
 
 #geom_rug not working so well, can check the other functions and see how the handle overplotting
 
@@ -66,7 +66,7 @@ ggplot(aes(x)) +
 geom_line(aes(y = fit), colour = "red", linetype = 1) +
 geom_line(aes(y = hi.cl), colour = "blue", linetype = 2) +
 geom_line(aes(y = lo.cl), colour = "blue", linetype = 2)  + 
-geom_rug(sides="b")  + 
+# geom_rug(sides="b")  + 
   theme_classic()  
 }
 
@@ -321,9 +321,126 @@ gridPrint(p1, p2, p3,
 
  dev.off() 
 ```
+#multipanel for BES
+```{r}
+p2b <-  p2a +
+  ylab("") +
+  xlab("") +
+  theme(axis.title = element_text(size = 5),
+        axis.text = element_text(size = 4),
+        axis.text.y = element_blank()) +
+  coord_cartesian(ylim = c(10, 18))
+
+p5b <- p5a + 
+  ylab("") +
+  xlab("") +
+  theme(axis.title = element_text(size = 5),
+        axis.text = element_text(size = 4),         
+        axis.text.y = element_blank()) +
+  coord_cartesian(ylim = c(10, 18))
+
+p8b <- p8a +
+  ylab("") +
+  xlab("") +
+  theme(axis.title = element_text(size = 5),
+        axis.text = element_text(size = 4),         
+        axis.text.y = element_blank()) +
+  coord_cartesian(ylim = c(10, 18))
+
+p11b <- p11a +
+  ylab("") +
+  xlab("") +
+  theme(axis.title = element_text(size = 5),
+        axis.text = element_text(size = 4),         
+        axis.text.y = element_blank()) +
+  coord_cartesian(ylim = c(10, 18))
+
+p14b <- p14a +
+  ylab("") +
+  xlab("") +
+  theme(axis.title = element_text(size = 5),
+        axis.text = element_text(size = 4),         
+        axis.text.y = element_blank()) +
+  coord_cartesian(ylim = c(10, 18))
+
+p17b <- p17a +
+  ylab("") +
+  xlab("") +
+  theme(axis.title = element_text(size = 5),
+        axis.text = element_text(size = 4),         
+        axis.text.y = element_blank()) +
+  coord_cartesian(ylim = c(10, 18))
+
+p3b <- p3a +
+  ylab("") +
+  xlab("") +
+  theme(axis.title = element_text(size = 5),
+        axis.text = element_text(size = 4),         
+        axis.text.y = element_blank())  +
+  coord_cartesian(ylim = c(-0.55, 1.75))
+                  
+p6b <- p6a + 
+  ylab("") +
+  xlab("") +
+  theme(axis.title = element_text(size = 5),
+        axis.text = element_text(size = 4),         
+        axis.text.y = element_blank())  +
+  coord_cartesian(ylim = c(-0.55, 1.75))
+                  
+p9b <-  p9a +
+  ylab("") +
+  xlab("") +
+  theme(axis.title = element_text(size = 5),
+        axis.text = element_text(size = 4),         
+        axis.text.y = element_blank())  +
+  coord_cartesian(ylim = c(-0.55, 1.75))
+                  
+p12b <- p12a + 
+  ylab("") +
+  xlab("") +
+  theme(axis.title = element_text(size = 5),
+        axis.text = element_text(size = 4),         
+        axis.text.y = element_blank())  +
+  coord_cartesian(ylim = c(-0.55, 1.75))
+                  
+p15b <- p15a + 
+  ylab("") +
+  xlab("") +
+  theme(axis.title = element_text(size = 5),
+        axis.text = element_text(size = 4),         
+        axis.text.y = element_blank())  +
+  coord_cartesian(ylim = c(-0.55, 1.75))
+                  
+p18b <- p18a +
+  ylab("") +
+  xlab("") +
+  theme(axis.title = element_text(size = 5),
+        axis.text = element_text(size = 4),         
+        axis.text.y = element_blank())  +
+  coord_cartesian(ylim = c(-0.55, 1.75))
+   
+```
 
 
+```{r}
+# HG
 
+# mgcViz function for multipanel plots
+gridPrint(p2b, p5b, p8b, p11b, p14b, p17b,
+          p3b, p6b, p9b, p12b, p15b, p18b,
+          respect=TRUE,
+          ncol = 6)
+
+# as above, write to file
+png(file = paste0(out_path, "gamm_multiplot_bes.png"), pointsize=10, width=7000, height=2000, res=600)
+gridPrint(p2b, p5b, p8b, p11b, p14b, p17b,
+          p3b, p6b, p9b, p12b, p15b, p18b,
+          respect=TRUE,
+          ncol = 6)
+dev.off()
+
+
+```
 
 
 
