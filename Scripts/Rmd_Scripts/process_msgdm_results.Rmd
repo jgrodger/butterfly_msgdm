@@ -190,7 +190,11 @@ for (i in 1:(ncol(my_env_data) + 1)) {
     })
 }
 
+filepath <- paste0(out_path, "/msgdm_single_splines.rds")
+filepath
 
+write_rds(my_plots ,
+          file = filepath)
 
 ```
 # Make a multipanel plot
@@ -200,19 +204,67 @@ print(c("max y = ", max_y))
 list2env(my_plots, envir = .GlobalEnv)
 
 # mgcViz function for multipanel plots
-gridPrint(p1, p2, p3, p4, p5, p6, p7, p8,
+gridPrint(p1, p2, p3, p4, p5, p6, p7, p8, p9, 
           respect=TRUE,
-          ncol = 8)
+          ncol = 3)
 
 # as above, write to file
-png(file = paste0(out_path, "msgdm_multiplot1.png"), pointsize=10, width=9000, height=1000, res=600)
-gridPrint(p1, p2, p3, p4, p5, p6, p7, p8,
-          respect=TRUE,
-          ncol = 8)
-dev.off()
+# png(file = paste0(out_path, "msgdm_multiplot1.png"), pointsize=10, width=9000, height=1000, res=600)
+# gridPrint(p1, p2, p3, p4, p5, p6, p7, p8,
+#           respect=TRUE,
+#           ncol = 3)
+# dev.off()
+
+
 
 
 ```
+## 2 chunks below copied from GAMM code
+# prepare data from gam.plot to make a custom plot with geom_line()
+```{r}
+as_plot_data2 <- prepare.clfit(coef(as_gamm$gam)[1], as_plot_data)
+wc_plot_data2 <- prepare.clfit(coef(wc_gamm$gam)[1], wc_plot_data)
+hs_plot_data2 <- prepare.clfit(coef(hs_gamm$gam)[1], hs_plot_data)
+```
+
+#make custom plots of predicted values and CI from gam.plot
+```{r}
+# create 
+p1a <- plot.clfit(as_plot_data2[[1]])
+p4a <- plot.clfit(as_plot_data2[[2]])
+p7a <- plot.clfit(as_plot_data2[[3]])
+p10a <- plot.clfit(as_plot_data2[[4]])
+p13a <- plot.clfit(as_plot_data2[[5]])
+p16a <- plot.clfit(as_plot_data2[[6]])
+
+p2a <- plot.clfit(wc_plot_data2[[1]])
+p5a <- plot.clfit(wc_plot_data2[[2]])
+p8a <- plot.clfit(wc_plot_data2[[3]])
+p11a <- plot.clfit(wc_plot_data2[[4]])
+p14a <- plot.clfit(wc_plot_data2[[5]])
+p17a <- plot.clfit(wc_plot_data2[[6]])
+
+p3a <- plot.clfit(hs_plot_data2[[1]])
+p6a <- plot.clfit(hs_plot_data2[[2]])
+p9a <- plot.clfit(hs_plot_data2[[3]])
+p12a <- plot.clfit(hs_plot_data2[[4]])
+p15a <- plot.clfit(hs_plot_data2[[5]])
+p18a <- plot.clfit(hs_plot_data2[[6]])
+
+#inspect
+ gridPrint(p1a, p2a, p3a, 
+          p4a, p5a, p6a,
+          p7a, p8a, p9a,
+          p10a, p11a, p12a,
+          p13a, p14a, p15a,
+          p16a, p17a, p18a,
+          respect=TRUE,
+          ncol = 3)
+
+```
+
+
+
 #### Extract coefficients for each zeta order
 ```{r}
 # Extract coefficients for each zeta order into a list
