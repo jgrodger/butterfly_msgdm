@@ -1,0 +1,27 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+```{r}
+here::i_am("Scripts/Rmd_Scripts/Gamm_multipanel_fig.Rmd")
+library(tidyverse)
+library(ggpubr)
+#library(mgcv)
+#library(mgcViz)
+library(here)
+library(conflicted)
+
+conflicts_prefer(dplyr::filter)
+conflicts_prefer(dplyr::select)
+```
+
+# load gamm objects
+```{r}
+
+
+as_panels <- readRDS(here("./Output/Spatial/msgdms/all_species_Simpson_4//figs_tables//msgdm_single_splines.rds"))
+wc_panels <- readRDS(here("./Output/Spatial/msgdms/wc_Simpson_4//figs_tables//msgdm_single_splines.rds"))
+hs_panels <- readRDS(here("./Output/Spatial/msgdms/hs_Simpson_4//figs_tables//msgdm_single_splines.rds"))
+```
+
