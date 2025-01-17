@@ -16,7 +16,7 @@ include_graphics(here("Output/Spatial/Figures/Hex_dens_transects_richness.png/")
 include_graphics(here("./Output/Spatial/Figures/all_env_vars.png"))
 ```
 
-```{r fig.cap = "Figure 3 A-E. Effects of environemental variables on speccies richness of All Species from GAMM analyses", out.width = "100%"}
+```{r fig.cap = "Figure 3 A-E. Effects of environmental variables on speccies richness of All Species from GAMM analyses", out.width = "100%"}
 include_graphics(here("Output/Spatial/GAM/GAMM_fig/gam_multiplot.png"))
 ```
 
