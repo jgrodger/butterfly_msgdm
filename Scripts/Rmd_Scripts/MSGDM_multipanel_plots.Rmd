@@ -23,7 +23,7 @@ if(!dir.exists(out_path)) dir.create(out_path)
 
 ```
 
-# load gamm objects
+# load msgdm lists of plots for single splines
 ```{r}
 my_panels <- list()
 

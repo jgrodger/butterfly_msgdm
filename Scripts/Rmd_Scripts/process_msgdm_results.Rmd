@@ -3,7 +3,7 @@ title: "Zeta Msgdm Results Processing"
 output: html_document
 
 params:
-  dataset: "all_species"
+  dataset: "hs_no_zeros"
   normalize_msgdm: "Simpson"
   orders_msgdm: 
    - 2
@@ -158,7 +158,7 @@ check <- subs_isplines[,3:11]
 # make the y axis a little taller than largest value over all variables
 
 #I have decided to leave distance off the plot for BES
-max_y <- 1.05*max(subs_isplines[, 3:10])
+max_y <- 1.05*max(subs_isplines[, 3:11])
 ```
 
 #### Make ispline plots for each variable and store in a list
