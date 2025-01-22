@@ -2,7 +2,7 @@
 title: "R Notebook"
 output: html_notebook
 ---
-# Libraries
+
 ```{r}
 here::i_am("Scripts/Rmd_Scripts/butterfly_maps.Rmd")
 library(tidyverse)
@@ -16,14 +16,15 @@ library(gridExtra)
 library(here)
 ```
 
+#### Load basemap and butterfly data
 ```{r}
 # Basemap without outlying islands
 gb <- readRDS(here("./Data./Maps./gb_multipolygon_simplified.rds"))
 
 #All species data
-butterfly_data <- readRDS(here("./Data/Processed_Data/Spatial/all_species.rds"))
+as_data <- readRDS(here("./Data/Processed_Data/Spatial/all_species.rds"))
 
-sites <- butterfly_data$sites %>%
+sites <- as_data$sites %>%
   rename(as.richness = richness)
 
 # Habitat generalists
@@ -33,14 +34,18 @@ wc_data <- readRDS(here("./Data/Processed_Data/Spatial/wc.rds"))
 #Habitat specialists
 hs_data <- readRDS(here("./Data/Processed_Data/Spatial/hs.rds"))
 
-# check if sites are in the same order in all datasets
+# load environmental data
+comb <- readRDS(here("./Data/Processed_Data/Spatial/map_all_env_vars.rds"))
+```
+
+#### add species richness for habitat specialists and generalists to site data
+```{r}
 any(rownames(sites) != rownames(wc_data$site.by.species))
 any(rownames(sites) != rownames(hs_data$site.by.species))
 
 sites <- sites %>%
   mutate(wc.richness = rowSums(wc_data$site.by.species),
          hs.richness = rowSums(hs_data$site.by.species))
-
 ```
 
 
@@ -192,9 +197,6 @@ dev.off()
 
 
 
-```{r}
-comb <- readRDS(here("./Data/Processed_Data/Spatial/map_all_env_vars.rds"))
-```
 
 
 
