@@ -5,8 +5,6 @@ date: "2024-06-18"
 output: html_document
 ---
 
-
-
 ###Deviance explained
 
 #### All Butterfly Species, Simpson
@@ -65,6 +63,33 @@ print_csv("./Output/Spatial/msgdms/hs_no_zeros_Sorensen/figs_tables/deviance_tab
 
 ```{r  message = FALSE}
 print_csv("./Output/Spatial/msgdms/hs_no_zeros_Sorensen//figs_tables/variance_partitioning_table.csv", tab_no = "SM12", tab_cap = "Variation partitioning for MSGDMs for Sorensen-Normalized zeta diversity for Habitat Specialists", my_dig = 3)
+```
+
+
+```{r, out.width = "100%"}
+include_graphics(here("./Output/Spatial/msgdms/all_species_Simpson_4/figs_tables/forest_plot.png"))
+```
+
+
+```{r fig.cap = "Figure SM12A. Effect sizes and p-values for splines of predictor variables and the intercept for All Butterfly Species, Simpson", out.width = "100%"}
+include_graphics(here("./Output/Spatial/msgdms/all_species_Simpson_4/figs_tables/forest_plot_p_values.png"))
+```
+
+
+```{r, out.width = "100%"}
+include_graphics(here("./Output/Spatial/msgdms/wc_Simpson_4/figs_tables/forest_plot.png"))
+```
+
+```{r fig.cap = "Figure SM12B. Effect sizes and p-values for splines of predictor variables and the intercept for Habitat Generalists, Simpson", out.width = "100%"}
+include_graphics(here("./Output/Spatial/msgdms/wc_Simpson_4/figs_tables/forest_plot_p_values.png"))
+```
+
+```{r, out.width = "100%"}
+include_graphics(here("./Output/Spatial/msgdms/hs_no_zeros_Simpson_4/figs_tables/forest_plot.png"))
+```
+
+```{r fig.cap = "Figure SM12C. Effect sizes and p-values for splines of predictor variables and the intercept for Habitat Specialists, Simpson", out.width = "100%"}
+include_graphics(here("./Output/Spatial/msgdms/hs_no_zeros_Simpson_4/figs_tables/forest_plot_p_values.png"))
 ```
 
 
