@@ -198,11 +198,11 @@ head(site.by.env)
 
 #### Add species richness to site by enve for exploration
 ```{r}
-species <- data.frame(row.names(site.by.species)) %>%
+species.rich <- data.frame(row.names(site.by.species)) %>%
   cbind(rowSums(site.by.species))
-names(species) <- c("site.no", "species.richness")
+names(species.rich) <- c("site.no", "species.richness")
 
-site.by.env <- merge(site.by.env, species, by = "site.no")
+site.by.env <- merge(site.by.env, species.rich, by = "site.no")
 
 ```
 
@@ -398,7 +398,10 @@ group_by(xy) %>%
   filter(n() > 1)
 
 # Finalise site.by.env dataframe for analyses
-site.by.env <- select(site.by.env, -c(site.no, ngr.1km,  x, y, species.richness))
+site.by.env <- site.by.env %>%
+  column_to_rownames(var = "site.no") %>%
+  select(-c(ngr.1km,  x, y, species.richness))
+rownames(site.by.env) <- paste("site", rownames(site.by.env), sep = "_")
 
 rownames(site.by.species) <- paste("site", rownames(site.by.species), sep = "_")
 site.by.species <- filter(site.by.species,
