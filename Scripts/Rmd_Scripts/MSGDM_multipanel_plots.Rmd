@@ -2,6 +2,7 @@
 title: "R Notebook"
 output: html_notebook
 ---
+# This makes figure 4
 
 ```{r}
 here::i_am("Scripts/Rmd_Scripts/Gamm_multipanel_fig.Rmd")
@@ -17,13 +18,15 @@ library(conflicted)
 conflicts_prefer(dplyr::filter)
 conflicts_prefer(dplyr::select)
 ```
+
+#### File paths
 ```{r}
 out_path <-  here("Output/Spatial/msgdms/msgdm_multipanel//")
 if(!dir.exists(out_path)) dir.create(out_path)
 
 ```
 
-# load msgdm lists of plots for single splines
+#### Load lists of plots for single splinesfor msgdms
 ```{r}
 my_panels <- list()
 
@@ -44,10 +47,7 @@ names(my_panels) <- paste0("p", c(1, 4, 7, 10, 13, 16, 19, 22, 25,
 #my_panels <- my_panels1 
 ```
 
-
-
-
-
+#### #### Modify panels by adding labels (letters), removing unnecessary axis labels, and specifying axis titles
 ```{r}
 # Column headings
 top_heads <- c("All", "Generalists", "Specialists")
@@ -58,9 +58,8 @@ panel_letters <- c("A", "D", "G", "J", "M", "P", "S", "V", "Y",
 # x-axis legends
 x_labels <- c("Temperature", "Log Prec.", "Top. Wet.", "pH", "Nit. Dep.", "Tree Dens.", "Log Pestic.", "Log Humans", "Geog. Dist.")
 
-
+# for each panel adjust appearance as follows
 for (i in 1:27){
-  # for each panel adjust appearance as follows
   p_i <-  my_panels[[i]]
   # Remove x axis legend for panels not in middle column and rename legend for panels that are in the middle column
   if (!is.element(i, 10:18)) {
@@ -88,7 +87,10 @@ for (i in 1:27){
 
 ```
 
+#### create a new list with the panels in the order needed for plottin (they are plotted row-wize but my_panels has them column_Wize)
 ```{r}
+# my_index gives index in the original list of panels for new list, but in the order the should be in for the new list. 
+# start_index is the first three entries for my_index, subsequent values of my_index are obtained by adding 1, 2, 3... to start_index entries
 start_index <- c(1, 10, 19)
 my_index <- start_index
 for (i in 1:8){
@@ -102,51 +104,28 @@ for (i in 1:27){
 ```
 
 
-```{r}
-#list2env(my_panels, envir = .GlobalEnv)
-#rm(my_panels)
-```
-```{r}
-#inspect
- # gridPrint(p1a, p2a, p3a, 
- #          p4a, p5a, p6a,
- #          p7a, p8a, p9a,
- #          p10a, p11a, p12a,
- #          p13a, p14a, p15a,
- #          p16a, p17a, p18a,
- #         # p19a, p20a, p21a,
- #         # p22a, p23a, p24a,
- #          #p25a, p26a, p27a,
- #          respect=TRUE,
- #          ncol = 3)
-```
+#### Make and inspect multipanel plot
 ```{r}
 nr <- 9
 nc <- 3
 
-combine <- rbind(tableGrob(t(top_heads), theme = ttheme_minimal(), rows = ""), 
+# to include column caption as a separate row, I addapted code from https://stackoverflow.com/questions/45473843/put-row-and-column-titles-using-grid-arrange-in-r
+all_elements <- rbind(tableGrob(t(top_heads), theme = ttheme_minimal(), rows = ""), 
                  cbind(tableGrob(rep(" ",nr), theme = ttheme_minimal()), # I couldn't work out how not to have row headings so made them a space 
-                       arrangeGrob(grobs = my_panels2, ncol = 3),  size = "last"), size = "last")
-
-
-
-
-#check = arrangeGrob(grobs = my_panels2, ncol = 3)
-
+                       arrangeGrob(grobs = my_panels2, ncol = nc),  size = "last"), size = "last")
 grid.newpage()
-grid.draw(combine)
-
-
-
+grid.draw(all_elements)
 ```
+
+#### Write multipanel plot ot png
 ```{r}
 png(file = paste0(out_path, "msgdm_multiplot.png"), pointsize=10, width=960, height=2000, res=300)
 grid.newpage()
-grid.draw(combine)
+grid.draw(all_elements)
 dev.off()
 ```
 
-
+#### example code from  https://stackoverflow.com/questions/45473843/put-row-and-column-titles-using-grid-arrange-in-r
 ```{r}
 pl <- replicate(12, ggplot(), FALSE)
 
@@ -155,11 +134,9 @@ nr <- 4
 nc <- 3
 
 
-combine <- rbind(tableGrob(t(c(letters[1:nc])), theme = ttheme_minimal(), rows = ""), 
+all_elements <- rbind(tableGrob(t(c(letters[1:nc])), theme = ttheme_minimal(), rows = ""), 
                  cbind(tableGrob(LETTERS[1:nr], theme = ttheme_minimal()), 
                        arrangeGrob(grobs = pl),  size = "last"), size = "last")
 grid.newpage()
-grid.draw(combine)
+grid.draw(all_elements)
 ```
-
-

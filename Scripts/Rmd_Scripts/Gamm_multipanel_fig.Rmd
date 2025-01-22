@@ -3,9 +3,7 @@ title: "R Notebook"
 output: html_notebook
 ---
 `
-# This makes figure 3 and equivalent for BES
-
-#geom_rug not working so well, can check the other functions and see how the handle overplotting
+# This makes figure 3
 
 ```{r}
 here::i_am("Scripts/Rmd_Scripts/Gamm_multipanel_fig.Rmd")
@@ -20,26 +18,10 @@ conflicts_prefer(dplyr::filter)
 conflicts_prefer(dplyr::select)
 ```
 
-# load gamm objects
+#### Functions
 ```{r}
-# they are in this order: ("gamm_corGaus", "gamm_corExp", "gamm_corLin",
-#"gamm_corRatio", "gamm_corSpher")
-
-as_mods <- readRDS(here("./Output/Spatial/GAM/GAMM_all_species/gamm_model_select_as.rds/"))
-as_gamm <- as_mods[[3]]
-
-wc_mods <- readRDS(here("./Output/Spatial/GAM/GAMM_wc/gamm_model_select_wc.rds/"))
-wc_gamm <- wc_mods[[3]]
-
-hs_mods <- readRDS(here("./Output/Spatial/GAM/GAMM_hs/gamm_model_select_hs.rds/"))
-hs_gamm <- hs_mods[[3]]
-```
-
-
-```{r}
-
-# a function to prepare data from plot.gam() and prepare for further plotting
-# the plot_data is a list with length being the number of predictors in the GAM
+# A function to prepare data from plot.gam() and prepare for further plotting.
+# plot_data is a list with length being the number of predictors in the GAM.
 
 prepare.clfit <- function(shift, plot_data){
 
@@ -72,13 +54,28 @@ geom_line(aes(y = lo.cl), colour = "blue", linetype = 2)  +
 
 ```
 
-
+#### File paths
 ```{r}
 out_path <-  here("Output/Spatial/GAM/GAMM_fig//")
 if(!dir.exists(out_path)) dir.create(out_path)
 ```
 
-# get predicted values and sE for smooths from gam.plot
+#### Load gamm objects
+```{r}
+# they are in this order: ("gamm_corGaus", "gamm_corExp", "gamm_corLin",
+#"gamm_corRatio", "gamm_corSpher")
+
+as_mods <- readRDS(here("./Output/Spatial/GAM/GAMM_all_species/gamm_model_select_as.rds/"))
+as_gamm <- as_mods[[3]]
+
+wc_mods <- readRDS(here("./Output/Spatial/GAM/GAMM_wc/gamm_model_select_wc.rds/"))
+wc_gamm <- wc_mods[[3]]
+
+hs_mods <- readRDS(here("./Output/Spatial/GAM/GAMM_hs/gamm_model_select_hs.rds/"))
+hs_gamm <- hs_mods[[3]]
+```
+
+#### Get predicted values and SE for smooths from gam.plot and inspect plots provided by mgcv
 ```{r}
 
 as_plot_data <- plot(as_gamm$gam, shift = coef(as_gamm$gam)[1], pages = 1, seWithMean = FALSE, se = 1.96) # in the output se is already multiplied by 1.96
@@ -89,358 +86,118 @@ hs_plot_data <- plot(hs_gamm$gam, shift = coef(hs_gamm$gam)[1], pages = 1, seWit
 
 ```
 
-# prepare data from gam.plot to make a custom plot with geom_line()
+#### prepare data from gam.plot to make a custom plot with geom_line()
 ```{r}
 as_plot_data2 <- prepare.clfit(coef(as_gamm$gam)[1], as_plot_data)
 wc_plot_data2 <- prepare.clfit(coef(wc_gamm$gam)[1], wc_plot_data)
 hs_plot_data2 <- prepare.clfit(coef(hs_gamm$gam)[1], hs_plot_data)
 ```
 
-#make custom plots of predicted values and CI from gam.plot
+#### create plots for gam splines and add to a list
 ```{r}
-# create 
-p1a <- plot.clfit(as_plot_data2[[1]])
-p4a <- plot.clfit(as_plot_data2[[2]])
-p7a <- plot.clfit(as_plot_data2[[3]])
-p10a <- plot.clfit(as_plot_data2[[4]])
-p13a <- plot.clfit(as_plot_data2[[5]])
-p16a <- plot.clfit(as_plot_data2[[6]])
+my_panels <- list()
 
-p2a <- plot.clfit(wc_plot_data2[[1]])
-p5a <- plot.clfit(wc_plot_data2[[2]])
-p8a <- plot.clfit(wc_plot_data2[[3]])
-p11a <- plot.clfit(wc_plot_data2[[4]])
-p14a <- plot.clfit(wc_plot_data2[[5]])
-p17a <- plot.clfit(wc_plot_data2[[6]])
+for (i in 1:6){
+my_panels[[i]] <- plot.clfit(as_plot_data2[[i]])
+}
 
-p3a <- plot.clfit(hs_plot_data2[[1]])
-p6a <- plot.clfit(hs_plot_data2[[2]])
-p9a <- plot.clfit(hs_plot_data2[[3]])
-p12a <- plot.clfit(hs_plot_data2[[4]])
-p15a <- plot.clfit(hs_plot_data2[[5]])
-p18a <- plot.clfit(hs_plot_data2[[6]])
+for (i in 7:12){
+my_panels[[i]] <- plot.clfit(wc_plot_data2[[i- 6]])
+}
 
-#inspect
- gridPrint(p1a, p2a, p3a, 
-          p4a, p5a, p6a,
-          p7a, p8a, p9a,
-          p10a, p11a, p12a,
-          p13a, p14a, p15a,
-          p16a, p17a, p18a,
-          respect=TRUE,
-          ncol = 3)
+for (i in 13:18){
+my_panels[[i]] <- plot.clfit(hs_plot_data2[[i - 12]])
+}
+```
+
+#### Modify panels by adding labels (letters) and specifying axis titles
+```{r}
+# Column headings
+top_heads <- c("All", "Generalists", "Specialists")
+# Panel labels
+panel_letters <- c("A", "D", "G", "J", "M", "P", 
+                   "B", "E", "H", "K", "N", "Q", 
+                   "C", "F", "I", "L", "O", "R")
+# x-axis legends
+x_labels <- c("Temperature", "Log Prec.", "Top. Wet.", "pH", "Nit. Dep.", "Log Humans")
+
+
+for (i in 1:18){
+  # for each panel adjust appearance as follows
+  p_i <-  my_panels[[i]]
+  # Remove x axis legend for panels not in middle column and rename legend for panels that are in the middle column
+  if (!is.element(i, 7:12)) {
+    p_i <-  p_i + 
+      xlab(" ")
+    } else {
+    p_i <- p_i + 
+      xlab(x_labels[i - 6])    
+    }
+  # only include y axis legend for the middle left panel
+  if (i == 3) {
+    p_i <-  p_i + 
+      ylab("Species Richness") 
+  } else {
+    p_i <-  p_i + 
+      ylab(" ")
+  }
+    # add panel labels to each panel
+  p_i <- p_i +
+    annotation_custom(grid::textGrob(panel_letters[i], 0.15, 0.9, gp = grid::gpar(fontsize = 6))) 
+  my_panels[[i]] <- p_i
+}
 
 ```
 
-# add annotation and set y axis limits as well as text size
+#### create a new list with the panels in the order needed for plottin (they are plotted row-wize but my_panels has them column_Wize)
 ```{r}
-# Could use labs(tag = "A"), etc and include "All Species" etc below as separate elements
+# my_index gives index in the original list of panels for new list, but in the order the should be in for the new list. 
+# start_index is the first three entries for my_index, subsequent values of my_index are obtained by adding 1, 2, 3... to start_index entries
+start_index <- c(1, 7, 13)
+my_index <- start_index
+for (i in 1:5){
+  my_index <- c(my_index, start_index +i)
+}
+my_panels2 <- list()
 
-p1 <- p1a +
-  ylab("") +
-  xlab("") +
-  labs(title = "All Species") +
-  theme(axis.title = element_text(size = 5),
-        axis.text = element_text(size = 4)) +
-  annotation_custom(grid::textGrob("A", 0.2, 0.95, gp = grid::gpar(fontsize = 6))) +
-  coord_cartesian(ylim = c(14, 23)) +
-  theme(plot.title = element_text(size = 5.5))
-
-p2 <- p2a +
-  ylab("") +
-  xlab("Mean Annual Temperature") +
-  labs(title = "Habitat Generalists") +
-  theme(axis.title = element_text(size = 5),
-        axis.text = element_text(size = 4)) +
-  annotation_custom(grid::textGrob("B", 0.2, 0.95, gp = grid::gpar(fontsize = 6))) +
-  coord_cartesian(ylim = c(10, 18)) +
-  theme(plot.title = element_text(size = 5.5))
-
-p3 <- p3a +
-  ylab("") +
-  xlab("") +
-  labs(title = "Habitat Specialists") +
- theme(axis.title = element_text(size = 5),
-        axis.text = element_text(size = 4)) +
-  annotation_custom(grid::textGrob("C", 0.2, 0.95, gp = grid::gpar(fontsize = 6))) +
-  coord_cartesian(ylim = c(-0.55, 1.75)) +
-  theme(plot.title = element_text(size = 5.5))
-
-
-p4 <- p4a +
-  ylab("") +
-  xlab("") +
-  theme(axis.title = element_text(size = 5),
-        axis.text = element_text(size = 4)) +
-  annotation_custom(grid::textGrob("D", 0.2, 0.95, gp = grid::gpar(fontsize = 6))) +
-  coord_cartesian(ylim = c(14, 23))
-
-p5 <- p5a +
-  ylab("") +
-  xlab("Mean Annual Precipitation") +
- theme(axis.title = element_text(size = 5),
-        axis.text = element_text(size = 4)) +
-  annotation_custom(grid::textGrob("E", 0.2, 0.95, gp = grid::gpar(fontsize = 6))) +
-  coord_cartesian(ylim = c(10, 18))
-
-p6 <- p6a +
-  ylab("") +
-  xlab("") +
-  theme(axis.title = element_text(size = 5),
-        axis.text = element_text(size = 4)) +
-  annotation_custom(grid::textGrob("F", 0.2, 0.95, gp = grid::gpar(fontsize = 6))) +
-  coord_cartesian(ylim = c(-0.55, 1.75))
-
-
-p7 <- p7a +
-  ylab("Species Richness") +
-  xlab("") +
-  theme(axis.title = element_text(size = 5),
-        axis.text = element_text(size = 4)) +
-  annotation_custom(grid::textGrob("G", 0.2, 0.95, gp = grid::gpar(fontsize = 6))) +
-  coord_cartesian(ylim = c(14, 23))
-
-p8 <- p8a +
-  ylab("") +
-  xlab("Topographical Wetness") +
-  theme(axis.title = element_text(size = 5),
-        axis.text = element_text(size = 4)) +
-  annotation_custom(grid::textGrob("H", 0.2, 0.95, gp = grid::gpar(fontsize = 6))) +
-  coord_cartesian(ylim = c(10, 18))
-
-p9 <- p9a +
-  ylab("") +
-  xlab("") +
-  theme(axis.title = element_text(size = 5),
-        axis.text = element_text(size = 4)) +
-  annotation_custom(grid::textGrob("I", 0.2, 0.95, gp = grid::gpar(fontsize = 6))) +
-  coord_cartesian(ylim = c(-0.55, 1.75))
-
-
-p10 <- p10a +
-  ylab("") +
-  xlab("") +
-  theme(axis.title = element_text(size = 5),
-        axis.text = element_text(size = 4)) +
-  annotation_custom(grid::textGrob("J", 0.2, 0.95, gp = grid::gpar(fontsize = 6))) +
-  coord_cartesian(ylim = c(14, 23))
-
-p11 <- p11a +
-  ylab("") +
-  xlab("pH") +
-  theme(axis.title = element_text(size = 5),
-        axis.text = element_text(size = 4)) +
-  annotation_custom(grid::textGrob("K", 0.2, 0.95, gp = grid::gpar(fontsize = 6))) +
-  coord_cartesian(ylim = c(10, 18))
-
-p12 <- p12a +
-  ylab("") +
-  xlab("") +
- theme(axis.title = element_text(size = 5),
-        axis.text = element_text(size = 4)) +
-  annotation_custom(grid::textGrob("L", 0.2, 0.95, gp = grid::gpar(fontsize = 6))) +
-  coord_cartesian(ylim = c(-0.55, 1.75))
-
-
-p13 <- p13a +
-  ylab("") +
-  xlab("") +
-  theme(axis.title = element_text(size = 5),
-        axis.text = element_text(size = 4)) +
-  annotation_custom(grid::textGrob("M", 0.2, 0.95, gp = grid::gpar(fontsize = 6))) +
-  coord_cartesian(ylim = c(14, 23))
-
-p14 <- p14a +
-  ylab("") +
-  xlab("Total Nitrogen Deposition") +
- theme(axis.title = element_text(size = 5),
-        axis.text = element_text(size = 4)) +
-  annotation_custom(grid::textGrob("N", 0.2, 0.95, gp = grid::gpar(fontsize = 6))) +
-  coord_cartesian(ylim = c(10, 18))
-
-p15 <- p15a +
-  ylab("") +
-  xlab("") +
-  theme(axis.title = element_text(size = 5),
-        axis.text = element_text(size = 4)) +
-  annotation_custom(grid::textGrob("O", 0.2, 0.95, gp = grid::gpar(fontsize = 6))) +
-  coord_cartesian(ylim = c(-0.55, 1.75))
-
-
-p16 <- p16a +
-  ylab("") +
-  xlab("") +
-  theme(axis.title = element_text(size = 5),
-        axis.text = element_text(size = 4)) +
-  annotation_custom(grid::textGrob("P", 0.2, 0.95, gp = grid::gpar(fontsize = 6))) +
-  coord_cartesian(ylim = c(14, 23))
-
-p17 <- p17a +
-  ylab("") +
-  xlab("Log Human Density") +
- theme(axis.title = element_text(size = 5),
-        axis.text = element_text(size = 4)) +
-  annotation_custom(grid::textGrob("Q", 0.2, 0.95, gp = grid::gpar(fontsize = 6))) +
-  coord_cartesian(ylim = c(10, 18))
-
-p18 <- p18a +
-  ylab("") +
-  xlab("") +
-  theme(axis.title = element_text(size = 5),
-        axis.text = element_text(size = 4)) +
-  annotation_custom(grid::textGrob("R", 0.2, 0.95, gp = grid::gpar(fontsize = 6))) +
-  coord_cartesian(ylim = c(-0.55, 1.75))
-
-
-
+for (i in 1:27){
+  my_panels2[[i]]<- my_panels[[my_index[i]]]
+}
 ```
 
-# print the multipanel plot
-
+#### Make and inspect multipanel plot
 ```{r}
-# this is a function from mgcViz
-gridPrint(p1, p2, p3, 
-          p4, p5, p6,
-          p7, p8, p9,
-          p10, p11, p12,
-          p13, p14, p15,
-          p16, p17, p18,
-          respect=TRUE,
-          ncol = 3)
+nr <- 6
+nc <- 3
 
-png(file = paste0(out_path, "gam_multiplot.png"), pointsize=10, width=960, height=1400, res=300)
- 
-gridPrint(p1, p2, p3, 
-          p4, p5, p6,
-          p7, p8, p9,
-          p10, p11, p12,
-          p13, p14, p15,
-          p16, p17, p18,
-          respect=TRUE,
-          ncol = 3)
-
- dev.off() 
+# to include column caption as a separate row, I addapted code from https://stackoverflow.com/questions/45473843/put-row-and-column-titles-using-grid-arrange-in-r
+all_elements <- rbind(tableGrob(t(top_heads), theme = ttheme_minimal(), rows = ""), 
+                 cbind(tableGrob(rep(" ",nr), theme = ttheme_minimal()), # I couldn't work out how not to have row headings so made them a space 
+                       arrangeGrob(grobs = my_panels2, ncol = nc),  size = "last"), size = "last")
+grid.newpage()
+grid.draw(all_elements)
 ```
-#multipanel for BES
+#### write multipanel plot to png
 ```{r}
-p2b <-  p2a +
-  ylab("") +
-  xlab("") +
-  theme(axis.title = element_text(size = 5),
-        axis.text = element_text(size = 4),
-        axis.text.y = element_blank()) +
-  coord_cartesian(ylim = c(10, 18))
-
-p5b <- p5a + 
-  ylab("") +
-  xlab("") +
-  theme(axis.title = element_text(size = 5),
-        axis.text = element_text(size = 4),         
-        axis.text.y = element_blank()) +
-  coord_cartesian(ylim = c(10, 18))
-
-p8b <- p8a +
-  ylab("") +
-  xlab("") +
-  theme(axis.title = element_text(size = 5),
-        axis.text = element_text(size = 4),         
-        axis.text.y = element_blank()) +
-  coord_cartesian(ylim = c(10, 18))
-
-p11b <- p11a +
-  ylab("") +
-  xlab("") +
-  theme(axis.title = element_text(size = 5),
-        axis.text = element_text(size = 4),         
-        axis.text.y = element_blank()) +
-  coord_cartesian(ylim = c(10, 18))
-
-p14b <- p14a +
-  ylab("") +
-  xlab("") +
-  theme(axis.title = element_text(size = 5),
-        axis.text = element_text(size = 4),         
-        axis.text.y = element_blank()) +
-  coord_cartesian(ylim = c(10, 18))
-
-p17b <- p17a +
-  ylab("") +
-  xlab("") +
-  theme(axis.title = element_text(size = 5),
-        axis.text = element_text(size = 4),         
-        axis.text.y = element_blank()) +
-  coord_cartesian(ylim = c(10, 18))
-
-p3b <- p3a +
-  ylab("") +
-  xlab("") +
-  theme(axis.title = element_text(size = 5),
-        axis.text = element_text(size = 4),         
-        axis.text.y = element_blank())  +
-  coord_cartesian(ylim = c(-0.55, 1.75))
-                  
-p6b <- p6a + 
-  ylab("") +
-  xlab("") +
-  theme(axis.title = element_text(size = 5),
-        axis.text = element_text(size = 4),         
-        axis.text.y = element_blank())  +
-  coord_cartesian(ylim = c(-0.55, 1.75))
-                  
-p9b <-  p9a +
-  ylab("") +
-  xlab("") +
-  theme(axis.title = element_text(size = 5),
-        axis.text = element_text(size = 4),         
-        axis.text.y = element_blank())  +
-  coord_cartesian(ylim = c(-0.55, 1.75))
-                  
-p12b <- p12a + 
-  ylab("") +
-  xlab("") +
-  theme(axis.title = element_text(size = 5),
-        axis.text = element_text(size = 4),         
-        axis.text.y = element_blank())  +
-  coord_cartesian(ylim = c(-0.55, 1.75))
-                  
-p15b <- p15a + 
-  ylab("") +
-  xlab("") +
-  theme(axis.title = element_text(size = 5),
-        axis.text = element_text(size = 4),         
-        axis.text.y = element_blank())  +
-  coord_cartesian(ylim = c(-0.55, 1.75))
-                  
-p18b <- p18a +
-  ylab("") +
-  xlab("") +
-  theme(axis.title = element_text(size = 5),
-        axis.text = element_text(size = 4),         
-        axis.text.y = element_blank())  +
-  coord_cartesian(ylim = c(-0.55, 1.75))
-   
-```
-
-
-```{r}
-# HG
-
-# mgcViz function for multipanel plots
-gridPrint(p2b, p5b, p8b, p11b, p14b, p17b,
-          p3b, p6b, p9b, p12b, p15b, p18b,
-          respect=TRUE,
-          ncol = 6)
-
-# as above, write to file
-png(file = paste0(out_path, "gamm_multiplot_bes.png"), pointsize=10, width=7000, height=2000, res=600)
-gridPrint(p2b, p5b, p8b, p11b, p14b, p17b,
-          p3b, p6b, p9b, p12b, p15b, p18b,
-          respect=TRUE,
-          ncol = 6)
+png(file = paste0(out_path, "gam_multiplot.png"), pointsize=10, width=1920, height=2800, res=300)
+grid.newpage()
+grid.draw(all_elements)
 dev.off()
 
-
 ```
 
+#### example code from  https://stackoverflow.com/questions/45473843/put-row-and-column-titles-using-grid-arrange-in-r
+```{r}
+pl <- replicate(12, ggplot(), FALSE)
+
+#N <- length(pl)
+nr <- 4
+nc <- 3
 
 
+all_elements <- rbind(tableGrob(t(c(letters[1:nc])), theme = ttheme_minimal(), rows = ""), 
+                 cbind(tableGrob(LETTERS[1:nr], theme = ttheme_minimal()), 
+                       arrangeGrob(grobs = pl),  size = "last"), size = "last")
+grid.newpage()
+grid.draw(all_elements)
+```
