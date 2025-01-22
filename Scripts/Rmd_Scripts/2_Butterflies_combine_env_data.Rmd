@@ -3,11 +3,14 @@ title: "R Notebook"
 output: html_notebook
 ---
 
+## This script processes environmental data, combines it with butterfly diversity data, and explores data (e.g. pairplots for species richnes and environmental variables). Finally, data saved for use in gamm and msgdm analyses
+
+
 #### Setup and Packages
 ```{r}
 #All the packes are used, checked24/04/2024
 
-here::i_am("Scripts/Rmd_Scripts/butterflies_combine_env_data.Rmd")
+here::i_am("Scripts/Rmd_Scripts/2_Butterflies_combine_env_data.Rmd")
 
 library(tidyverse)
 library(conflicted)
@@ -23,9 +26,7 @@ library(here)
 
 conflicts_prefer(dplyr::filter)
 ```
-To do: check we arereading correct processed input here
-       get rid of northern Ireland and Ireland (mask)
-       #mask isle of man and channel islands
+
 
 #### Load data
 ```{r}
@@ -64,6 +65,16 @@ site.by.prec <- readRDS(here("./Data/Masked_Cropped_Environmental_Data/site_by_p
 
 #### Functions
 ```{r}
+# a nice little function for plotting a bloe fit line #https://stackoverflow.com/questions/35085261/how-to-use-loess-method-in-ggallyggpairs-using-wrap-function
+# Function to return points and geom_smooth
+# allow for the method to be changed
+my_fn <- function(data, mapping, method="loess", ...){
+      p <- ggplot(data = data, mapping = mapping) + 
+      geom_point() + 
+      geom_smooth(method=method, ...)
+      p
+    }
+
 log10_plusone <- function(x)
 {log10(x + 1)}
 
@@ -120,9 +131,6 @@ site.by.log10.mean.ann.rain <- site.by.prec %>%
 
 ```
 
-
-
-
 #### Merge env variables
 ```{r}
 # Make a list to be able to use lapply
@@ -145,20 +153,16 @@ for (i in 2:length(layers2)){
 
 ```
 
+#### Inspect maps of environmental data
 ```{r}
 comb.check <- select(comb, -ngr.1km)
 
 plot(rast(comb.check, crs = "EPSG:27700", type = "xyz"))
 ```
-
+#### Write map of environmental data to RDS
 ```{r}
 write_rds(comb, file = here("./Data/Processed_Data/Spatial/map_all_env_vars.rds"))
 ```
-
-
-
-
-
 
 #### Merge env vars with site data to make site.by.env and site.by.xy dataframes
 ```{r}
@@ -188,6 +192,18 @@ rownames(site.by.env) <- site.by.env$site
 site.by.env <- select(site.by.env, -site)
 
 head(site.by.env)
+
+
+```
+
+#### Add species richness to site by enve for exploration
+```{r}
+species <- data.frame(row.names(site.by.species)) %>%
+  cbind(rowSums(site.by.species))
+names(species) <- c("site.no", "species.richness")
+
+site.by.env <- merge(site.by.env, species, by = "site.no")
+
 ```
 
 #### Plot  Sites
@@ -347,86 +363,42 @@ figure <- grid.arrange(p8, p9, p10, p11, p19, p20, p21, p22 + rremove("x.text"),
 dev.off()
 
 ```
-#### Check correlation between environmental variables
-
+#### Pearson correlations (Remove untransformed versions of log-transformed variables from environmetal data)
 ```{r}
-#### Remove untransformed versions of log-transformed variables from environmetal data
-
 site.by.env <- site.by.env %>%
   select(-c(mean.ann.rain, pesticide.risk, humans))
 
-cor(site.by.env[, 3:12], method = "pearson")
+cor(site.by.env[, 3:13], method = "pearson")
 ```
 
-
+#### Spearman correlations
 ```{r}
-cor(site.by.env[, 3:12], method = "spearman")
+cor(site.by.env[, 3:13], method = "spearman")
 ```
 
-```{r}
-ggpairs(site.by.env, 
-        columns = 5:12,
-        aes(alpha = 0.05),
-        lower = list(continuous = "smooth"))
-
-```
-
-
+#### Make pairplots
 ```{r}
 ggpairs(site.by.env, 
-        columns = 5:12,
+        columns = 5:13,
         aes(alpha = 0.05),
-        lower = list(continuous = "smooth_loess"),
-        upper = list(continuous = "smooth_loess"))
+        lower = list(continuous = my_fn))
+
 ```
 
-## 3 chunks below should be put at appropriate places in this notebook and for pairplots, update to use ggpairs and add loess fit
-
-#### Environmental variable, easting, northing and richness Pearson and Spearman correlations
-```{r}
-site.by.env.and.richness <- cbind(site.by.xy) %>%
-  cbind(site.by.env, rowSums(site.by.species)) %>% 
-  rename(species.richness = 'rowSums(site.by.species)')
-  
-
-t1 <- cor(site.by.env.and.richness)
-t2 <- cor(site.by.env.and.richness, method = "spearman")
-
-print("Pearson correlation")
-t1
-print("Spearman correlation")
-t2
-```
-
-#### Visualise relationships between x, y, predictors and richness
-```{r}
-pairs(site.by.env.and.richness[,3:11])
-pairs(site.by.env.and.richness[,c(1, 2, 11)])
-pairs(site.by.env.and.richness[, c(3, 4, 5, 11)])
-pairs(site.by.env.and.richness[,c(6, 7, 8, 11)])
-pairs(site.by.env.and.richness[c(9, 10, 11)])
-```
-
-#### Check species richness distribution
-```{r}
-hist(site.by.env.and.richness$species.richness)
-```
-
-## Obtain versions of dataset for analysis (i.e. all species, 
-## wider countryside species, habitat specialists)
+#### Obtain versions of dataset for analysis (i.e. all species, wider countryside species, habitat specialists)
 ```{r}
 # Finalise site.by.xy dataframe for analyses
 site.by.xy <- site.by.env %>%
   select(x, y)
 
-# Inspect duplicates for coordinates
+# Inspect duplicates for coordinates (two transects centred on same grid)
 dup_xy <- site.by.xy %>%
   mutate(xy = paste(x,y)) %>%
 group_by(xy) %>% 
   filter(n() > 1)
 
 # Finalise site.by.env dataframe for analyses
-site.by.env <- select(site.by.env, -c(site.no, ngr.1km,  x, y))
+site.by.env <- select(site.by.env, -c(site.no, ngr.1km,  x, y, species.richness))
 
 rownames(site.by.species) <- paste("site", rownames(site.by.species), sep = "_")
 site.by.species <- filter(site.by.species,
@@ -446,8 +418,7 @@ head(site.by.env)
 
 head(site.by.xy)
 ```
-#### Obtain datasets for wider countryside and habitat specialists
-#### With and without rows that have no species
+#### Obtain datasets for wider countryside and habitat specialists (habitat specialists with and without rows that have no species)
 ```{r}
 species$species.no <- paste("species", species$species.no, sep = "_")
 
@@ -499,5 +470,6 @@ write_rds(wc, file = here("./Data/Processed_Data/Spatial/wc.rds"))
 #write_rds(wc.no.zeros, file = here("./Data/Processed_Data/Spatial/wc_no_zeros.rds"))
 
 write_rds(hs, file = here("./Data/Processed_Data/Spatial/hs.rds"))
+
 write_rds(hs.no.zeros, file = here("./Data/Processed_Data/Spatial/hs_no_zeros.rds"))
 ```

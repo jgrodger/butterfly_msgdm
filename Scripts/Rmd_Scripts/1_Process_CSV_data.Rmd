@@ -3,6 +3,7 @@ title: "Processing butterfly data from UKBMS"
 output: html_notebook
 ---
 
+## What this does
 
 This script loads ukbms data for records, sites and species. It cleans the data, 
 renames columns for ease of use, filters by various criteria, including coverage 
@@ -11,7 +12,7 @@ environmental data from matching grid cells in butterflies_combine_env_data.Rmd.
 
 #### Load packages.
 ```{r}
-here::i_am("Scripts//Rmd_Scripts//Process_CSV_data.Rmd")
+here::i_am("Scripts//Rmd_Scripts//1_Process_CSV_data.Rmd")
 
 library(conflicted)
 
