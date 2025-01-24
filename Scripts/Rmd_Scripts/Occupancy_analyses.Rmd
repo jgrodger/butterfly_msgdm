@@ -3,13 +3,9 @@ title: "R Notebook"
 output: html_notebook
 ---
 
-```{r}
-# Parameterised reports: see https://r4ds.had.co.nz/r-markdown.html
-```
-
 #### Packages
 ```{r}
-here::i_am("Scripts/Rmd_Scripts/Zeta_declines_decays_analyses.Rmd")
+here::i_am("Scripts/Rmd_Scripts/Occupancy_analyses.Rmd")
 
 library(tidyverse)
 library(zetadiv)
@@ -22,31 +18,6 @@ library(tictoc)
 conflicts_prefer(dplyr::select)
 conflicts_prefer(knitrProgressBar::progress_estimated)
 ```
-
-
-
-#### File Paths
-```{r}
-data_path <- paste0("./Data/Processed_Data/Spatial/all_species.rds")
-
-out_path <-  paste0(here("Output/Spatial/zeta_declines_decays/all_species/"))
-
-if(!dir.exists(out_path)) dir.create(out_path, recursive = TRUE)
-```
-
-#### Data
-```{r}
-data <- readRDS(here(data_path))
-
-site.by.species <- data$site.by.species
-  
-site.by.env <- data$site.by.env
-
-site.by.xy <- data$site.by.xy
-
-species <- data$species
-```
-
 
 #### Functions
 ```{r}
@@ -121,137 +92,59 @@ return(out.df)
 #occ.df1<- column_to_rownames(occ.df1, "Row.names")
 ```
 
-
-## Contributions to Variation in zeta diversity 
-
-
-# to do here: change so I can see wider countryside and habitat specialists with different colours/symbols
-
-#contribution to variance of zeta 
+#### File Paths
 ```{r}
+data_path <- paste0("./Data/Processed_Data/Spatial/all_species.rds")
 
-occ.df<- data.frame( cbind(colSums(site.by.species), colSums(site.by.species)/nrow(site.by.species)))
+out_path <-  paste0(here("Output/Spatial/zeta_declines_decays/all_species/"))
 
+if(!dir.exists(out_path)) dir.create(out_path, recursive = TRUE)
+```
+
+#### Load data
+```{r}
+data <- readRDS(here(data_path))
+
+site.by.species <- data$site.by.species
+  
+site.by.env <- data$site.by.env
+
+site.by.xy <- data$site.by.xy
+
+species <- data$species
+```
+
+#### Recode Wider countryside sp to Habitat generalist
+```{r}
+species <- species %>% 
+  mutate(
+    strategy = case_match(strategy, "Wider countryside sp" ~ "Habitat generalist", .default = "Habitat specialist"))
+
+```
+
+#### Inspect occupancy
+```{r}
+# here I am trying to work out relative influence of different species on zeta diversity in relation to their occupancy
+
+# "occ" is number of sites occupied
+# "p.occ" is proportion of sites occupied
+
+occ.df <- data.frame(cbind(colSums(site.by.species), colSums(site.by.species)/nrow(site.by.species)))
 names(occ.df) <- c("occ", "p.occ")
 
 
-# here I am trying to work out relative influence of different species on zeta diversity in relation to their occupancy
-#commented out
-#probability that species is shared between n sites in one sample but not shared between n sites in a second sample
 occ.df <- occ.df %>% 
   mutate(rare.cat = case_when(p.occ < 0.2 ~ "1.rare",
                               p.occ >=0.2 & p.occ < 0.4 ~ "2.med.rare",
                               p.occ >=0.4 & p.occ < 0.6 ~ "3.med", 
                               p.occ >= 0.6 & p.occ < 0.8 ~ "4.med.common",
-                              p.occ >= 0.8 ~ "5.common")#,
-   # share2 = (p.occ1^2)*(1-p.occ1^2),
-   #      share3 = (p.occ1^3)*(1-p.occ1^3),
-    #     share4 = (p.occ1^4)*(1-p.occ1^4),
-     #    share5 = (p.occ1^5)*(1-p.occ1^5),
-  #       share10 = (p.occ1^10)*(1-p.occ1^10),
-   #      share15 = (p.occ1^15)*(1-p.occ1^15),
-  #       share20 = (p.occ1^20)*(1-p.occ1^20),
-  #       share30 = (p.occ1^30)*(1-p.occ1^30),
-  #       share50 = (p.occ1^50)*(1-p.occ1^50),
-  #       share100 = (p.occ1^100)*(1-p.occ1^100),
-  #       share200 = (p.occ1^200)*(1-p.occ1^200)
-    )
+                              p.occ >= 0.8 ~ "5.common"))
 
 hist(occ.df$p.occ, breaks = 20)
 
-
-#share2 is the probability that species is shared between 2 sites in one sample but not shared between 2 sites in a second sample
-
-
-
-
-
-
-
-
-
 ```
 
-```{r}
-#I have tweaked the Zeta.order.ex function to include the varmat in the output
-
-Zeta.order.ex.2 <- function (data.spec, order = 1, sd.correct = TRUE, rescale = FALSE, 
-    empty.row = "empty") 
-{
-    if (empty.row == "remove") {
-        data.spec <- data.spec[-which(rowSums(data.spec) == 0), 
-            ]
-    }
-    if (order > dim(data.spec)[1]) {
-        stop("Error: wrong value for \"order\": it must be equal or lower than the number of sites.")
-    }
-    data.spec <- as.matrix(data.spec)
-    intercept_mat <- t(data.spec) %*% data.spec
-    occupancy <- colSums(data.spec)
-    p <- exp(lchoose(occupancy, order) - lchoose(nrow(data.spec), 
-        order))
-    zeta.val <- sum(p)
-    varmat <- exp(lchoose(intercept_mat, order) - lchoose(nrow(data.spec), 
-        order))
-    for (j in 1:length(occupancy)) {
-        for (k in 1:length(occupancy)) {
-            varmat[j, k] <- varmat[j, k] - p[j] * p[k]
-        }
-    }
-    if (sd.correct == TRUE) {
-        zeta.val.sd <- sqrt(sum(varmat) * choose(nrow(data.spec), 
-            order)/(choose(nrow(data.spec), order) - 1))
-    }
-    else {
-        zeta.val.sd <- sqrt(sum(varmat))
-    }
-    zeta.order <- list()
-    zeta.order$zeta.order <- order
-    zeta.order$combinations <- choose(x <- dim(data.spec)[1], 
-        order)
-    zeta.order$zeta.val <- zeta.val
-    zeta.order$zeta.val.sd <- zeta.val.sd
-    zeta.order$varmat <- varmat
-        return(zeta.order)
-}
-
-
-# a function to get the rowsums for each species in the varmat normalised by variance (sumo of whole matrix)and add to a dataframe which should already have the occupancy and possibly rowsums for other orders of zeta.
-#normalised rowsums of the varmat are supposed to represent contribution of each species to variation in zeta diversity so that occupancy can be plotted against contribution to zeta for differnt orders of zeta
-
-# arguments are: site by species matrix, zeta order, name for new variable of normalised rowsums of varmat for each species, data frame to merge the new variable into
-
-get.var.share <- function(data.spec, ord, new.var.name, data.occ){
-  
-  z <-  Zeta.order.ex.2(data.spec, order = ord)
-
-
-df1 <- data.frame(z$varmat)
-
-df2<- data.frame(rowSums(df1)/sum(df1))
-
-names(df2)<- new.var.name
-
-out.df <- merge(data.occ, df2, by = "row.names")
-
-out.df<- column_to_rownames(out.df, "Row.names")
-
-
-return(out.df)
-
-}
-
-#occ.df1<- column_to_rownames(occ.df1, "Row.names")
-
-
-
-```
-
-
-
-# to do here: change so I can see wider countryside and habitat specialists with different colours/symbols
-
-#contribution to variance of zeta 
+# Calculate expected contribution to zeta diversity of different butterfly species for different zeta orders, assuming random occurrence of all species
 ```{r}
 occ.df<- data.frame( cbind(colSums(site.by.species), colSums(site.by.species)/nrow(site.by.species))) %>%
   rownames_to_column(var = "species.no")
@@ -262,8 +155,10 @@ occ.df <- merge(species, occ.df, by = "species.no")
 
 
 # here I am trying to work out relative influence of different species on zeta diversity in relation to their occupancy
-#commented out
-#probability that species is shared between n sites in one sample but not shared between n sites in a second sample
+ 
+# ex.share.n 
+# First we calculate the probability that a species is shared between n sites in one sample but not shared between n sites in a second sample
+# Then we normalise by column sums to obtain expected share of variance in zeta diversity contributed by each species
 occ.df <- occ.df %>% 
   mutate(rare.cat = case_when(p.occ < 0.2 ~ "1.rare",
                               p.occ >=0.2 & p.occ < 0.4 ~ "2.med.rare",
@@ -288,120 +183,94 @@ occ.df <- occ.df %>%
          
     )
 
-#normalise expected share of variance by column sums
+# normalise expected share of variance by column sums
 
 occ.df[, 10:23] <- lapply(occ.df[, 10:23], function(x) x/sum(x))
 
 # I need species no as row names again for functions below
 occ.df<- column_to_rownames(occ.df, var = "species.no")
-
-hist(occ.df$p.occ, breaks = 20)
-
-
-#share2 is the probability that species is shared between 2 sites in one sample but not shared between 2 sites in a second sample
-
-
-
-
-
-
-
-
-
 ```
 
 
-
+#### Plot expected contribution to zeta diversity of different butterfly species
 ```{r}
 
-
 ggplot(occ.df, aes(x=p.occ, y=ex.share.2, fill=strategy)) + geom_point(shape=21, size = 3) + 
-  scale_fill_manual(values=c("blue", "green")) +
+  scale_fill_manual(values=c("green", "blue")) +
    labs(title="Zeta = 2", x = "Occupancy", y = "Expected Variance Contribution")
 
 
 ggplot(occ.df, aes(x=p.occ, y=ex.share.3, fill=strategy)) + geom_point(shape=21, size = 3) + 
-  scale_fill_manual(values=c("blue", "green")) +
+  scale_fill_manual(values=c("green", "blue")) +
    labs(title="Zeta = 3", x = "Occupancy", y = "Expected Variance Contribution")
 
 
 ggplot(occ.df, aes(x=p.occ, y=ex.share.4, fill=strategy)) + geom_point(shape=21, size = 3) + 
-  scale_fill_manual(values=c("blue", "green")) +
+  scale_fill_manual(values=c("green", "blue")) +
    labs(title="Zeta = 4", x = "Occupancy", y = "Expected Variance Contribution")
 
 
 ggplot(occ.df, aes(x=p.occ, y=ex.share.5, fill=strategy)) + geom_point(shape=21, size = 3) + 
-  scale_fill_manual(values=c("blue", "green")) +
+  scale_fill_manual(values=c("green", "blue")) +
    labs(title="Zeta = 5", x = "Occupancy", y = "Expected Variance Contribution")
 
 
 
 ggplot(occ.df, aes(x=p.occ, y=ex.share.6, fill=strategy)) + geom_point(shape=21, size = 3) + 
-  scale_fill_manual(values=c("blue", "green")) +
+  scale_fill_manual(values=c("green", "blue")) +
    labs(title="Zeta = 6", x = "Occupancy", y = "Expected Variance Contribution")
 
 
 ggplot(occ.df, aes(x=p.occ, y=ex.share.7, fill=strategy)) + geom_point(shape=21, size = 3) + 
-  scale_fill_manual(values=c("blue", "green")) +
+  scale_fill_manual(values=c("green", "blue")) +
    labs(title="Zeta = 7", x = "Occupancy", y = "Expected Variance Contribution")
 
 
 
 ggplot(occ.df, aes(x=p.occ, y=ex.share.8, fill=strategy)) + geom_point(shape=21, size = 3) + 
-  scale_fill_manual(values=c("blue", "green")) +
+  scale_fill_manual(values=c("green", "blue")) +
    labs(title="Zeta = 8", x = "Occupancy", y = "Expected Variance Contribution")
 
 
 ggplot(occ.df, aes(x=p.occ, y=ex.share.9, fill=strategy)) + geom_point(shape=21, size = 3) + 
-  scale_fill_manual(values=c("blue", "green")) +
+  scale_fill_manual(values=c("green", "blue")) +
    labs(title="Zeta = 9", x = "Occupancy", y = "Expected Variance Contribution")
 
 
 ggplot(occ.df, aes(x=p.occ, y=ex.share.10, fill=strategy)) + geom_point(shape=21, size = 3) + 
-  scale_fill_manual(values=c("blue", "green")) +
+  scale_fill_manual(values=c("green", "blue")) +
    labs(title="Zeta = 10", x = "Occupancy", y = "Expected Variance Contribution")
 
 
 ggplot(occ.df, aes(x=p.occ, y=ex.share.15, fill=strategy)) + geom_point(shape=21, size = 3) + 
-  scale_fill_manual(values=c("blue", "green")) +
+  scale_fill_manual(values=c("green", "blue")) +
    labs(title="Zeta = 15", x = "Occupancy", y = "Expected Variance Contribution")
 
 
 ggplot(occ.df, aes(x=p.occ, y=ex.share.20, fill=strategy)) + geom_point(shape=21, size = 3) + 
-  scale_fill_manual(values=c("blue", "green")) +
+  scale_fill_manual(values=c("green", "blue")) +
    labs(title="Zeta = 20", x = "Occupancy", y = "Expected Variance Contribution")
 
 
 
 ggplot(occ.df, aes(x=p.occ, y=ex.share.30, fill=strategy)) + geom_point(shape=21, size = 3) + 
-  scale_fill_manual(values=c("blue", "green")) +
+  scale_fill_manual(values=c("green", "blue")) +
    labs(title="Zeta = 30", x = "Occupancy", y = "Expected Variance Contribution")
 
 
 ggplot(occ.df, aes(x=p.occ, y=ex.share.40, fill=strategy)) + geom_point(shape=21, size = 3) + 
-  scale_fill_manual(values=c("blue", "green")) +
+  scale_fill_manual(values=c("green", "blue")) +
    labs(title="Zeta = 40", x = "Occupancy", y = "Expected Variance Contribution")
 
 
 ggplot(occ.df, aes(x=p.occ, y=ex.share.50, fill=strategy)) + geom_point(shape=21, size = 3) + 
-  scale_fill_manual(values=c("blue", "green")) +
+  scale_fill_manual(values=c("green", "blue")) +
    labs(title="Zeta = 50", x = "Occupancy", y = "Expected Variance Contribution")
 ```
 
-```{r}
-sp.occ.table <- occ.df[, c(1:4, 7)] 
-
-sp.occ.table <- sp.occ.table[base::order(-sp.occ.table$p.occ), ]
-
-#df[order(-df$var1), ]
-```
-
-
-
+#### Extract observed share of variance of zeta diversity contributed by different species of butterfly for different zeta orders
 ```{r}
 occ.df <- get.var.share(site.by.species, 2, "share.2", occ.df)
-
-
 occ.df <- get.var.share(site.by.species, 3, "share.3", occ.df)
 occ.df <- get.var.share(site.by.species, 4, "share.4", occ.df)
 occ.df <- get.var.share(site.by.species, 5, "share.5", occ.df)
@@ -417,129 +286,94 @@ occ.df <- get.var.share(site.by.species, 40, "share.40", occ.df)
 occ.df <- get.var.share(site.by.species, 50, "share.50", occ.df)
 ```
 
-
-
+#### Plot share of variance of zeta diversity contributed by different species of butterfly
 ```{r}
-
-
 ggplot(occ.df, aes(x=p.occ, y=share.2, fill=strategy)) + geom_point(shape=21, size = 3) + 
-  scale_fill_manual(values=c("blue", "green")) +
+  scale_fill_manual(values=c("green", "blue")) +
    labs(title="Zeta = 2", x = "Occupancy", y = "Variance Contribution")
 
 
 ggplot(occ.df, aes(x=p.occ, y=share.3, fill=strategy)) + geom_point(shape=21, size = 3) + 
-  scale_fill_manual(values=c("blue", "green")) +
+  scale_fill_manual(values=c("green", "blue")) +
    labs(title="Zeta = 3", x = "Occupancy", y = "Variance Contribution")
 
 
 ggplot(occ.df, aes(x=p.occ, y=share.4, fill=strategy)) + geom_point(shape=21, size = 3) + 
-  scale_fill_manual(values=c("blue", "green")) +
+  scale_fill_manual(values=c("green", "blue")) +
    labs(title="Zeta = 4", x = "Occupancy", y = "Variance Contribution")
 
 
 ggplot(occ.df, aes(x=p.occ, y=share.5, fill=strategy)) + geom_point(shape=21, size = 3) + 
-  scale_fill_manual(values=c("blue", "green")) +
+  scale_fill_manual(values=c("green", "blue")) +
    labs(title="Zeta = 5", x = "Occupancy", y = "Variance Contribution")
 
 
 
 ggplot(occ.df, aes(x=p.occ, y=share.6, fill=strategy)) + geom_point(shape=21, size = 3) + 
-  scale_fill_manual(values=c("blue", "green")) +
+  scale_fill_manual(values=c("green", "blue")) +
    labs(title="Zeta = 6", x = "Occupancy", y = "Variance Contribution")
 
 
 ggplot(occ.df, aes(x=p.occ, y=share.7, fill=strategy)) + geom_point(shape=21, size = 3) + 
-  scale_fill_manual(values=c("blue", "green")) +
+  scale_fill_manual(values=c("green", "blue")) +
    labs(title="Zeta = 7", x = "Occupancy", y = "Variance Contribution")
 
 
 
 ggplot(occ.df, aes(x=p.occ, y=share.8, fill=strategy)) + geom_point(shape=21, size = 3) + 
-  scale_fill_manual(values=c("blue", "green")) +
+  scale_fill_manual(values=c("green", "blue")) +
    labs(title="Zeta = 8", x = "Occupancy", y = "Variance Contribution")
 
 
 ggplot(occ.df, aes(x=p.occ, y=share.9, fill=strategy)) + geom_point(shape=21, size = 3) + 
-  scale_fill_manual(values=c("blue", "green")) +
+  scale_fill_manual(values=c("green", "blue")) +
    labs(title="Zeta = 9", x = "Occupancy", y = "Variance Contribution")
 
 
 ggplot(occ.df, aes(x=p.occ, y=share.10, fill=strategy)) + geom_point(shape=21, size = 3) + 
-  scale_fill_manual(values=c("blue", "green")) +
+  scale_fill_manual(values=c("green", "blue")) +
    labs(title="Zeta = 10", x = "Occupancy", y = "Variance Contribution")
 
 
 ggplot(occ.df, aes(x=p.occ, y=share.15, fill=strategy)) + geom_point(shape=21, size = 3) + 
-  scale_fill_manual(values=c("blue", "green")) +
+  scale_fill_manual(values=c("green", "blue")) +
    labs(title="Zeta = 15", x = "Occupancy", y = "Variance Contribution")
 
 
 ggplot(occ.df, aes(x=p.occ, y=share.20, fill=strategy)) + geom_point(shape=21, size = 3) + 
-  scale_fill_manual(values=c("blue", "green")) +
+  scale_fill_manual(values=c("green", "blue")) +
    labs(title="Zeta = 20", x = "Occupancy", y = "Variance Contribution")
 
 
 
 ggplot(occ.df, aes(x=p.occ, y=share.30, fill=strategy)) + geom_point(shape=21, size = 3) + 
-  scale_fill_manual(values=c("blue", "green")) +
+  scale_fill_manual(values=c("green", "blue")) +
    labs(title="Zeta = 30", x = "Occupancy", y = "Variance Contribution")
 
 
 ggplot(occ.df, aes(x=p.occ, y=share.40, fill=strategy)) + geom_point(shape=21, size = 3) + 
-  scale_fill_manual(values=c("blue", "green")) +
+  scale_fill_manual(values=c("green", "blue")) +
    labs(title="Zeta = 40", x = "Occupancy", y = "Variance Contribution")
 
 
 ggplot(occ.df, aes(x=p.occ, y=share.50, fill=strategy)) + geom_point(shape=21, size = 3) + 
-  scale_fill_manual(values=c("blue", "green")) +
+  scale_fill_manual(values=c("green", "blue")) +
    labs(title="Zeta = 50", x = "Occupancy", y = "Variance Contribution")
 
 ```
 
-
-
-regw rtwbt
-
-# to do here: change so I can see wider countryside and habitat specialists with different colours/symbols
-
-#contribution to variance of zeta 
+#### Plot rank occupancy
 ```{r}
-occ.df<- data.frame( cbind(colSums(site.by.species), colSums(site.by.species)/nrow(site.by.species)))
-
-names(occ.df) <- c("occ", "p.occ")
-
-
-# here I am trying to work out relative influence of different species on zeta diversity in relation to their occupancy
-#commented out
-#probability that species is shared between n sites in one sample but not shared between n sites in a second sample
-occ.df <- occ.df %>% 
-  mutate(rare.cat = case_when(p.occ < 0.2 ~ "1.rare",
-                              p.occ >=0.2 & p.occ < 0.4 ~ "2.med.rare",
-                              p.occ >=0.4 & p.occ < 0.6 ~ "3.med", 
-                              p.occ >= 0.6 & p.occ < 0.8 ~ "4.med.common",
-                              p.occ >= 0.8 ~ "5.common")
-    )
 
 occ.df$rank <- rank(-occ.df$p.occ, ties.method = "random")
 
 hist(occ.df$p.occ, breaks = 20)
 
 plot(occ.df$p.occ ~ occ.df$rank)
-
-
-
-#share2 is the probability that species is shared between 2 sites in one sample but not shared between 2 sites in a second sample
-
 ```
 
-#### Output occupancy table
+#### Output occupancy table and rank occupancy plot with different colours of habitat specialist and generalists
 ```{r}
-
-occ.df <- occ.df %>%
-  rownames_to_column(var = "species.no") %>%
-  merge(species, by = "species.no")
-  
-  
 occ.out <- occ.df %>%
   select(common.name, sci.name, strategy, habitat, occ, p.occ, rank) %>%
   arrange(desc(occ)) %>%
@@ -565,5 +399,3 @@ png(file = paste0(out_path, "/rank_occupancy.png"))
 rank_occ
 dev.off()
 ```
-
-
