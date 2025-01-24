@@ -48,10 +48,10 @@ sites <- sites %>%
          hs.richness = rowSums(hs_data$site.by.species))
 ```
 
-
-### squares and hexagons of point density, adapted from https://r-graph-gallery.com/329-hexbin-map-for-distribution.html
+#### Make and inspect point density plots with rectangles and hexagons, write hexagon plot as a png  
 ```{r}
-#rectangle
+# Adapted from https://r-graph-gallery.com/329-hexbin-map-for-distribution.html
+# Rectangles
 rect_dens <- ggplot() + 
     geom_sf(data = gb) +
   geom_bin2d(bins=30, data = sites, aes(x = x, y = y)) +
@@ -63,7 +63,7 @@ rect_dens <- ggplot() +
   axis.text.y = element_blank(),
   axis.ticks = element_blank())
 
-#hex
+# Hexagons
 hex_dens <- ggplot() + 
     geom_sf(data = gb) +
   geom_hex(bins=30, data = sites, aes(x = x, y = y)) +
@@ -80,34 +80,32 @@ hex_dens <- ggplot() +
                              theme(legend.title.position = "top",
                                   legend.text.position = "bottom")))
 
-
 rect_dens
 hex_dens
-
 
 
 png(filename =  paste0(here("Output/Spatial/Figures/Hex_dens_transects.png/")))
 hex_dens
 dev.off()
 ```
-
+#### Inspect histograms of species richness per site for all species, habitat generalists and habitat specialists
 ```{r}
 hist(sites$as.richness)
 hist(sites$wc.richness)
 hist(sites$hs.richness)
 ```
 
-
+#### Make hexplots showing mean species richness in each hexagon for all species
 ```{r}
 # modified above plot along lines suggested by answer https://stackoverflow.com/questions/74818772/r-how-to-fill-geom-hex-with-a-numerical-value-and-heat-scale-it
 
 
-# note, by default interals are left-open and right-closed, ie they do not include lower endpoint but do include right endpoint
+# note, by default intervals are left-open and right-closed, ie they do not include lower endpoint but do include upper endpoint
 
 as_richness <- ggplot() + 
     geom_sf(data = gb) +
   stat_summary_hex(
-    bins=30, 
+    bins = 30, 
     data = sites, 
     aes(x = x, y = y, z = as.richness)) + #the mean is taken by default
     scale_fill_viridis_b(name="AS",
@@ -123,11 +121,10 @@ as_richness <- ggplot() +
                              theme(legend.title.position = "top",
                                   legend.text.position = "bottom")))
 as_richness
-
-
 ```
-```{r}
 
+#### Make hexplots showing mean species richness in each hexagon for habitat generalists
+```{r}
 wc_richness <- ggplot() + 
     geom_sf(data = gb) +
   stat_summary_hex(
@@ -149,7 +146,7 @@ wc_richness <- ggplot() +
 
 wc_richness
 ```
-
+#### Make hexplots showing mean species richness in each hexagon for habitat specialists
 ```{r}
 
 hs_richness <- ggplot() + 
@@ -173,6 +170,8 @@ hs_richness <- ggplot() +
 
 hs_richness
 ```
+
+#### Make a multipanel plot of hexplots, inspect, write to png
 ```{r}
 all_hex <- grid.arrange(hex_dens, as_richness, wc_richness, hs_richness, ncol = 4, nrow = 1)
 
@@ -195,12 +194,7 @@ dev.off()
 
 ```
 
-
-
-
-
-
-#### Plot env vars and save pngs for figures
+#### Plot env vars and save pngs for figures, 4 to a page and eight to a page
 ```{r}
 # two sets of vars to be plotted 
 comb1 <- select(comb, x, y,  mean.ann.temp, topographic.wetness, ph, total.n)
@@ -217,25 +211,7 @@ plot(comb3)
 
 ```
 
-
-
-```{r}
-# this worked for individual plots but not multipanel plot
-theme_j1 <- function(){ 
-    font <- "Georgia"   #assign font family up front
-    
-    theme_grey() %+replace%    #replace elements we want to change
-    
-    theme(
-      
-   legend.position = c(.8, .75),
-             legend.background = element_rect(fill="grey", 
-                                size=0.5, linetype="solid")
-    )
-}
-```
-
-
+#### Make environmental variale plots with 
 ```{r}
 #copy and paste because I can't work out how to do inside a function
 
@@ -387,7 +363,7 @@ humans_plot <- ggplot() +
                                   legend.text.position = "bottom")))
 
 ```
-
+#### Make multipanel environmental plot with grid arrange
 ```{r}
 all_env <- grid.arrange(temp_plot, wet_plot, ph_plot, n_plot, 
                         prec_plot, tree_plot, pest_plot, humans_plot, 
