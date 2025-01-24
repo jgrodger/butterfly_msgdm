@@ -4,7 +4,7 @@ output: html_notebook
 ---
 
 ```{r}
-here::i_am("Scripts/Rmd_Scripts/butterfly_maps.Rmd")
+here::i_am("Scripts/Rmd_Scripts/3_Butterflies_maps.Rmd")
 library(tidyverse)
 library(viridis)
 library(terra)
