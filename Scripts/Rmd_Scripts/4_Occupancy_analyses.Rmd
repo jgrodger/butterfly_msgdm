@@ -5,11 +5,16 @@ output: html_notebook
 
 #### Packages
 ```{r}
-here::i_am("Scripts/Rmd_Scripts/Occupancy_analyses.Rmd")
+here::i_am("Scripts/Rmd_Scripts/4_Occupancy_analyses.Rmd")
 
 library(tidyverse)
 library(zetadiv)
 library(tidyverse)
+library(ggpubr)
+library(mgcv)
+library(mgcViz)
+library(grid)
+library(gridExtra)
 library(here)
 library(knitr)
 library(conflicted)
@@ -146,6 +151,8 @@ hist(occ.df$p.occ, breaks = 20)
 
 # Calculate expected contribution to zeta diversity of different butterfly species for different zeta orders, assuming random occurrence of all species
 ```{r}
+# To anyone reading this code, I apologize for the prodigious use of copy and paste!
+
 occ.df<- data.frame( cbind(colSums(site.by.species), colSums(site.by.species)/nrow(site.by.species))) %>%
   rownames_to_column(var = "species.no")
 
@@ -196,75 +203,75 @@ occ.df<- column_to_rownames(occ.df, var = "species.no")
 ```{r}
 
 ggplot(occ.df, aes(x=p.occ, y=ex.share.2, fill=strategy)) + geom_point(shape=21, size = 3) + 
-  scale_fill_manual(values=c("green", "blue")) +
+  scale_fill_manual(values=c("blue", "green")) +
    labs(title="Zeta = 2", x = "Occupancy", y = "Expected Variance Contribution")
 
 
 ggplot(occ.df, aes(x=p.occ, y=ex.share.3, fill=strategy)) + geom_point(shape=21, size = 3) + 
-  scale_fill_manual(values=c("green", "blue")) +
+  scale_fill_manual(values=c("blue", "green")) +
    labs(title="Zeta = 3", x = "Occupancy", y = "Expected Variance Contribution")
 
 
 ggplot(occ.df, aes(x=p.occ, y=ex.share.4, fill=strategy)) + geom_point(shape=21, size = 3) + 
-  scale_fill_manual(values=c("green", "blue")) +
+  scale_fill_manual(values=c("blue", "green")) +
    labs(title="Zeta = 4", x = "Occupancy", y = "Expected Variance Contribution")
 
 
 ggplot(occ.df, aes(x=p.occ, y=ex.share.5, fill=strategy)) + geom_point(shape=21, size = 3) + 
-  scale_fill_manual(values=c("green", "blue")) +
+  scale_fill_manual(values=c("blue", "green")) +
    labs(title="Zeta = 5", x = "Occupancy", y = "Expected Variance Contribution")
 
 
 
 ggplot(occ.df, aes(x=p.occ, y=ex.share.6, fill=strategy)) + geom_point(shape=21, size = 3) + 
-  scale_fill_manual(values=c("green", "blue")) +
+  scale_fill_manual(values=c("blue", "green")) +
    labs(title="Zeta = 6", x = "Occupancy", y = "Expected Variance Contribution")
 
 
 ggplot(occ.df, aes(x=p.occ, y=ex.share.7, fill=strategy)) + geom_point(shape=21, size = 3) + 
-  scale_fill_manual(values=c("green", "blue")) +
+  scale_fill_manual(values=c("blue", "green")) +
    labs(title="Zeta = 7", x = "Occupancy", y = "Expected Variance Contribution")
 
 
 
 ggplot(occ.df, aes(x=p.occ, y=ex.share.8, fill=strategy)) + geom_point(shape=21, size = 3) + 
-  scale_fill_manual(values=c("green", "blue")) +
+  scale_fill_manual(values=c("blue", "green")) +
    labs(title="Zeta = 8", x = "Occupancy", y = "Expected Variance Contribution")
 
 
 ggplot(occ.df, aes(x=p.occ, y=ex.share.9, fill=strategy)) + geom_point(shape=21, size = 3) + 
-  scale_fill_manual(values=c("green", "blue")) +
+  scale_fill_manual(values=c("blue", "green")) +
    labs(title="Zeta = 9", x = "Occupancy", y = "Expected Variance Contribution")
 
 
 ggplot(occ.df, aes(x=p.occ, y=ex.share.10, fill=strategy)) + geom_point(shape=21, size = 3) + 
-  scale_fill_manual(values=c("green", "blue")) +
+  scale_fill_manual(values=c("blue", "green")) +
    labs(title="Zeta = 10", x = "Occupancy", y = "Expected Variance Contribution")
 
 
 ggplot(occ.df, aes(x=p.occ, y=ex.share.15, fill=strategy)) + geom_point(shape=21, size = 3) + 
-  scale_fill_manual(values=c("green", "blue")) +
+  scale_fill_manual(values=c("blue", "green")) +
    labs(title="Zeta = 15", x = "Occupancy", y = "Expected Variance Contribution")
 
 
 ggplot(occ.df, aes(x=p.occ, y=ex.share.20, fill=strategy)) + geom_point(shape=21, size = 3) + 
-  scale_fill_manual(values=c("green", "blue")) +
+  scale_fill_manual(values=c("blue", "green")) +
    labs(title="Zeta = 20", x = "Occupancy", y = "Expected Variance Contribution")
 
 
 
 ggplot(occ.df, aes(x=p.occ, y=ex.share.30, fill=strategy)) + geom_point(shape=21, size = 3) + 
-  scale_fill_manual(values=c("green", "blue")) +
+  scale_fill_manual(values=c("blue", "green")) +
    labs(title="Zeta = 30", x = "Occupancy", y = "Expected Variance Contribution")
 
 
 ggplot(occ.df, aes(x=p.occ, y=ex.share.40, fill=strategy)) + geom_point(shape=21, size = 3) + 
-  scale_fill_manual(values=c("green", "blue")) +
+  scale_fill_manual(values=c("blue", "green")) +
    labs(title="Zeta = 40", x = "Occupancy", y = "Expected Variance Contribution")
 
 
 ggplot(occ.df, aes(x=p.occ, y=ex.share.50, fill=strategy)) + geom_point(shape=21, size = 3) + 
-  scale_fill_manual(values=c("green", "blue")) +
+  scale_fill_manual(values=c("blue", "green")) +
    labs(title="Zeta = 50", x = "Occupancy", y = "Expected Variance Contribution")
 ```
 
@@ -289,78 +296,140 @@ occ.df <- get.var.share(site.by.species, 50, "share.50", occ.df)
 #### Plot share of variance of zeta diversity contributed by different species of butterfly
 ```{r}
 ggplot(occ.df, aes(x=p.occ, y=share.2, fill=strategy)) + geom_point(shape=21, size = 3) + 
-  scale_fill_manual(values=c("green", "blue")) +
+  scale_fill_manual(values=c("blue", "green")) +
    labs(title="Zeta = 2", x = "Occupancy", y = "Variance Contribution")
 
 
 ggplot(occ.df, aes(x=p.occ, y=share.3, fill=strategy)) + geom_point(shape=21, size = 3) + 
-  scale_fill_manual(values=c("green", "blue")) +
+  scale_fill_manual(values=c("blue", "green")) +
    labs(title="Zeta = 3", x = "Occupancy", y = "Variance Contribution")
 
 
 ggplot(occ.df, aes(x=p.occ, y=share.4, fill=strategy)) + geom_point(shape=21, size = 3) + 
-  scale_fill_manual(values=c("green", "blue")) +
+  scale_fill_manual(values=c("blue", "green")) +
    labs(title="Zeta = 4", x = "Occupancy", y = "Variance Contribution")
 
 
 ggplot(occ.df, aes(x=p.occ, y=share.5, fill=strategy)) + geom_point(shape=21, size = 3) + 
-  scale_fill_manual(values=c("green", "blue")) +
+  scale_fill_manual(values=c("blue", "green")) +
    labs(title="Zeta = 5", x = "Occupancy", y = "Variance Contribution")
 
 
 
 ggplot(occ.df, aes(x=p.occ, y=share.6, fill=strategy)) + geom_point(shape=21, size = 3) + 
-  scale_fill_manual(values=c("green", "blue")) +
+  scale_fill_manual(values=c("blue", "green")) +
    labs(title="Zeta = 6", x = "Occupancy", y = "Variance Contribution")
 
 
 ggplot(occ.df, aes(x=p.occ, y=share.7, fill=strategy)) + geom_point(shape=21, size = 3) + 
-  scale_fill_manual(values=c("green", "blue")) +
+  scale_fill_manual(values=c("blue", "green")) +
    labs(title="Zeta = 7", x = "Occupancy", y = "Variance Contribution")
 
 
 
 ggplot(occ.df, aes(x=p.occ, y=share.8, fill=strategy)) + geom_point(shape=21, size = 3) + 
-  scale_fill_manual(values=c("green", "blue")) +
+  scale_fill_manual(values=c("blue", "green")) +
    labs(title="Zeta = 8", x = "Occupancy", y = "Variance Contribution")
 
 
 ggplot(occ.df, aes(x=p.occ, y=share.9, fill=strategy)) + geom_point(shape=21, size = 3) + 
-  scale_fill_manual(values=c("green", "blue")) +
+  scale_fill_manual(values=c("blue", "green")) +
    labs(title="Zeta = 9", x = "Occupancy", y = "Variance Contribution")
 
 
 ggplot(occ.df, aes(x=p.occ, y=share.10, fill=strategy)) + geom_point(shape=21, size = 3) + 
-  scale_fill_manual(values=c("green", "blue")) +
+  scale_fill_manual(values=c("blue", "green")) +
    labs(title="Zeta = 10", x = "Occupancy", y = "Variance Contribution")
 
 
 ggplot(occ.df, aes(x=p.occ, y=share.15, fill=strategy)) + geom_point(shape=21, size = 3) + 
-  scale_fill_manual(values=c("green", "blue")) +
+  scale_fill_manual(values=c("blue", "green")) +
    labs(title="Zeta = 15", x = "Occupancy", y = "Variance Contribution")
 
 
 ggplot(occ.df, aes(x=p.occ, y=share.20, fill=strategy)) + geom_point(shape=21, size = 3) + 
-  scale_fill_manual(values=c("green", "blue")) +
+  scale_fill_manual(values=c("blue", "green")) +
    labs(title="Zeta = 20", x = "Occupancy", y = "Variance Contribution")
 
 
 
 ggplot(occ.df, aes(x=p.occ, y=share.30, fill=strategy)) + geom_point(shape=21, size = 3) + 
-  scale_fill_manual(values=c("green", "blue")) +
+  scale_fill_manual(values=c("blue", "green")) +
    labs(title="Zeta = 30", x = "Occupancy", y = "Variance Contribution")
 
 
 ggplot(occ.df, aes(x=p.occ, y=share.40, fill=strategy)) + geom_point(shape=21, size = 3) + 
-  scale_fill_manual(values=c("green", "blue")) +
+  scale_fill_manual(values=c("blue", "green")) +
    labs(title="Zeta = 40", x = "Occupancy", y = "Variance Contribution")
 
 
 ggplot(occ.df, aes(x=p.occ, y=share.50, fill=strategy)) + geom_point(shape=21, size = 3) + 
-  scale_fill_manual(values=c("green", "blue")) +
+  scale_fill_manual(values=c("blue", "green")) +
    labs(title="Zeta = 50", x = "Occupancy", y = "Variance Contribution")
 
 ```
+
+
+#### Create individual panels for multipanel plot (selected from above two sets of plots)
+```{r}
+p1 <- ggplot(occ.df, aes(x=p.occ, y=ex.share.2, fill=strategy)) + geom_point(shape=21, size = 3) + 
+  scale_fill_manual(values=c("blue", "green")) +
+   labs(title="Zeta = 2", x = " ", y = "Expected Variance \nContribution") + 
+  theme(legend.position="none")
+
+
+p2 <- ggplot(occ.df, aes(x=p.occ, y=ex.share.4, fill=strategy)) + geom_point(shape=21, size = 3) + 
+  scale_fill_manual(values=c("blue", "green")) +
+   labs(title="Zeta = 4", x = " ", y = " ") + 
+  theme(legend.position="none")
+
+p3 <- ggplot(occ.df, aes(x=p.occ, y=ex.share.20, fill=strategy)) + geom_point(shape=21, size = 3) + 
+  scale_fill_manual(values=c("blue", "green")) +
+   labs(title="Zeta = 20", x = " ", y = " ") + 
+  theme(legend.position="none")
+
+
+
+p4 <- ggplot(occ.df, aes(x=p.occ, y=share.2, fill=strategy)) + geom_point(shape=21, size = 3) + 
+  scale_fill_manual(values=c("blue", "green")) +
+   labs(title=" ", x = "Occupancy", y = "Observed Variance \nContribution") + 
+  theme(legend.position="none")
+
+
+p5 <-ggplot(occ.df, aes(x=p.occ, y=share.4, fill=strategy)) + geom_point(shape=21, size = 3) + 
+  scale_fill_manual(values=c("blue", "green")) +
+   labs(title=" ", x = "Occupancy", y = " ") + 
+  theme(legend.position="none")
+
+p6 <- ggplot(occ.df, aes(x=p.occ, y=share.20, fill=strategy)) + geom_point(shape=21, size = 3) + 
+  scale_fill_manual(values=c("blue", "green")) +
+   labs(title=" ", x = "Occupancy", y = " ") + 
+  theme(legend.position="none")
+
+plot_list <- list(p1, p2, p3, p4, p5, p6)
+```
+
+#### Make selected plots into a multipanel plot and write as png file
+```{r}
+nr <- 2
+nc <- 3
+
+top_heads <- c(" ", " ", " ")
+
+# to include column caption as a separate row, I addapted code from https://stackoverflow.com/questions/45473843/put-row-and-column-titles-using-grid-arrange-in-r
+all_elements <- rbind(tableGrob(t(top_heads), theme = ttheme_minimal(), rows = ""), 
+                 cbind(tableGrob(rep(" ",nr), theme = ttheme_minimal()), # I couldn't work out how not to have row headings so made them a space 
+                       arrangeGrob(grobs = plot_list, ncol = nc),  size = "last"), size = "last")
+grid.newpage()
+grid.draw(all_elements)
+
+
+png(file = paste0(out_path, "/contribution_zeta_variance.png"), pointsize=10, width=1920, height=2800, res=300)
+grid.newpage()
+grid.draw(all_elements)
+dev.off()
+```
+
 
 #### Plot rank occupancy
 ```{r}
@@ -387,10 +456,15 @@ occ.out <- occ.df %>%
  write_csv(occ.out, file = paste0(out_path, "/butterfly_occupancy.csv"))
 kable(occ.out, digits = 3)
 
+# I need a factor to use groups in ggplot2
+occ.df <- occ.df %>% 
+  mutate(strategy = factor(strategy))
 
+# Make the Plot
 rank_occ <- ggplot(occ.df, aes(x = rank, y = p.occ)) + 
-         geom_point(color='black', shape=21, size=2, aes(fill=factor(strategy))) +
-        scale_fill_manual(values = c("blue", "green")) +  
+         geom_point(color='black', shape=21, size=2, aes(fill = strategy)) +
+        scale_fill_manual(values = c("blue", "green"),
+                          name = "Butterfly\ngroup") +  
         ylab("Proportion of sites occupied") +
         xlab("Rank")
 rank_occ
