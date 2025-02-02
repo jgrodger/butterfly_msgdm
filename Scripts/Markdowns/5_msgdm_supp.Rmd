@@ -4,8 +4,13 @@ author: "JG Rodger"
 date: "2024-06-18"
 output: html_document
 ---
+### The relationship between occupancy and zeta diversity
 
-###Deviance explained
+```{r fig.cap = "Figure S4.1. Expected and observed contributions of butterfly species to zeta diversity against occupancy, for different orders of zeta diversity", out.width = "100%"}
+include_graphics(here("./Output/Spatial/zeta_declines_decays/all_species/contribution_zeta_variance.png"))
+```
+
+### Deviance explained
 
 #### All Butterfly Species, Simpson
 ```{r  message = FALSE}
@@ -15,7 +20,6 @@ print_csv("./Output/Spatial/msgdms/all_species_Simpson/figs_tables/deviance_tabl
 ```{r message = FALSE}
 print_csv("./Output/Spatial/msgdms/all_species_Simpson//figs_tables/variance_partitioning_table.csv", tab_no = "SM2", tab_cap = "Variation partitioning for MSGDMs for Simpson-Normalized zeta diversity for All Species", my_dig = 3)
 ```
-
 
 #### Wider Countryside Species, Simpson
 ```{r  message = FALSE}
