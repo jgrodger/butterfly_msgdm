@@ -2,6 +2,10 @@
 title: "Render Analysis Reports"
 output: html_notebook
 ---
+
+```{r}
+# Parameterised reports: see https://r4ds.had.co.nz/r-markdown.html
+```
  
 # this calls the markdowns and generate reports with specified parameters
 
