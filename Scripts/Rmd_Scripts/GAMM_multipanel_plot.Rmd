@@ -8,6 +8,7 @@ output: html_notebook
 ```{r}
 here::i_am("Scripts/Rmd_Scripts/Gamm_multipanel_fig.Rmd")
 library(tidyverse)
+library(gridExtra)
 library(ggpubr)
 library(mgcv)
 library(mgcViz)
