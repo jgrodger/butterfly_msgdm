@@ -11,16 +11,11 @@ output: html_document
 include_graphics(here("Output/Spatial/Figures/Hex_dens_transects_richness.png/"))
 ```
 
-
-```{r fig.cap = "Figure 2. Environmental variables assessed for relationships with richness and turnover of butterflies in Great Britain", out.width = "100%"}
-include_graphics(here("./Output/Spatial/Figures/all_env_vars.png"))
-```
-
-```{r fig.cap = "Figure 3. Relationships of species richness with environmental variables for all butterfly species, generalists, and specialists", out.width = "100%"}
+```{r fig.cap = "Figure 2. Relationships of species richness with environmental variables for all butterfly species, generalists, and specialists", out.width = "100%"}
 include_graphics(here("Output/Spatial/GAM/GAMM_fig/gam_multiplot.png"))
 ```
 
-```{r fig.cap = "Figure 4. Relationships of species turnover with environmental variables and geographic distance for all butterfly species, generalists, and specialists", out.width = "100%"}
+```{r fig.cap = "Figure 3. Relationships of species turnover with environmental variables and geographic distance for all butterfly species, generalists, and specialists", out.width = "100%"}
 include_graphics(here("Output/Spatial/msgdms/msgdm_multipanel/msgdm_multiplot.png"))
 ```
 
