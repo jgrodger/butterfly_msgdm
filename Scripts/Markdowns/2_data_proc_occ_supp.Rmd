@@ -5,12 +5,20 @@ date: "2024-06-18"
 output: html_document
 ---
 
-## Supplementary Materials: Occupancy
+## Supplementary Materials Part 1: Occupancy
 
 
+
+```{r fig.cap = "Figure S1.1. Environmental variables assessed for relationships with richness and turnover of butterflies in Great Britain", out.width = "100%"}
+include_graphics(here("./Output/Spatial/Figures/all_env_vars.png"))
+```
 
 ```{r, message=FALSE}
-print_csv(tab_no = "S1",
+print_csv(tab_no = "S1.1",
           csv_path = "Output/Spatial/zeta_declines_decays/all_species/butterfly_occupancy.csv",
           tab_cap = "Occupancy of butterflies in the sites used for this study")
+```
+
+```{r fig.cap = "Figure S1.2. Rank occupancy of habitat specialist and generalist butterfly species", out.width = "100%"}
+include_graphics(here("./Output/Spatial/zeta_declines_decays/all_species/rank_occupancy.png"))
 ```
