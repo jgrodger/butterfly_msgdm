@@ -149,9 +149,9 @@ hist(occ.df$p.occ, breaks = 20)
 
 ```
 
-# Calculate expected contribution to zeta diversity of different butterfly species for different zeta orders, assuming random occurrence of all species
+#### Calculate expected contribution to zeta diversity of different butterfly species for different zeta orders, assuming random occurrence of all species
 ```{r}
-# To anyone reading this code, I apologize for the prodigious use of copy and paste!
+# To anyone reading this code, including the future me, I apologize for the prodigious use of copy and paste!
 
 occ.df<- data.frame( cbind(colSums(site.by.species), colSums(site.by.species)/nrow(site.by.species))) %>%
   rownames_to_column(var = "species.no")
@@ -199,7 +199,7 @@ occ.df<- column_to_rownames(occ.df, var = "species.no")
 ```
 
 
-#### Plot expected contribution to zeta diversity of different butterfly species
+#### Plot expected contribution to zeta diversity of different butterfly species for different butterfly species
 ```{r}
 
 ggplot(occ.df, aes(x=p.occ, y=ex.share.2, fill=strategy)) + geom_point(shape=21, size = 3) + 
@@ -429,7 +429,6 @@ grid.newpage()
 grid.draw(all_elements)
 dev.off()
 ```
-
 
 #### Plot rank occupancy
 ```{r}

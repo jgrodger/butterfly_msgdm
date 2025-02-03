@@ -1,6 +1,6 @@
 # Readme for Butterfly MSGDM project
 
-## Note, this needs much updating
+## Note, updating in progress 24/01/2025
 
 Template for file documentation
 
@@ -9,6 +9,12 @@ X)Filename
 	•Inputs
 	•Outputs
 ----------------------------------------------------------------------------------------------------------
+Order in which to run scripts: 
+First run the following two scripts in this order
+1) Process_CSV_Data.Rmd
+2) butterflies_combine_env_data.Rmd
+
+
 Scripts
 
 R_Scripts
@@ -16,7 +22,7 @@ butterfly_richness_turnover_functions.R
 	•What this does:
 		•loads functions used by other scripts, especially functions that are used by more than one script
 
-1)Process_CSV_Data.Rmd
+1) Process_CSV_Data.Rmd
 	•What this does: 
 		•Data cleaning and subsetting(filtering) for UKBMS records, sites and 
 		species data.
@@ -46,9 +52,8 @@ butterfly_richness_turnover_functions.R
 			methods.
 
 
-To do
-	•Plots not printing in report, check!		
-	• Update Data exploration below
+Note
+	•Some plots may not print		
 2) butterflies_combine_env_data.Rmd
 	•What this does:
 		•Data synthsis and processing: 
@@ -99,27 +104,29 @@ To do
 			•widercountryside species "./Data/Processed_Data/Spatial/wc.rds"
 			•habitat specialists INCLUDING sites with no habitat specialists "./Data/Processed_Data/Spatial/hs.rds"
 			•habitat specialists EXCLUDING sites with no habitat specialists. "./Data/Processed_Data/Spatial/hs_no_zeros.rds"
+		•Slimmed down site by env to just map environmental data•"./Data/Processed_Data/Spatial/map_all_env_vars.rds"))
 
-## Needs tidying and annotating, and eventually this can be pasted into butterflies_combine_env_data.Rmd
-2a) butterfly_maps.Rmd		
+3) butterflies_maps.Rmd		
 	•What this does: generates maps of the distribution of sites in our data,
-		including showing density of sites. Various attempts were made, and I am
-		going with the hexplots.
+		including showing density of sites and mean species richness for each butterfly group and makes maps of environmental variables
 	•Inputs
 		•Basemap "./Data./Maps./gb_multipolygon_simplified.rds"
 		•Data "./Data/Processed_Data/Spatial/all_species.rds"
 	•Outputs
-		• hexmap of site density "Output/Spatial/Figures/Hex_dens_transects.png/"
+		• Hexmap of site density "Output/Spatial/Figures/Hex_dens_transects.png/"
+		• Fig. 1 multipanel hexmaps of site density and species richness "Output/Spatial/Figures/Hex_dens_transects.png/"
+		• Fig. S1.1 multipanel maps of environmental variables "Output/Spatial/Figures/all_env_vars.png/"
 		
-3)Occupancy_analyses.Rmd
+4) Occupancy_analyses.Rmd
 	•What this does: 
 		•Analyses and plots species contributions to variance of raw zeta 
-		diversity for different zeta orders, grouping by strategy (hs/wc).
+		diversity for different zeta orders, grouping by strategy (habitat specialist/habitat generalist).
 	•Inputs
 	Data: all species data "./Data/Processed_Data/Spatial/all_species.rds"
 	•Outputs
-		•Species occupancy table "Output/Spatial/zeta_declines_decays/all_species/butterfly_occupancy.csv"
-		•Rank occupancy plot grouped by (hs/wc). "Output/Spatial/zeta_declines_decays/all_species/rank_occupancy.png"
+		•Fig S1.1 Species occupancy table "Output/Spatial/zeta_declines_decays/all_species/butterfly_occupancy.csv"
+		•Table S1.1 Rank occupancy plot grouped by (habitat specialist/habitat generalist). "Output/Spatial/zeta_declines_decays/all_species/rank_occupancy.png"
+		•Fig S 4.1 Plot of contributions of different butterfly species to variance in zeta diversity for interpretation of msgdm results "Output/Spatial/zeta_declines_decays/all_species/contribution_zeta_variance.png"
 
  https://zsmith27.github.io/rmarkdown_crash-course/lesson-7-parameterized-reports.html		
 4) run_zeta_msgdm.Rmd
