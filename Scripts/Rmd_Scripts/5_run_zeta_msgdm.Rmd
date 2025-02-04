@@ -11,7 +11,7 @@ output: html_notebook
 
 ## setup
 ```{r}
-here::i_am("Scripts/Rmd_Scripts/run_zeta_msgdm.Rmd")
+here::i_am("Scripts/Rmd_Scripts/5_run_zeta_msgdm.Rmd")
 
 library(tidyverse)
 
