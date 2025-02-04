@@ -22,7 +22,7 @@ butterfly_richness_turnover_functions.R
 	•What this does:
 		•loads functions used by other scripts, especially functions that are used by more than one script
 
-1) Process_CSV_Data.Rmd
+1) 1_Process_CSV_Data.Rmd
 	•What this does: 
 		•Data cleaning and subsetting(filtering) for UKBMS records, sites and 
 		species data.
@@ -54,7 +54,7 @@ butterfly_richness_turnover_functions.R
 
 Note
 	•Some plots may not print		
-2) butterflies_combine_env_data.Rmd
+2) 2_butterflies_combine_env_data.Rmd
 	•What this does:
 		•Data synthsis and processing: 
 			•Environmental variables:
@@ -106,7 +106,7 @@ Note
 			•habitat specialists EXCLUDING sites with no habitat specialists. "./Data/Processed_Data/Spatial/hs_no_zeros.rds"
 		•Slimmed down site by env to just map environmental data•"./Data/Processed_Data/Spatial/map_all_env_vars.rds"))
 
-3) butterflies_maps.Rmd		
+3) 3_butterflies_maps.Rmd		
 	•What this does: generates maps of the distribution of sites in our data,
 		including showing density of sites and mean species richness for each butterfly group and makes maps of environmental variables
 	•Inputs
@@ -117,7 +117,7 @@ Note
 		• Fig. 1 multipanel hexmaps of site density and species richness "Output/Spatial/Figures/Hex_dens_transects.png/"
 		• Fig. S1.1 multipanel maps of environmental variables "Output/Spatial/Figures/all_env_vars.png/"
 		
-4) Occupancy_analyses.Rmd
+4) 4_Occupancy_analyses.Rmd
 	•What this does: 
 		•Analyses and plots species contributions to variance of raw zeta 
 		diversity for different zeta orders, grouping by strategy (habitat specialist/habitat generalist).
@@ -129,16 +129,16 @@ Note
 		•Fig S 4.1 Plot of contributions of different butterfly species to variance in zeta diversity for interpretation of msgdm results "Output/Spatial/zeta_declines_decays/all_species/contribution_zeta_variance.png"
 
  https://zsmith27.github.io/rmarkdown_crash-course/lesson-7-parameterized-reports.html		
-4) run_zeta_msgdm.Rmd
+5) 5_run_zeta_msgdm.Rmd
 	•What this does: runs r markdopwn files and renders parameterized reports 
 	for data analyses. 
-	Most analyses done for all of 
+	Analyses done for the first three or all four groups below
 		•all butterfly species: all_species.
 		•wider countryside species: wc.
 		•habitat specialists INCLUDING sites with no habitat specialists: hs.
 		•habitat specialists EXCLUDING sites with no habitat specialists: 
 		hs_no_zeros.
-	The following analyses are done
+	The following analyses are done NEEDS UPDATING
 		•Zeta diversity decline and decay. "Scripts/Rmd_Scripts/Zeta_declines_decays_analyses.Rmd"
 		•MSGDMs "Scripts/Rmd_Scripts/Zeta_msgdm_analyses.Rmd"
 			•note: sensitivity and robustness not yet done. They need to be 
