@@ -9,7 +9,7 @@ output: html_notebook
  
 # this calls the markdowns and generate reports with specified parameters
 
-## setup
+#### Packages
 ```{r}
 here::i_am("Scripts/Rmd_Scripts/5_run_zeta_msgdm.Rmd")
 
@@ -27,7 +27,8 @@ library(conflicted)
 
 conflicts_prefer(dplyr::select)
 ```
-##  Load functions
+
+####  Load functions
 ```{r}
 source(here("./Scripts/R_scripts/get_k_fold_performance.R"))
 
@@ -38,7 +39,8 @@ source(here("./Scripts/R_scripts/get_validation_different_seeds_and_samps.R"))
 
 # https://bookdown.org/yihui/rmarkdown/params-knit.html#knit-with-custom-parameters
 
-
+# This function includes procedures for all .Rmd files which are set up as parameterized reports.
+# These can be parameterized for different butterfly groups, zeta orders, and sometimes different random seeds.
 render_report = function(analysis_script, params_list) {
   out_path <- if (analysis_script == "Zeta_declines_decays_analyses.Rmd"){
                     paste0(here("Output/Spatial/zeta_declines_decays"), "/", params_list$dataset,  "/")
@@ -68,11 +70,9 @@ if(!dir.exists(out_path)) dir.create(out_path, recursive = TRUE)
 }
 ```
 
-
-
+### Code chunks below produce parameterized reports as specified in each
 
 #### GAMS comparing different distribution families
-
 ```{r}
 render_report(analysis_script = "GAM_compare_family_analyses.Rmd", list(dataset = "all_species"))
 Sys.Date()
@@ -87,8 +87,8 @@ Sys.Date()
 render_report(analysis_script = "GAM_compare_family_analyses.Rmd", list(dataset = "hs"))
 Sys.Date()
 ```
-#### GAMS comparing different splines
 
+#### GAMS comparing different splines
 ```{r}
 render_report(analysis_script = "GAM_compare_spline_analyses.Rmd", list(dataset = "all_species"))
 ```
@@ -101,14 +101,7 @@ render_report(analysis_script = "GAM_compare_spline_analyses.Rmd", list(dataset 
 render_report(analysis_script = "GAM_compare_spline_analyses.Rmd", list(dataset = "hs", family = "nb"))
 ```
 
-
-
-
-
-## GAMMS
-Note, GAMMS conducted in GAMM_compare_corstructs_analyses.Rmd notebook
-
-### Full Model
+### GAMMS comparing different spatial autocorrelation structure
 
 #### All species
 ```{r}
@@ -131,10 +124,8 @@ render_report(analysis_script = "process_GAMM_analyses.Rmd",
                    analysis = "gamm_cor_struct_compare"))
 ```
 
-# GAMM model selection
-
-# sink() didn't work this way so instead I changed the param in process_GAMMS_single_result_output.Rmd and ran it
-
+### GAMM model selection
+##### sink() didn't work this way so instead I changed the param in process_GAMMS_single_result_output.Rmd and ran it
 
 #### All species
 ```{r}
@@ -144,6 +135,7 @@ render_report(analysis_script = "process_GAMMS_single_result_output.Rmd",
                    analysis = "gamm_model_select_as",
                    corStruct = "corExp"))
 ```
+
 #### Wider Countryside
 ```{r}
 
@@ -152,6 +144,7 @@ render_report(analysis_script = "process_GAMMS_single_result_output.Rmd",
                    analysis = "gamm_model_select_wc",
                    corStruct = "corExp"))
 ```
+
 #### Habitat Specialists corGaus
 ```{r}
 
@@ -160,7 +153,9 @@ render_report(analysis_script = "process_GAMMS_single_result_output.Rmd",
                    analysis = "gamm_model_select_hs",
                    corStruct = "corGaus"))
 ```
-## Zeta declines and decays
+#####Note, final GAMMS conducted in GAMM_compare_corstructs_analyses.Rmd notebook
+
+### Zeta declines and decays
 ##### By default, the time consuming zeta decay analysis does not run (in params list include "run_decay_analysis = TRUE" to make it run)
 ```{r}
 tic()
@@ -178,7 +173,7 @@ render_report(analysis_script = "Zeta_declines_decays_analyses.Rmd", list(datase
 toc()
 ```
 
-## MSGDMs
+#### MSGDMs
 ```{r}
 tic()
 render_report(analysis_script = "Zeta_msgdm_analyses.Rmd", list(dataset = "all_species",
@@ -215,9 +210,9 @@ toc()
 
 ```
 
-MSGDMS with different seeds 
+#### MSGDMS with different seeds 
 ```{r}
-
+# All species
 tic()
 render_report(analysis_script = "Zeta_msgdm_change_seed.Rmd", list(dataset = "all_species",
               orders_msgdm =  c(2, 4), sam_msgdm = 500000, normalize_msgdm = "Simpson", my_seed = 1))
@@ -229,13 +224,12 @@ render_report(analysis_script = "Zeta_msgdm_change_seed.Rmd", list(dataset = "al
 toc()
 
 
-
 tic()
 render_report(analysis_script = "Zeta_msgdm_change_seed.Rmd", list(dataset = "all_species",
               orders_msgdm =  c(2, 4, 20), sam_msgdm = 500000, normalize_msgdm = "Simpson", my_seed = 4))
 toc()
 
-
+#Habitat specialists
 tic()
 render_report(analysis_script = "Zeta_msgdm_change_seed.Rmd", list(dataset = "hs_no_zeros",
               orders_msgdm =  c(2, 4, 20), sam_msgdm = 500000, normalize_msgdm = "Simpson", my_seed = 4))
@@ -246,15 +240,6 @@ tic()
 render_report(analysis_script = "Zeta_msgdm_change_seed.Rmd", list(dataset = "wc",
               orders_msgdm =  c(2, 4, 20), sam_msgdm = 500000, normalize_msgdm = "Simpson", my_seed = 4))
 toc()
-
-
-
-
-
-
-
-
-
 
 tic()
 render_report(analysis_script = "Zeta_msgdm_change_seed.Rmd", list(dataset = "all_species",
@@ -272,8 +257,6 @@ render_report(analysis_script = "Zeta_msgdm_change_seed.Rmd", list(dataset = "al
 toc()
 
 ```
-
-
 
 #### Generate tables and figures for msgdms
 ##### Note, using zeta = 50 also produces similar results
@@ -303,7 +286,7 @@ render_report(analysis_script = "process_msgdm_results.Rmd",
                    orders_msgdm =  c(2, 3, 4)))
 ```
 
-
+#### Generate tables and figures for msgdms MSGDM results used in main text
 ```{r}
 render_report(analysis_script = "process_msgdm_results.Rmd", 
               list(dataset = "all_species", normalize_msgdm = "Simpson",
