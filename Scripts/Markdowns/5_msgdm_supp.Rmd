@@ -4,7 +4,7 @@ author: "JG Rodger"
 date: "2024-06-18"
 output: html_document
 ---
-### The relationship between occupancy and zeta diversity
+##  Supplementary Materials Part 4: MSGDMs
 
 ```{r fig.cap = "Figure S4.1. Expected and observed contributions of butterfly species to zeta diversity against occupancy, for different orders of zeta diversity", out.width = "100%"}
 include_graphics(here("./Output/Spatial/zeta_declines_decays/all_species/contribution_zeta_variance.png"))

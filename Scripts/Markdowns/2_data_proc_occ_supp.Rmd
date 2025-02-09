@@ -4,10 +4,9 @@ author: "JG Rodger"
 date: "2024-06-18"
 output: html_document
 ---
+# Supplementary Materials
 
-## Supplementary Materials Part 1: Occupancy
-
-
+## Supplementary Materials Part 1: Environmental variables and 0ccupancy
 
 ```{r fig.cap = "Figure S1.1. Environmental variables assessed for relationships with richness and turnover of butterflies in Great Britain", out.width = "100%"}
 include_graphics(here("./Output/Spatial/Figures/all_env_vars.png"))

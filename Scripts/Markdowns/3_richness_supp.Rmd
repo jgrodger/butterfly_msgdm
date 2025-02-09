@@ -5,7 +5,7 @@ date: "2024-06-18"
 output: html_document
 ---
 
-#### GAMs and GAMMs
+##  Supplementary Materials Part 2: GAMs and GAMMs
 ```{r , message=FALSE}
 print_csv(tab_no = "S2.1",
           csv_path = "Output/Spatial/GAM/GAM_all_species/family_aic_table.csv",
