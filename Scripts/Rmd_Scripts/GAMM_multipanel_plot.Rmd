@@ -3,7 +3,7 @@ title: "R Notebook"
 output: html_notebook
 ---
 `
-# This makes figure 3
+# This makes figure 2
 
 ```{r}
 here::i_am("Scripts/Rmd_Scripts/Gamm_multipanel_fig.Rmd")

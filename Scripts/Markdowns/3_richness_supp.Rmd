@@ -7,14 +7,14 @@ output: html_document
 
 #### GAMs and GAMMs
 ```{r , message=FALSE}
-print_csv(tab_no = "SG1",
+print_csv(tab_no = "S2.1",
           csv_path = "Output/Spatial/GAM/GAM_all_species/family_aic_table.csv",
           tab_cap = "Comparison of GAM models for different distribution of species richness for All Species.",
           my_dig = 2)
 ```
 
 ```{r , message=FALSE}
-print_csv(tab_no = "SG2",
+print_csv(tab_no = "S2.2",
           csv_path = "Output/Spatial/GAM/GAM_wc/family_aic_table.csv",
           tab_cap = "Comparison of GAM models for different distribution of species richness for Wider Countryside Species.",
           my_dig = 2)
@@ -22,7 +22,7 @@ print_csv(tab_no = "SG2",
 
 
 ```{r , message=FALSE}
-print_csv(tab_no = "SG3",
+print_csv(tab_no = "S2.3",
           csv_path = "Output/Spatial/GAM/GAM_hs/family_aic_table.csv",
           tab_cap = "Comparison of GAM models for different distribution of species richness for Habitat Specialists.",
           my_dig = 2)
@@ -34,14 +34,14 @@ print_csv(tab_no = "SG3",
 
 
 ```{r , message=FALSE}
-print_csv(tab_no = "SG4",
+print_csv(tab_no = "S2.4",
           csv_path = "Output/Spatial/GAM/GAMM_all_species/gamm_model_select_as/corExp/gamm_info.csv",
           tab_cap = "Key information for GAMM for All Species")
 
 ```
 
 ```{r , message=FALSE}
-print_csv(tab_no = "SG5",
+print_csv(tab_no = "S2.5",
           csv_path = "Output/Spatial/GAM/GAMM_all_species/gamm_model_select_as/corExp/parametric_p_value_table.csv",
           tab_cap = "Significance of parametric and smooth terms in GAMM for All Species")
 
@@ -53,14 +53,14 @@ print_csv(csv_path = "Output/Spatial/GAM/GAMM_all_species/gamm_model_select_as/c
 ```
 
 ```{r , message=FALSE}
-print_csv(tab_no = "SG6",
+print_csv(tab_no = "S2.6",
           csv_path = "Output/Spatial/GAM/GAMM_wc/gamm_model_select_wc/corExp/gamm_info.csv",
           tab_cap = "Key information for GAMM for Wider Countryside Species")
 
 ```
 
 ```{r , message=FALSE}
-print_csv(tab_no = "SG7",
+print_csv(tab_no = "S2.7",
           csv_path = "Output/Spatial/GAM/GAMM_wc/gamm_model_select_wc/corExp/parametric_p_value_table.csv",
           tab_cap = "Significance of parametric and smooth terms in GAMM for Wider Counrysided Species")
 
@@ -72,14 +72,14 @@ print_csv(csv_path = "Output/Spatial/GAM/GAMM_wc/gamm_model_select_wc/corExp/smo
 ```
 
 ```{r , message=FALSE}
-print_csv(tab_no = "SG8",
+print_csv(tab_no = "S2.8",
           csv_path = "Output/Spatial/GAM/GAMM_hs/gamm_model_select_hs/corGaus/gamm_info.csv",
           tab_cap = "Key information for GAMM for Habitat Specialists")
 
 ```
 
 ```{r , message=FALSE}
-print_csv(tab_no = "SG9",
+print_csv(tab_no = "S2.9",
           csv_path = "Output/Spatial/GAM/GAMM_hs/gamm_model_select_hs/corGaus/parametric_p_value_table.csv",
           tab_cap = "Significance of parametric and smooth terms in GAMM for Habitat Specialists")
 

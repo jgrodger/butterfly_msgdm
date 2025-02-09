@@ -15,7 +15,7 @@ include_graphics(here("Output/Spatial/Figures/Hex_dens_transects_richness.png/")
 include_graphics(here("Output/Spatial/GAM/GAMM_fig/gam_multiplot.png"))
 ```
 
-```{r fig.cap = "Figure 3. Relationships of species turnover with environmental variables and geographic distance for all butterfly species, generalists, and specialists", out.width = "100%"}
+```{r fig.cap = "Figure 3. Relationships of species turnover with environmental variables and geographic distance for all butterfly species, generalists, and specialists" at Zeta order 4, out.width = "100%"}
 include_graphics(here("Output/Spatial/msgdms/msgdm_multipanel/msgdm_multiplot.png"))
 ```
 

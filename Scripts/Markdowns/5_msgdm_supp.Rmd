@@ -14,59 +14,59 @@ include_graphics(here("./Output/Spatial/zeta_declines_decays/all_species/contrib
 
 #### All Butterfly Species, Simpson
 ```{r  message = FALSE}
-print_csv("./Output/Spatial/msgdms/all_species_Simpson/figs_tables/deviance_table.csv", tab_no = "SM1", tab_cap = "Deviance explained by MSGDMs for Simpson-Normalized zeta diversity for All Butterfly Species", my_dig = 3)
+print_csv("./Output/Spatial/msgdms/all_species_Simpson/figs_tables/deviance_table.csv", tab_no = "S4.1", tab_cap = "Deviance explained by MSGDMs for Simpson-Normalized zeta diversity for All Butterfly Species", my_dig = 3)
 ```
 
 ```{r message = FALSE}
-print_csv("./Output/Spatial/msgdms/all_species_Simpson//figs_tables/variance_partitioning_table.csv", tab_no = "SM2", tab_cap = "Variation partitioning for MSGDMs for Simpson-Normalized zeta diversity for All Species", my_dig = 3)
+print_csv("./Output/Spatial/msgdms/all_species_Simpson//figs_tables/variance_partitioning_table.csv", tab_no = "S4.2", tab_cap = "Variation partitioning for MSGDMs for Simpson-Normalized zeta diversity for All Species", my_dig = 3)
 ```
 
 #### Wider Countryside Species, Simpson
 ```{r  message = FALSE}
-print_csv("./Output/Spatial/msgdms/wc_Simpson/figs_tables/deviance_table.csv", tab_no = "SM3", tab_cap = "Deviance explained by MSGDMs for Simpson-Normalized zeta diversity for Wider Countryside Species", my_dig = 3)
+print_csv("./Output/Spatial/msgdms/wc_Simpson/figs_tables/deviance_table.csv", tab_no = "S4.3", tab_cap = "Deviance explained by MSGDMs for Simpson-Normalized zeta diversity for Wider Countryside Species", my_dig = 3)
 ```
 
 ```{r  message = FALSE}
-print_csv("./Output/Spatial/msgdms/wc_Simpson//figs_tables/variance_partitioning_table.csv", tab_no = "SM4", tab_cap = "Variation partitioning for MSGDMs for Simpson-Normalized zeta diversity for Wider Countryside Species", my_dig = 3)
+print_csv("./Output/Spatial/msgdms/wc_Simpson//figs_tables/variance_partitioning_table.csv", tab_no = "S4.4", tab_cap = "Variation partitioning for MSGDMs for Simpson-Normalized zeta diversity for Wider Countryside Species", my_dig = 3)
 ```
 
 #### Habitat Specialists, Simpson
 ```{r  message = FALSE}
-print_csv("./Output/Spatial/msgdms/hs_no_zeros_Simpson/figs_tables/deviance_table.csv", tab_no = "SM5", tab_cap = "Deviance explained by MSGDMs for Simpson-Normalized zeta diversity for Habitat Specialists", my_dig = 3)
+print_csv("./Output/Spatial/msgdms/hs_no_zeros_Simpson/figs_tables/deviance_table.csv", tab_no = "S4.5", tab_cap = "Deviance explained by MSGDMs for Simpson-Normalized zeta diversity for Habitat Specialists", my_dig = 3)
 ```
 
 ```{r message = FALSE}
-print_csv("./Output/Spatial/msgdms/hs_no_zeros_Simpson//figs_tables/variance_partitioning_table.csv", tab_no = "SM6", tab_cap = "Variation partitioning for MSGDMs for Simpson-Normalized zeta diversity for Habitat Specialists", my_dig = 3)
+print_csv("./Output/Spatial/msgdms/hs_no_zeros_Simpson//figs_tables/variance_partitioning_table.csv", tab_no = "S4.6", tab_cap = "Variation partitioning for MSGDMs for Simpson-Normalized zeta diversity for Habitat Specialists", my_dig = 3)
 ```
 
 #### All Butterfly Species, Sorensen
 ```{r  message = FALSE}
-print_csv("./Output/Spatial/msgdms/all_species_Sorensen/figs_tables/deviance_table.csv", tab_no = "SM7", tab_cap = "Deviance explained by MSGDMs for Sorensen-Normalized zeta diversity for All Species", my_dig = 3)
+print_csv("./Output/Spatial/msgdms/all_species_Sorensen/figs_tables/deviance_table.csv", tab_no = "S4.7", tab_cap = "Deviance explained by MSGDMs for Sorensen-Normalized zeta diversity for All Species", my_dig = 3)
 ```
 
 ```{r  message = FALSE}
-print_csv("./Output/Spatial/msgdms/wc_Sorensen//figs_tables/variance_partitioning_table.csv", tab_no = "SM8", tab_cap = "Variation partitioning for MSGDMs for Sorensen-Normalized zeta diversity for Wider Countryside Species", my_dig = 3)
+print_csv("./Output/Spatial/msgdms/wc_Sorensen//figs_tables/variance_partitioning_table.csv", tab_no = "S4.8", tab_cap = "Variation partitioning for MSGDMs for Sorensen-Normalized zeta diversity for Wider Countryside Species", my_dig = 3)
 ```
 
 
 #### Wider Countryside Species, Sorensen
 ```{r message = FALSE}
-print_csv("./Output/Spatial/msgdms/wc_Sorensen/figs_tables/deviance_table.csv", tab_no = "SM9", tab_cap = "Deviance explained by MSGDMs for Sorensen-Normalized zeta diversity for Wider Countryside Species", my_dig = 3)
+print_csv("./Output/Spatial/msgdms/wc_Sorensen/figs_tables/deviance_table.csv", tab_no = "S4.9", tab_cap = "Deviance explained by MSGDMs for Sorensen-Normalized zeta diversity for Wider Countryside Species", my_dig = 3)
 ```
 
 ```{r message = FALSE}
-print_csv("./Output/Spatial/msgdms/wc_Sorensen//figs_tables/variance_partitioning_table.csv", tab_no = "SM10", tab_cap = "Variation partitioning for MSGDMs for Sorensen-Normalized zeta diversity for Wider Countryside Species", my_dig = 3)
+print_csv("./Output/Spatial/msgdms/wc_Sorensen//figs_tables/variance_partitioning_table.csv", tab_no = "S4.10", tab_cap = "Variation partitioning for MSGDMs for Sorensen-Normalized zeta diversity for Wider Countryside Species", my_dig = 3)
 ```
 
 
 #### Habitat Specialists, Sorensen
 ```{r  message = FALSE}
-print_csv("./Output/Spatial/msgdms/hs_no_zeros_Sorensen/figs_tables/deviance_table.csv", tab_no = "SM11", tab_cap = "Deviance explained by MSGDMs for Sorensen-Normalized zeta diversity for Habitat Specialists", my_dig = 3)
+print_csv("./Output/Spatial/msgdms/hs_no_zeros_Sorensen/figs_tables/deviance_table.csv", tab_no = "S4.11", tab_cap = "Deviance explained by MSGDMs for Sorensen-Normalized zeta diversity for Habitat Specialists", my_dig = 3)
 ```
 
 
 ```{r  message = FALSE}
-print_csv("./Output/Spatial/msgdms/hs_no_zeros_Sorensen//figs_tables/variance_partitioning_table.csv", tab_no = "SM12", tab_cap = "Variation partitioning for MSGDMs for Sorensen-Normalized zeta diversity for Habitat Specialists", my_dig = 3)
+print_csv("./Output/Spatial/msgdms/hs_no_zeros_Sorensen//figs_tables/variance_partitioning_table.csv", tab_no = "S4.12", tab_cap = "Variation partitioning for MSGDMs for Sorensen-Normalized zeta diversity for Habitat Specialists", my_dig = 3)
 ```
 
 
@@ -75,7 +75,7 @@ include_graphics(here("./Output/Spatial/msgdms/all_species_Simpson_4/figs_tables
 ```
 
 
-```{r fig.cap = "Figure SM12A. Effect sizes and p-values for splines of predictor variables and the intercept for All Butterfly Species, Simpson", out.width = "100%"}
+```{r fig.cap = "Figure S4.12A. Effect sizes and p-values for splines of predictor variables and the intercept for All Butterfly Species, Simpson", out.width = "100%"}
 include_graphics(here("./Output/Spatial/msgdms/all_species_Simpson_4/figs_tables/forest_plot_p_values.png"))
 ```
 
@@ -84,7 +84,7 @@ include_graphics(here("./Output/Spatial/msgdms/all_species_Simpson_4/figs_tables
 include_graphics(here("./Output/Spatial/msgdms/wc_Simpson_4/figs_tables/forest_plot.png"))
 ```
 
-```{r fig.cap = "Figure SM12B. Effect sizes and p-values for splines of predictor variables and the intercept for Habitat Generalists, Simpson", out.width = "100%"}
+```{r fig.cap = "Figure S4.12B. Effect sizes and p-values for splines of predictor variables and the intercept for Habitat Generalists, Simpson", out.width = "100%"}
 include_graphics(here("./Output/Spatial/msgdms/wc_Simpson_4/figs_tables/forest_plot_p_values.png"))
 ```
 
@@ -92,7 +92,7 @@ include_graphics(here("./Output/Spatial/msgdms/wc_Simpson_4/figs_tables/forest_p
 include_graphics(here("./Output/Spatial/msgdms/hs_no_zeros_Simpson_4/figs_tables/forest_plot.png"))
 ```
 
-```{r fig.cap = "Figure SM12C. Effect sizes and p-values for splines of predictor variables and the intercept for Habitat Specialists, Simpson", out.width = "100%"}
+```{r fig.cap = "Figure S4.12C. Effect sizes and p-values for splines of predictor variables and the intercept for Habitat Specialists, Simpson", out.width = "100%"}
 include_graphics(here("./Output/Spatial/msgdms/hs_no_zeros_Simpson_4/figs_tables/forest_plot_p_values.png"))
 ```
 
