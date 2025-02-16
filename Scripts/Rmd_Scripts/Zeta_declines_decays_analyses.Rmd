@@ -169,15 +169,15 @@ dev.off()
 
 ```
 
-
-
+#### Write values of zeta diversity for each order up to 250 to csv
 ```{r}
+# Output the zeta diversity to csv
+zeta_div <- data.frame(cbind(zd$zeta.order, zd$zeta.val, zd$zeta.val.sd))
+names(zeta_div) <- c("Order", "Value", "SD")
+
 write_csv(zeta_div, file = paste0(out_path, params$dataset, "_",  "zeta_decline_exact.csv"))
 kable(t(zeta_div), digits = 2)
 ```
-
-
-
 
 ## check nestedness by comparing Sorensen and Simpson Dissimilarity (Cang's code)
 ```{r}
