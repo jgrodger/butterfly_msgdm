@@ -66,10 +66,6 @@ site.by.env <- data$site.by.env
 site.by.xy <- data$site.by.xy
 
 species <- data$species
-
-
-
-
 ```
 
 #### Parameters for this report
@@ -95,10 +91,11 @@ zd_performance$R.sq.multi <- c(summary(zd$zeta.exp)$r.squared,
                               summary(zd$zeta.pl)$r.squared)
 zd_performance$R.sq.adj <- c(summary(zd$zeta.exp)$adj.r.squared, 
                               summary(zd$zeta.pl)$adj.r.squared)
-kable(zd_performance)
 
-# Keep to add values from below
-all_performance <- zd_performance
+# Inspect and save table comparing power law and exponential fit
+kable(zd_performance, digits = 3)
+
+write_csv(zd_performance, file = paste0(out_path, "/", params$dataset, "_",  "zeta_declines_performance_10.csv"))
 ```
 
 ```{r}
@@ -110,9 +107,9 @@ dev.off()
 
 ```
 
-#### We present results for all species and habitat generalists (wider countryside species) using orders 1:20, for habitat specialists for orders 1:10
-
 ### Orders 1:20
+
+#### We present results for all species and habitat generalists using orders 1:20
 ```{r}
 zd <- Zeta.decline.ex(data.spec = site.by.species, orders = 1:20)
 # "Power Law"
@@ -126,10 +123,11 @@ zd_performance$R.sq.multi <- c(summary(zd$zeta.exp)$r.squared,
                               summary(zd$zeta.pl)$r.squared)
 zd_performance$R.sq.adj <- c(summary(zd$zeta.exp)$adj.r.squared, 
                               summary(zd$zeta.pl)$adj.r.squared)
-kable(zd_performance)
 
-all_performance <- rbind(all_performance, zd_performance)
+# Inspect and save table comparing power law and exponential fit
+kable(zd_performance, digits = 3)
 
+write_csv(zd_performance, file = paste0(out_path, "/", params$dataset, "_",  "zeta_declines_performance_20.csv"))
 ```
 
 ```{r}
@@ -155,30 +153,11 @@ zd_performance$R.sq.multi <- c(summary(zd$zeta.exp)$r.squared,
                               summary(zd$zeta.pl)$r.squared)
 zd_performance$R.sq.adj <- c(summary(zd$zeta.exp)$adj.r.squared, 
                               summary(zd$zeta.pl)$adj.r.squared)
-kable(zd_performance)
 
+# Inspect and save table comparing power law and exponential fit
+kable(zd_performance, digits = 3)
 
-```
-
-# Below not used in paper but shows that results are qualitatively the same
-```{r}
-# Finalise a datafram summarising performance of exponential versus power law
-# declines
-all_performance <- rbind(all_performance, zd_performance)
-infocols <- data.frame(rep(c("Exponential", "Power Law"), times = 3))
-names(infocols) <- "Regression Fit"
-infocols$'Zeta values' <- rep(c("1 to 10", "1 to 50", "1 to 250"), each = 2)
-all_performance <- cbind(infocols, all_performance)
-
-# Output the zeta diversity to csv
-zeta_div <- data.frame(cbind(zd$zeta.order, zd$zeta.val, zd$zeta.val.sd))
-names(zeta_div) <- c("Order", "Value", "SD")
-```
-
-
-```{r}
-write_csv(all_performance, file = paste0(out_path, "/", params$dataset, "_",  "zeta_declines_performance.csv"))
-kable(all_performance, digits = 3)
+write_csv(zd_performance, file = paste0(out_path, "/", params$dataset, "_",  "zeta_declines_performance_10.csv"))
 ```
 
 ```{r}
@@ -189,6 +168,7 @@ Plot.zeta.decline(zd, arrange.plots = FALSE)
 dev.off()
 
 ```
+
 
 
 ```{r}
