@@ -179,7 +179,7 @@ write_csv(zeta_div, file = paste0(out_path, params$dataset, "_",  "zeta_decline_
 kable(t(zeta_div), digits = 2)
 ```
 
-## check nestedness by comparing Sorensen and Simpson Dissimilarity (Cang's code)
+#### check nestedness by comparing Sorensen and Simpson Dissimilarity (Cang's code)
 ```{r}
 
 jac <- vector()
@@ -230,8 +230,8 @@ summary(m1)
 
 
 ```
-# Save anova table to check nestedness
 
+#### Save anova table testing for nestedness
 ```{r}
 # Obtain data to population caption for anova table
 
@@ -276,8 +276,7 @@ kable(anova_table, caption = anova_caption, align = 'c')
 
 ```
 
-
-
+#### the zeta decay analysis is quite time-consuming, so there is an option to not do it
 ```{r}
 if(params$run_decay_analysis == FALSE ){
 knitr::knit_exit()
@@ -285,7 +284,7 @@ knitr::knit_exit()
 ```
 
 
-## Zeta decay 
+#### Zeta decay 
 ```{r, warning = FALSE, label='Zeta Distance Decay Mean Slopes'}
 set.seed(1) 
 
@@ -303,7 +302,7 @@ dev.off()
 
 ```
 
-
+#### Fit gams to zeta distance decay
 ```{r, warning = FALSE, label='Zeta Distance Decay GAMs'}
 set.seed(1) 
 zeta.ddecay.gam. <- Zeta.ddecay(xy = site.by.xy, data.spec = site.by.species, order = 2, 
@@ -339,10 +338,3 @@ zeta.ddecay.gam. <- Zeta.ddecay(xy = site.by.xy, data.spec = site.by.species, or
                                     reg.type="gam")
 }
 ```
-
-
-
-
-
-
-
