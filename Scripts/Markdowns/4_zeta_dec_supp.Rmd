@@ -8,8 +8,11 @@ output: html_document
 ##  Supplementary Materials Part 3: Zeta Declines
 
 ```{r}
-# datasets to analyse
-datasets <- c("all_species", "wc", "hs", "hs_no_zeros")
+# datasets to present
+
+datasets <- c("all_species", "wc",  "hs_no_zeros")
+# We are no longer presenting results for habitat specialists that include sites with no habitat specialists
+# datasets <- c("all_species", "wc", "hs", "hs_no_zeros")
 dataset_names <- c("All Butterfly Species", "Wider Countryside Species", "Habitat Specialists including sites with no species", "Habitat Specialists excluding sites with no species" )
 ```
 
@@ -21,7 +24,7 @@ dataset_names <- c("All Butterfly Species", "Wider Countryside Species", "Habita
 
 ```
 
-```{r fig.cap = "Figure S3.1. Zeta diversity decline for All Butterfly Species fr0m zeta orders 1 to 20", out.width = "100%"}
+```{r fig.cap = "Figure S3.1. Zeta diversity decline for All Butterfly Species from zeta orders 1 to 20", out.width = "100%"}
 include_graphics(here("./Output/Spatial/zeta_declines_decays/all_species/all_species_zeta_decline_to_20.png"))
 ```
 
@@ -29,7 +32,7 @@ include_graphics(here("./Output/Spatial/zeta_declines_decays/all_species/all_spe
 include_graphics(here("./Output/Spatial/zeta_declines_decays/wc/wc_zeta_decline_to_20.png"))
 ```
 
-```{r fig.cap = "Figure S3.4. Zeta diversity decline for Habitat Specialists from zeta orders 1 to 10. Sites with no habitat specialist species were excluded from this analysis.", out.width = "100%"}
+```{r fig.cap = "Figure S3.3. Zeta diversity decline for Habitat Specialists from zeta orders 1 to 10. Sites with no habitat specialist species were excluded from this analysis.", out.width = "100%"}
 include_graphics(here("./Output/Spatial/zeta_declines_decays/hs_no_zeros/hs_no_zeros_zeta_decline_to_10.png"))
 ```
 
