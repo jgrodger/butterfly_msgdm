@@ -79,7 +79,7 @@ print(params)
 
 ## Zeta Declines
 
-### Orders 1:10
+### Orders 1:10 (for presentation, we will use orders 1:10 for habitat specialists)
 ```{r}
 zd <- Zeta.decline.ex(data.spec = site.by.species, orders = 1:10)
 # "Power Law"
@@ -110,9 +110,11 @@ dev.off()
 
 ```
 
-### Orders 1:50
+#### We present results for all species and habitat generalists (wider countryside species) using orders 1:20, for habitat specialists for orders 1:10
+
+### Orders 1:20
 ```{r}
-zd <- Zeta.decline.ex(data.spec = site.by.species, orders = 1:50)
+zd <- Zeta.decline.ex(data.spec = site.by.species, orders = 1:20)
 # "Power Law"
 summary(zd$zeta.pl)
 # Exponential")
@@ -132,14 +134,14 @@ all_performance <- rbind(all_performance, zd_performance)
 
 ```{r}
 
-png(file = paste0(out_path, params$dataset, "_", "zeta_decline_to_50.png"), pointsize = 6, width=960, height=960, res=300)
+png(file = paste0(out_path, params$dataset, "_", "zeta_decline_to_20.png"), pointsize = 6, width=960, height=960, res=300)
 par(mfrow = c(2,2))
 Plot.zeta.decline(zd, arrange.plots = FALSE)
 dev.off()
 
 ```
 
-### Orders 1:250
+### Orders 1:250 (results not presented)
 ```{r}
 zd <- Zeta.decline.ex(data.spec = site.by.species, orders = 1:250)
 # "Power Law"
@@ -187,6 +189,8 @@ Plot.zeta.decline(zd, arrange.plots = FALSE)
 dev.off()
 
 ```
+
+
 ```{r}
 write_csv(zeta_div, file = paste0(out_path, params$dataset, "_",  "zeta_decline_exact.csv"))
 kable(t(zeta_div), digits = 2)
