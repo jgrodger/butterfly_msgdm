@@ -24,6 +24,7 @@ dataset_names <- c("All Butterfly Species", "Wider Countryside Species", "Habita
 
 ```
 
+### Zeta diversity decline curves
 ```{r fig.cap = "Figure S3.1. Zeta diversity decline for All Butterfly Species from zeta orders 1 to 20", out.width = "100%"}
 include_graphics(here("./Output/Spatial/zeta_declines_decays/all_species/all_species_zeta_decline_to_20.png"))
 ```
@@ -36,7 +37,7 @@ include_graphics(here("./Output/Spatial/zeta_declines_decays/wc/wc_zeta_decline_
 include_graphics(here("./Output/Spatial/zeta_declines_decays/hs_no_zeros/hs_no_zeros_zeta_decline_to_10.png"))
 ```
 
-## Comparison of exponential versus power Law fits to zeta decline
+### Comparison of exponential versus power law fits to zeta decline
 ```{r, results='asis', message=FALSE}
 for (i in 1:length(datasets)){
   my_file <- paste0("./Output/Spatial/zeta_declines_decays/", datasets[i], "/", 
@@ -47,7 +48,7 @@ for (i in 1:length(datasets)){
 }
 ```
 
-## Comparison of zeta decline values
+### Zeta decline tables
 ```{r, results='asis', message=FALSE}
 
 for (i in 1:length(datasets)){
@@ -58,57 +59,46 @@ print(kable(t(zeta_div), digits = 2,
 }
 ```
 
-## Evidence of nestedness of Sorensen and Simpson Diversity of pairs of sites 
+### Evidence of nestedness of Sorensen and Simpson Diversity of pairs of sites 
 
-
-#### All Butterfly Species
-```{r fig.cap = "Figure S3.5. Comparison of Jaccard, Simpson, and Sorensen dissimilarity for pairs of sites for All Species", out.width = "100%"}
+```{r fig.cap = "Figure S3.4. Comparison of Jaccard, Simpson, and Sorensen dissimilarity for pairs of sites for All Species", out.width = "100%"}
+# All Butterfly Species
 include_graphics(here("./Output/Spatial/zeta_declines_decays/all_species/zeta_boxplot.png."))
 ```
 
 ```{r}
-print_rds(here("Output/Spatial/zeta_declines_decays/all_species/nestedness_anova_table.rds"), tab_no = "S3.9")
+print_rds(here("Output/Spatial/zeta_declines_decays/all_species/nestedness_anova_table.rds"), tab_no = "S3.7")
 ```
 
-#### Wider Countryside Species
-```{r fig.cap = "Figure S3.6. Comparison of Jaccard, Simpson, and Sorensen dissimilarity for pairs of sites for Wider Countryside Species", out.width = "100%"}
+```{r fig.cap = "Figure S3.5. Comparison of Jaccard, Simpson, and Sorensen dissimilarity for pairs of sites for Wider Countryside Species", out.width = "100%"}
+# Habitat Generalists
 include_graphics(here("./Output/Spatial/zeta_declines_decays/wc/zeta_boxplot.png."))
 ```
 
 ```{r}
-print_rds(here("Output/Spatial/zeta_declines_decays/wc/nestedness_anova_table.rds"), tab_no = "S3.10")
+print_rds(here("Output/Spatial/zeta_declines_decays/wc/nestedness_anova_table.rds"), tab_no = "S3.8")
 ```
 
-#### Habitat Specialists
-```{r fig.cap = "Figure S3.7. Comparison of Jaccard, Simpson, and Sorensen dissimilarity for pairs of sites for Habitat Specialists", out.width = "100%"}
+```{r fig.cap = "Figure S3.6. Comparison of Jaccard, Simpson, and Sorensen dissimilarity for pairs of sites for Habitat Specialists", out.width = "100%"}
+# Habitat Specialists
 include_graphics(here("./Output/Spatial/zeta_declines_decays/hs/zeta_boxplot.png."))
 ```
 
 ```{r}
-print_rds(here("Output/Spatial/zeta_declines_decays/hs/nestedness_anova_table.rds"), tab_no = "S3.11")
+print_rds(here("Output/Spatial/zeta_declines_decays/hs/nestedness_anova_table.rds"), tab_no = "S3.9")
 ```
 
+### Zeta decay curves
 
-## Zeta decays
-
-
-#### All Butterfly Species
-```{r fig.cap = "Figure S3.8. Zeta diversity decay with distance for , zeta orders 1 to 100", out.width = "100%"}
+```{r fig.cap = "Figure S3.7. Zeta diversity decay with distance for all butterfly species, zeta orders 1 to 100", out.width = "100%"}
 include_graphics(here("./Output/Spatial/zeta_declines_decays/all_species/all_species_zeta_distance_decays.png"))
 ```
 
-#### Wider Countryside Species
-```{r fig.cap = "Figure S3.9. Zeta diversity decay with distance for , zeta orders 1 to 100", out.width = "100%"}
+```{r fig.cap = "Figure S3.8. Zeta diversity decay with distance for habitat generalists, zeta orders 1 to 100", out.width = "100%"}
 include_graphics(here("./Output/Spatial/zeta_declines_decays/wc/wc_zeta_distance_decays.png"))
 ```
 
-#### Habitat Specialists including sites with no species
-```{r fig.cap = "Figure S3.10. Zeta diversity decay with distance for , zeta orders 1 to 100", out.width = "100%"}
-include_graphics(here("./Output/Spatial/zeta_declines_decays/hs/hs_zeta_distance_decays.png"))
-```
-
-#### Habitat Specialists excluding sites with no species
-```{r fig.cap = "Figure S3.11. Zeta diversity decay with distance for , zeta orders 1 to 100", out.width = "100%"}
+```{r fig.cap = "Figure S3.9. Zeta diversity decay with distance for habitat specialists, zeta orders 1 to 100", out.width = "100%"}
 include_graphics(here("./Output/Spatial/zeta_declines_decays/hs_no_zeros/hs_no_zeros_zeta_distance_decays.png"))
 ```
 
