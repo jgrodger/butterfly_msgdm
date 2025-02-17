@@ -11,9 +11,15 @@ output: html_document
 # datasets to present
 
 datasets <- c("all_species", "wc",  "hs_no_zeros")
+
+dataset_names <- c("All Butterfly Species", "Habitat Generalists", "Habitat Specialists" )
+#maximum zeta order for zeta decline
+max_zeta <- list(20, 20, 10)
+
 # We are no longer presenting results for habitat specialists that include sites with no habitat specialists
 # datasets <- c("all_species", "wc", "hs", "hs_no_zeros")
-dataset_names <- c("All Butterfly Species", "Wider Countryside Species", "Habitat Specialists including sites with no species", "Habitat Specialists excluding sites with no species" )
+# dataset_names <- c("All Butterfly Species", "Habitat Generalists", "Habitat Specialists including sites with no species", "Habitat Specialists excluding sites with no species" )
+
 ```
 
 
@@ -29,7 +35,7 @@ dataset_names <- c("All Butterfly Species", "Wider Countryside Species", "Habita
 include_graphics(here("./Output/Spatial/zeta_declines_decays/all_species/all_species_zeta_decline_to_20.png"))
 ```
 
-```{r fig.cap = "Figure S3.2. Zeta diversity decline for Wider Countryside Species from zeta orders 1 to 20", out.width = "100%"}
+```{r fig.cap = "Figure S3.2. Zeta diversity decline for Habitat Generalists from zeta orders 1 to 20", out.width = "100%"}
 include_graphics(here("./Output/Spatial/zeta_declines_decays/wc/wc_zeta_decline_to_20.png"))
 ```
 
@@ -39,12 +45,13 @@ include_graphics(here("./Output/Spatial/zeta_declines_decays/hs_no_zeros/hs_no_z
 
 ### Comparison of exponential versus power law fits to zeta decline
 ```{r, results='asis', message=FALSE}
+
 for (i in 1:length(datasets)){
   my_file <- paste0("./Output/Spatial/zeta_declines_decays/", datasets[i], "/", 
-                    datasets[i], "_zeta_declines_performance.csv")
+                    datasets[i], "_zeta_declines_performance_", max_zeta[[i]], ".csv")
   performance <-  read_csv(here(my_file))
   print(kable(performance, digits = 3,
-             caption = paste0("Table S3.", i, ". Comparison of exponential versus power law fits to zeta decline for ", dataset_names[i])))
+             caption = paste0("Table S3.", i, ". Comparison of exponential versus power law fits to zeta decline for ", dataset_names[i], ", zeta orders 1 to ", max_zeta[[i]])))
 }
 ```
 
@@ -55,7 +62,7 @@ for (i in 1:length(datasets)){
 my_file <- paste0("./Output/Spatial/zeta_declines_decays/", datasets[i], "/", datasets[i], "_zeta_decline_exact.csv")
 zeta_div <-  read_csv(here(my_file))
 print(kable(t(zeta_div), digits = 2,
-             caption = paste0("Table S3.", i + 3, ". Comparison of zeta diversity values for ", dataset_names[i])))
+             caption = paste0("Table S3.", i + 3, ". Zeta diversity values for ", dataset_names[i])))
 }
 ```
 
@@ -70,7 +77,7 @@ include_graphics(here("./Output/Spatial/zeta_declines_decays/all_species/zeta_bo
 print_rds(here("Output/Spatial/zeta_declines_decays/all_species/nestedness_anova_table.rds"), tab_no = "S3.7")
 ```
 
-```{r fig.cap = "Figure S3.5. Comparison of Jaccard, Simpson, and Sorensen dissimilarity for pairs of sites for Wider Countryside Species", out.width = "100%"}
+```{r fig.cap = "Figure S3.5. Comparison of Jaccard, Simpson, and Sorensen dissimilarity for pairs of sites for Habitat Generalists", out.width = "100%"}
 # Habitat Generalists
 include_graphics(here("./Output/Spatial/zeta_declines_decays/wc/zeta_boxplot.png."))
 ```
