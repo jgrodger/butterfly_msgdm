@@ -1,0 +1,73 @@
+---
+title: "Butterfly Richness and Turnover Report"
+author: "JG Rodger"
+date: "2024-08-01"
+output: html_document
+---
+
+```{r setup, echo = FALSE, message = FALSE}
+
+knitr::opts_chunk$set(
+  echo = FALSE)
+
+here::i_am("Scripts/Markdowns/test_report.Rmd")
+
+library(knitr)
+library(rmarkdown)
+library(readr)
+library(conflicted)
+library(here)
+
+```
+
+
+```{r}
+# function to print csv table to my specs
+# csv_path: file path for use in read_csv(here())
+# tab_no
+# tab_cap: caption argument for kable()
+# my_dig: digits argument for kable()
+print_csv <- function(csv_path, tab_no = "", tab_cap = "", my_dig = 3){
+  
+my_table <- read_csv(here(csv_path))
+
+my_caption <- if(tab_cap == "") {
+"" #Allow caption to be empty if so desired
+} else {
+paste0("Table ", tab_no, ". ", tab_cap)
+} 
+
+
+kable(my_table, digits = my_dig,
+      caption = my_caption)  
+}
+
+# function to print table from dataframe and caption saved in rds file
+# file_path: file path to use in here()
+# tab_no
+# my_dig: digits argument for kable()
+print_rds <- function(file_path, tab_no = "", my_dig = 3){
+
+my_data <- read_rds(file_path)
+    
+my_table <- my_data$table
+
+my_caption <- if(tab_no == "") {
+"" #Allow caption to be empty if so desired
+} else {
+paste0("Table ", tab_no, ". ", my_data$caption)
+} 
+
+kable(my_table, digits = my_dig,
+      caption = my_caption,
+      align = 'c')  
+}
+```
+
+```{r, child='2_data_proc_occ_supp.Rmd}
+```
+
+```{r, child=3_richness_supp.Rmd}
+```
+
+
