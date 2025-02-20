@@ -75,7 +75,7 @@ print(params)
 
 ## Zeta Declines
 
-### Orders 1:10 (for presentation, we will use orders 1:10 for habitat specialists)
+### Habitat Specialists (for presentation, we will use orders 1:10 for habitat specialists)
 ```{r}
 zd <- Zeta.decline.ex(data.spec = site.by.species, orders = 1:10)
 # "Power Law"
@@ -109,7 +109,7 @@ dev.off()
 
 ### Orders 1:20
 
-#### We present results for all species and habitat generalists using orders 1:20
+#### All Species and Habitat Generalists (we present results for all species and habitat generalists using orders 1:20)
 ```{r}
 zd <- Zeta.decline.ex(data.spec = site.by.species, orders = 1:20)
 # "Power Law"

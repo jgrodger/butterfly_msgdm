@@ -154,7 +154,7 @@ Note
 		•markdown reports
 
 
-5)Zeta_declines_decays_analyses.Rmd
+6) 6_Zeta_declines_decays_analyses.Rmd
 	•What this does: Called by run_zeta_msgdm.Rmd;
 	analyses
 		•Zeta diversity: Calculates values.
@@ -165,12 +165,20 @@ Note
 	•Inputs: datasets produced by butterflies_combine_env_data.Rmd
 	•Outputs: For each dataset 
 		•Zeta values: values up to zeta = 250 in table "~zeta_decline_exact.csv")
-		•Zeta decline
-			• Zeta decline plot for orders 1 to 10 "~zeta_decline_to_10.png"
-			• Zeta decline plot for orders 1 to 60 "~zeta_decline_to_60.png"
-			•Comparison of aic and r-squared of exponential verus power law 
-			decline  "~zeta_declines_performance.csv"
-		Zeta decays
+		•Zeta decline, for orders 1 to 10, 1 to 20 and 1 to 50
+			•Zeta decline plots
+				•"~zeta_decline_to_10.png"
+				•"~zeta_decline_to_20.png"
+				•"~zeta_decline_to_250.png"
+			•Tables comparing aic and r-squared of exponential verus power law 
+			decline
+				•"~zeta_declines_performance_10.csv"
+				•"~zeta_declines_performance_20.csv"
+				•"~zeta_declines_performance_250.csv"
+			•Nestedness test
+				•Boxplots of Simpson, Sorensen and Jaccard dissimilarity "~zeta_boxplot.png"
+				•Table testing difference between Simpson and Sorensen dissimilarity  "~nestedness_anova_table.rds"
+		•Zeta decays
 			•Output of Zeta.ddecays "~zeta_distance_decay.rds"
 			•Zeta distance decay plot "~zeta_distance_decays.png"
 		Markdown: Zeta_declines_decays_analyses.html
