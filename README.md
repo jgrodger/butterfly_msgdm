@@ -183,8 +183,8 @@ Note
 			•Zeta distance decay plot "~zeta_distance_decays.png"
 		Markdown: Zeta_declines_decays_analyses.html
 			
-	
-6)Zeta_msgdm_analyses.Rmd
+	# Below still needs annotation and updating in this readme and the powerpoint
+6)Zeta_msgdm_analyses.Rmd 
 	•What this does: Called by run_zeta_msgdm.Rmd;
 	analyses 		
 		•Pearson and Spearman correlations of predictors

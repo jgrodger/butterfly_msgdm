@@ -75,7 +75,7 @@ site.by.xy <- data$site.by.xy
 print(params)
 ```
 
-
+#### Do MSGDM
 ```{r}
 
 n_iterations <- length(params$orders_msgdm)
@@ -107,7 +107,7 @@ write_rds(output0, file = filepath)
 
 ```
 
-## MSGDM summaries
+#### MSGDM summaries
 ```{r}
 for (i in 1:length(params$orders_msgdm)) {
 print(names(output0[i]))
@@ -115,7 +115,7 @@ print(summary(output0[[i]]$model))
 }
 ```
 
-# MSGDM deviance explained
+#### MSGDM deviance explained
 ```{r}
 for (i in 1:length(params$orders_msgdm)) {
 print(names(output0[i]))
@@ -123,7 +123,7 @@ print(with(summary(output0[[i]]$model), 1 - deviance/null.deviance))
 }
 ```
 
-### MSGDM i-spline plots
+#### MSGDM i-spline plots
 ```{r}
 
 for (i in 1:length(params$orders_msgdm)) {
