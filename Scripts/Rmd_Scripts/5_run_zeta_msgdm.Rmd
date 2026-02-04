@@ -9,6 +9,8 @@ output: html_notebook
  
 # this calls the markdowns and generate reports with specified parameters
 
+# run the setup chunk and the functions chunk, then run the chunks for the analyses desired
+
 #### Packages
 ```{r}
 here::i_am("Scripts/Rmd_Scripts/5_run_zeta_msgdm.Rmd")

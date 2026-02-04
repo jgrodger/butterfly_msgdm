@@ -117,7 +117,7 @@ grid.newpage()
 grid.draw(all_elements)
 ```
 
-#### Write multipanel plot ot png
+#### Write multipanel plot to png
 ```{r}
 png(file = paste0(out_path, "msgdm_multiplot.png"), pointsize=10, width=960, height=2000, res=300)
 grid.newpage()

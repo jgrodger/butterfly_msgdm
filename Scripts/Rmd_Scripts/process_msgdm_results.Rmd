@@ -42,7 +42,7 @@ conflicts_prefer(dplyr::rename)
 
 #### File Paths
 ```{r}
-# Path to data used for tje msgdm analysis (which is already done)
+# Path to data used for the msgdm analysis (which is already done)
 data_path <- paste0("./Data/Processed_Data/Spatial/", params$dataset, ".rds")
 
 # Path to output of the msgdm analysis
@@ -97,8 +97,7 @@ for(i in 1:length(my_orders)){
 all_isplines <- bind_rows(all_isplines) 
 ```
 
-#### I have not yet managed to get plots of isplines against environmental data 
-#### on the original scale
+#### I have not managed to get plots of isplines against environmental data on the original scale. This code is part of an attempt
 ```{r}
 # to do this, check downloaded code. If that doesn't help, add to questions for Guillaume
 
@@ -134,7 +133,7 @@ for(i in 1:(ncol(my_env_data) + 1)){
 }
 ```
 
-### get data to to make multipanel plot for BES using only zeta = 4
+#### get data to to make multipanel plot for BES poster using only zeta = 4
 ```{r}
 
 #subset to zeta = 4 and get maximum y axis for value for ispline plots
@@ -198,7 +197,8 @@ write_rds(my_plots ,
           file = filepath)
 
 ```
-# Make a multipanel plot
+
+#### Make a multipanel plot
 ```{r}
 print(c("max y = ", max_y))
 # Export plots from the list to the global environment
@@ -297,7 +297,7 @@ forest_plots[[i]] <- p
 
 ```
 
-# Make a table with names of predictor splines and intercept to add to forest plot
+#### Make a table with names of predictor splines and intercept to add to forest plot
 ```{r}
 table_base <- 
   ggplot(data = all_coef[[1]], aes(y = y_height)) + # everything in this plot is empty 
@@ -510,7 +510,7 @@ write_csv(varparts, file = paste0(out_path, "variance_partitioning_table.csv"))
 ```
 
 
-#### Below is code for validation
+#### Below is code that could be developed further for validation
 
 
 
