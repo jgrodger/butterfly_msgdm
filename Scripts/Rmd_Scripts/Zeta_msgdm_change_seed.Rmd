@@ -75,7 +75,7 @@ site.by.xy <- data$site.by.xy
 print(params)
 ```
 
-#### Do MSGDM
+#### Do MSGDMs with Zeta.msgdm()
 ```{r}
 
 n_iterations <- length(params$orders_msgdm)
@@ -141,3 +141,29 @@ dev.off()
 }
 
 ```
+
+#### MSGDM deviance partitioning
+```{r}
+varparts <- list()
+
+for (i in 1:length(params$orders_msgdm)) {
+  set.seed(1)
+  varparts[[i]] <- Zeta.varpart(msgdm.mod = output0[[i]], method.glm = "glm.fit2", cons.inter = -1) 
+}
+names(varparts) <- paste0("zeta.vapart.", params$orders_msgdm)
+
+for (i in 1:length(params$orders_msgdm)) {
+pie.neg(varparts[[i]][4:7,1], density = c(4, 0, 8, -1),  angle = c(90, 0, 0, 0), labels =  c("distance","undistinguishable","environment","unexplained"), radius = 0.9, main = paste0("Zeta = ", params$orders_msgdm[i]))
+
+filepath <- paste0(out_path, "msgdm_var_pie_",params$dataset, "_", params$normalize_msgdm, "_zeta_order", params$orders_msgdm[i], ".png")
+
+#For unknown reasons, over writing is not happening unless I have the next line of code  
+unlink(filepath, recursive = FALSE, force = FALSE) #deletes previous version with the same name  
+  
+png(file = filepath)
+pie.neg(varparts[[i]][4:7,1], density = c(4, 0, 8, -1),  angle = c(90, 0, 0, 0), labels =  c("distance","undistinguishable","environment","unexplained"), radius = 0.9, main = paste0("Zeta = ", params$orders_msgdm[i]))
+dev.off()  
+    
+}
+```
+
