@@ -21,12 +21,13 @@ Then the following can be run in any order
 3_butterflies_maps.Rmd	
 4_Occupancy_analyses.Rmd
 5_run_zeta_msgdm.Rmd
+	•Note, this file calls other files to run analyses and generate paramterised reports
 
-The following scripts do not have to be run by the user
+The following scripts are run via 5_run_zeta_msgdm.Rmd
 
 6_Zeta_declines_decays_analyses.Rmd
 	This is run by 5_run_zeta_msgdm.Rmd
-
+7_Zeta_msgdm_change_seed_analyses.Rmd
 
 Scripts
 
@@ -202,10 +203,11 @@ Note
 		Markdown: Zeta_declines_decays_analyses.html
 			
 	# Below still needs annotation and updating in this readme and the powerpoint
-7) Zeta_msgdm_analyses.Rmd 
+7) 7_Zeta_msgdm_change_seed_analyses.Rmd 
 	•What this does: 
 		•Creates a parameterised report
 		•Called by run_zeta_msgdm.Rmd
+		•Seed can be set as a paramter
 		
 	•Analyses 		
 		•Pearson and Spearman correlations of predictors
@@ -227,7 +229,7 @@ Note
 
 7)process_msgdm_results.RMD
 	•What this does: makes forest plots for msgdms
-	•Inputs: msgdm outputs in list "[dataset]_[normalize_msgdm]/zeta_msgdms.rds" 
+	•Inputs: msgdm outputs  from  7_Zeta_msgdm_analyses.Rmd in list "[dataset]_[normalize_msgdm]/zeta_msgdms.rds" 
 	•Outputs: 
 		•Forest plots:
 		•Associated p value tables (image)
@@ -287,7 +289,7 @@ Note
 	•Outputs: For each dataset, list with all GAMM outputs 
 	"~[dataset]_gamm_cor_struct_compare.rds"
 	
-11) butterfly_msgdm_tables_figures_report.Rmd
+11) butterfly_richness_turnover.Rmd
 	•What this does: Generates a report containing figures and tables for main 
 	text and supplementary materials
 	•Inputs: 
