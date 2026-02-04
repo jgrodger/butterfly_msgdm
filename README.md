@@ -11,9 +11,22 @@ X)Filename
 ----------------------------------------------------------------------------------------------------------
 Order in which to run scripts: 
 
-1) 1_Process_CSV_Data.Rmd
-2) 2_butterflies_combine_env_data.Rmd
-3) 3_butterflies_maps.Rmd	
+The first two scripts must be run in order
+
+1_Process_CSV_Data.Rmd
+2_butterflies_combine_env_data.Rmd
+
+Then the following can be run in any order
+
+3_butterflies_maps.Rmd	
+4_Occupancy_analyses.Rmd
+5_run_zeta_msgdm.Rmd
+
+The following scripts do not have to be run by the user
+
+6_Zeta_declines_decays_analyses.Rmd
+	This is run by 5_run_zeta_msgdm.Rmd
+
 
 Scripts
 
@@ -155,14 +168,19 @@ Note
 
 
 6) 6_Zeta_declines_decays_analyses.Rmd
-	•What this does: Called by run_zeta_msgdm.Rmd;
-	analyses
+	•What this does
+		•Creates a parameterised report
+		•Called by run_zeta_msgdm.Rmd
+		
 		•Zeta diversity: Calculates values.
 		•Zeta decline: Compares fit of exponential versus power-law decline in 
 		zeta diversity with zeta order, for different ranges of zeta 
 		order.
 		•Zeta decay: Assesses and plots zeta decay for different orders of zeta.
 	•Inputs: datasets produced by butterflies_combine_env_data.Rmd
+			•all butterfly species "./Data/Processed_Data/Spatial/all_species.rds"
+			•widercountryside species "./Data/Processed_Data/Spatial/wc.rds"
+			•habitat specialists EXCLUDING sites with no habitat specialists. "./Data/Processed_Data/Spatial/hs_no_zeros.rds"
 	•Outputs: For each dataset 
 		•Zeta values: values up to zeta = 250 in table "~zeta_decline_exact.csv")
 		•Zeta decline, for orders 1 to 10, 1 to 20 and 1 to 50
@@ -184,9 +202,12 @@ Note
 		Markdown: Zeta_declines_decays_analyses.html
 			
 	# Below still needs annotation and updating in this readme and the powerpoint
-6)Zeta_msgdm_analyses.Rmd 
-	•What this does: Called by run_zeta_msgdm.Rmd;
-	analyses 		
+7) Zeta_msgdm_analyses.Rmd 
+	•What this does: 
+		•Creates a parameterised report
+		•Called by run_zeta_msgdm.Rmd
+		
+	•Analyses 		
 		•Pearson and Spearman correlations of predictors
 		•MSGDM analyses
 		•Calculates deviance explained by MSGDM analyses from deviance and null 
@@ -195,7 +216,10 @@ Note
 		addition or instead.
 		•Ispline plots
 		•Deviance explained pie plots
-	•Inputs: datasets produced by butterflies_combine_env_data.Rmd
+	•Inputs: datasets produced by 2_butterflies_combine_env_data.Rmd
+			•all butterfly species "./Data/Processed_Data/Spatial/all_species.rds"
+			•widercountryside species "./Data/Processed_Data/Spatial/wc.rds"
+			•habitat specialists EXCLUDING sites with no habitat specialists. "./Data/Processed_Data/Spatial/hs_no_zeros.rds"
 	•Outputs: For each dataset 
 		•ispline plots "~ispline_plot_[dataset]_[normalize_msgdm]_zeta_order[i].png"
 		•pie plots "~msgdm_var_pie_[dataset]_[normalize_msgdm]_zeta_order[i].png"

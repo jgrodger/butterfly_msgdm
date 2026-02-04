@@ -11,11 +11,9 @@ params:
   normalize_msgdm: "Simpson"
 ---
 
-"You can also run arbitrary R expressions by prefacing the parameter value with !r"
-https://r4ds.had.co.nz/r-markdown.html
-
 ```{r}
-# You can also run arbitrary R expressions by prefacing the parameter value with !r
+# In R Markdown
+#You can also run arbitrary R expressions by prefacing the parameter value with !r
 # https://r4ds.had.co.nz/r-markdown.html
 
 ```
@@ -83,8 +81,6 @@ site.by.xy <- data$site.by.xy
 print(params)
 ```
 
-
-
 #### Environmental variable Pearson and Spearman correlations
 ```{r}
 t1 <- cor(site.by.env)
@@ -96,12 +92,7 @@ print("Spearman correlation")
 t2
 ```
 
-
-
-
-
-
-
+#### Do MSGDMs with Zeta.msgdm()
 ```{r}
 
 n_iterations <- length(params$orders_msgdm)
@@ -133,7 +124,7 @@ write_rds(output0, file = filepath)
 
 ```
 
-## MSGDM summaries
+#### MSGDM summaries
 ```{r}
 for (i in 1:length(params$orders_msgdm)) {
 print(names(output0[i]))
@@ -141,7 +132,7 @@ print(summary(output0[[i]]$model))
 }
 ```
 
-# MSGDM deviance explained
+#### MSGDM deviance explained
 ```{r}
 for (i in 1:length(params$orders_msgdm)) {
 print(names(output0[i]))
@@ -149,7 +140,7 @@ print(with(summary(output0[[i]]$model), 1 - deviance/null.deviance))
 }
 ```
 
-### MSGDM i-spline plots
+#### MSGDM i-spline plots
 ```{r}
 
 for (i in 1:length(params$orders_msgdm)) {
@@ -168,7 +159,7 @@ dev.off()
 
 ```
 
-#MSGDM deviance partitioning
+#### MSGDM deviance partitioning
 ```{r}
 varparts <- list()
 
@@ -183,10 +174,9 @@ pie.neg(varparts[[i]][4:7,1], density = c(4, 0, 8, -1),  angle = c(90, 0, 0, 0),
 
 filepath <- paste0(out_path, "msgdm_var_pie_",params$dataset, "_", params$normalize_msgdm, "_zeta_order", params$orders_msgdm[i], ".png")
 
-#For unknown reasons, over writing is not happening  
+#For unknown reasons, over writing is not happening unless I have the next line of code  
 unlink(filepath, recursive = FALSE, force = FALSE) #deletes previous version with the same name  
   
-    
 png(file = filepath)
 pie.neg(varparts[[i]][4:7,1], density = c(4, 0, 8, -1),  angle = c(90, 0, 0, 0), labels =  c("distance","undistinguishable","environment","unexplained"), radius = 0.9, main = paste0("Zeta = ", params$orders_msgdm[i]))
 dev.off()  
