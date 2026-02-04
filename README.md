@@ -10,10 +10,10 @@ X)Filename
 	•Outputs
 ----------------------------------------------------------------------------------------------------------
 Order in which to run scripts: 
-First run the following two scripts in this order
-1) Process_CSV_Data.Rmd
-2) butterflies_combine_env_data.Rmd
 
+1) 1_Process_CSV_Data.Rmd
+2) 2_butterflies_combine_env_data.Rmd
+3) 3_butterflies_maps.Rmd	
 
 Scripts
 
@@ -56,7 +56,7 @@ Note
 	•Some plots may not print		
 2) 2_butterflies_combine_env_data.Rmd
 	•What this does:
-		•Data synthsis and processing: 
+		•Data synthesis and processing: 
 			•Environmental variables:
 				•Extracts data for environmental variables for sites included 
 				by the other criteria into site by environment dataset.
