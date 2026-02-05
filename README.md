@@ -202,7 +202,6 @@ Note
 			•Zeta distance decay plot "~zeta_distance_decays.png"
 		Markdown: Zeta_declines_decays_analyses.html
 			
-	# Below still needs annotation and updating in this readme and the powerpoint
 7) 7_Zeta_msgdm_change_seed_analyses.Rmd 
 	•What this does: 
 		•Creates a parameterised report
@@ -226,21 +225,31 @@ Note
 		•ispline plots "~ispline_plot_[dataset]_[normalize_msgdm]_zeta_order[i].png"
 		•pie plots "~msgdm_var_pie_[dataset]_[normalize_msgdm]_zeta_order[i].png"
 		•msgdm outputs in list "[dataset]_[normalize_msgdm]/zeta_msgdms.rds" 
+		• NOW THIS SHOULD ALSO MAKE VARIANCE PIE PLOTS, CHECK WORKING (LAST CHUNK ADDED NOT YET RUN)
 
-7)process_msgdm_results.RMD
+8) MSGDM_multipanel_plot.RMD
+	•What this does: Makes figure 3, a multipanel plot of MSGDM splines
+	•Inputs: files from 7_Zeta_msgdm_change_seed_analyses.Rmd Output
+		•./Output/Spatial/msgdms/all_species_Simpson_4//figs_tables//msgdm_single_splines.rds
+		•./Output/Spatial/msgdms/wc_Simpson_4//figs_tables//msgdm_single_splines.rds
+		•./Output/Spatial/msgdms/hs_no_zeros_Simpson_4//figs_tables//msgdm_single_splines.rds
+	•Outputs
+		•Fig. 3
+			•msgdm_multiplot.png
+
+	# Below still needs annotation and updating in this readme and the powerpoint
+
+ # I am not sure if this is now used or not
+8) process_msgdm_results.RMD
 	•What this does: makes forest plots for msgdms
 	•Inputs: msgdm outputs  from  7_Zeta_msgdm_analyses.Rmd in list "[dataset]_[normalize_msgdm]/zeta_msgdms.rds" 
 	•Outputs: 
-		•Forest plots:
-		•Associated p value tables (image)
-	
-8)process_msgdm_results.Rmd
-	•What this does: makes plots and tables of MSGDM results for interpretation 
-	and presentation in the paper
 		•ispline plots for each variable grouped by zeta order
 		•Forest plots coloured by predictor
-	•Inputs: msgdm outpus from files "~zeta_msgdms.rds"
-	•Outputs	
+		•Associated p value tables (image)
+		
+	
+	
 	
 9) GAM_compare_family_analyses.Rmd
 	•What this does: Called by run_zeta_msgdm.Rmd;

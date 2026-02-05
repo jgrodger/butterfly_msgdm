@@ -5,7 +5,7 @@ output: html_notebook
 # This makes figure 3
 
 ```{r}
-here::i_am("Scripts/Rmd_Scripts/Gamm_multipanel_fig.Rmd")
+here::i_am("Scripts/Rmd_Scripts/MSGDM_multipanel_plot.Rmd")
 library(tidyverse)
 library(ggpubr)
 library(mgcv)
@@ -47,7 +47,7 @@ names(my_panels) <- paste0("p", c(1, 4, 7, 10, 13, 16, 19, 22, 25,
 #my_panels <- my_panels1 
 ```
 
-#### #### Modify panels by adding labels (letters), removing unnecessary axis labels, and specifying axis titles
+#### Modify panels by adding labels (letters), removing unnecessary axis labels, and specifying axis titles
 ```{r}
 # Column headings
 top_heads <- c("All", "Generalists", "Specialists")
@@ -87,7 +87,7 @@ for (i in 1:27){
 
 ```
 
-#### create a new list with the panels in the order needed for plottin (they are plotted row-wize but my_panels has them column_Wize)
+#### create a new list with the panels in the order needed for plotting (they are plotted row-wize but my_panels has them column_Wize)
 ```{r}
 # my_index gives index in the original list of panels for new list, but in the order the should be in for the new list. 
 # start_index is the first three entries for my_index, subsequent values of my_index are obtained by adding 1, 2, 3... to start_index entries
