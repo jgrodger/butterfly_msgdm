@@ -364,7 +364,6 @@ p_tables[[i]] <- p_table
 }
 ```
 
-
 #### A list of tables of p values with headings to combine with forest plots
 ```{r}
 
