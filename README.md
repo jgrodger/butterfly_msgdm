@@ -227,7 +227,7 @@ Note
 		•msgdm outputs in list "[dataset]_[normalize_msgdm]/zeta_msgdms.rds" 
 		• NOW THIS SHOULD ALSO MAKE VARIANCE PIE PLOTS, CHECK WORKING (LAST CHUNK ADDED NOT YET RUN)
 
-8) MSGDM_multipanel_plot.RMD
+8) 8_MSGDM_multipanel_plot.RMD
 	•What this does: Makes figure 3, a multipanel plot of MSGDM splines
 	•Inputs: files from 7_Zeta_msgdm_change_seed_analyses.Rmd Output
 		•./Output/Spatial/msgdms/all_species_Simpson_4//figs_tables//msgdm_single_splines.rds
