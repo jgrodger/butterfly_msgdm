@@ -144,7 +144,7 @@ Note
 
  https://zsmith27.github.io/rmarkdown_crash-course/lesson-7-parameterized-reports.html		
 5) 5_run_zeta_msgdm.Rmd
-	•What this does: runs r markdopwn files and renders parameterized reports 
+	•What this does: runs r markdown files and renders parameterized reports 
 	for data analyses. 
 	Analyses done for the first three or all four groups below
 		•all butterfly species: all_species.
@@ -237,17 +237,20 @@ Note
 		•Fig. 3
 			•msgdm_multiplot.png
 
-	# Below still needs annotation and updating in this readme and the powerpoint
-
- # I am not sure if this is now used or not
-8) process_msgdm_results.RMD
+ 9) 9_process_msgdm_results.RMD
 	•What this does: makes forest plots for msgdms
 	•Inputs: msgdm outputs  from  7_Zeta_msgdm_analyses.Rmd in list "[dataset]_[normalize_msgdm]/zeta_msgdms.rds" 
 	•Outputs: 
+		•Single spline msgdm plots "[dataset]_[normalize_msgdm]_zeta_order[i]/msgdm_single_splines.rds"
+		•Multipanel plot of single ispline plots (currently not written to output)
 		•ispline plots for each variable grouped by zeta order
-		•Forest plots coloured by predictor
-		•Associated p value tables (image)
+		•		
+		•Fig. S4 
+			•Forest plots coloured by predictor, including associated p values "[dataset]_[normalize_msgdm]_zeta_order[i]/forest_plot.png"
+		•Variance (Deviance) explained "[dataset]_[normalize_msgdm]_zeta_order[i]/deviance_table.csv"
+		•Variance partitionining "[dataset]_[normalize_msgdm]_zeta_order[i]/variance_partitioning_table.csv"
 		
+	# Below still needs annotation and updating in this readme and the powerpoint
 	
 	
 	
