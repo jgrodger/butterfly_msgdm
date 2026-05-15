@@ -60,7 +60,7 @@ render_report = function(analysis_script, params_list) {
                 } else if(analysis_script == "process_GAMMS_single_result_output.Rmd"){  
                       paste0(here("Output/Spatial/GAM/GAMM_"), params_list$dataset, "/", 
                              params_list$analysis, "/", params_list$corStruct, "//")
-                } else if(analysis_script == "process_msgdm_results.Rmd"){  
+                } else if(analysis_script == "9_process_msgdm_results.Rmd"){  
                       paste0(here("Output/Spatial/msgdms"), "/", 
                       params_list$dataset, "_" , params_list$normalize_msgdm, "/", 
                       "figs_tables/")
@@ -226,18 +226,49 @@ toc()
 
 #### Generate tables and figures for MSGDMs for main text
 ```{r}
-render_report(analysis_script = "process_msgdm_results.Rmd", 
+render_report(analysis_script = "9_process_msgdm_results.Rmd", 
               list(dataset = "all_species", normalize_msgdm = "Simpson",
                    orders_msgdm =  c(2, 4, 20), seed = 4))
 
-render_report(analysis_script = "process_msgdm_results.Rmd", 
+render_report(analysis_script = "9_process_msgdm_results.Rmd", 
               list(dataset = "hs_no_zeros", normalize_msgdm = "Simpson",
                    orders_msgdm =  c(2, 4, 20), seed = 4))
 
-render_report(analysis_script = "process_msgdm_results.Rmd", 
+render_report(analysis_script = "9_process_msgdm_results.Rmd", 
               list(dataset = "wc", normalize_msgdm = "Simpson",
                    orders_msgdm =  c(2, 4, 20), seed = 4))
 ```
+
+
+
+#### Generate a overlapping but different set of tables and figures for msgdms
+##### Note, using zeta = 50 also produces similar results
+```{r}
+render_report(analysis_script = "9_process_msgdm_results.Rmd", 
+              list(dataset = "all_species", normalize_msgdm = "Simpson",
+                   orders_msgdm =  c(2, 4, 20)))
+
+render_report(analysis_script = "9_process_msgdm_results.Rmd", 
+              list(dataset = "wc", normalize_msgdm = "Simpson",
+                   orders_msgdm =  c(2, 4, 20)))
+
+render_report(analysis_script = "9_process_msgdm_results.Rmd", 
+              list(dataset = "hs_no_zeros", normalize_msgdm = "Simpson",
+                   orders_msgdm =  c(2, 3, 4)))
+
+render_report(analysis_script = "9_process_msgdm_results.Rmd", 
+              list(dataset = "all_species", normalize_msgdm = "Sorensen",
+                   orders_msgdm =  c(2, 4, 20)))
+
+render_report(analysis_script = "9_process_msgdm_results.Rmd", 
+              list(dataset = "wc", normalize_msgdm = "Sorensen",
+                   orders_msgdm =  c(2, 4, 20)))
+
+render_report(analysis_script = "9_process_msgdm_results.Rmd", 
+              list(dataset = "hs_no_zeros", normalize_msgdm = "Sorensen",
+                   orders_msgdm =  c(2, 3, 4)))
+```
+
 
 #### previous MSGDM analyses, code may not run if results with seed = 4 not available, probably delete this
 
@@ -281,30 +312,3 @@ toc()
 ```
 
 
-#### Generate tables and figures for msgdms
-##### Note, using zeta = 50 also produces similar results
-```{r}
-render_report(analysis_script = "process_msgdm_results.Rmd", 
-              list(dataset = "all_species", normalize_msgdm = "Simpson",
-                   orders_msgdm =  c(2, 4, 20)))
-
-render_report(analysis_script = "process_msgdm_results.Rmd", 
-              list(dataset = "wc", normalize_msgdm = "Simpson",
-                   orders_msgdm =  c(2, 4, 20)))
-
-render_report(analysis_script = "process_msgdm_results.Rmd", 
-              list(dataset = "hs_no_zeros", normalize_msgdm = "Simpson",
-                   orders_msgdm =  c(2, 3, 4)))
-
-render_report(analysis_script = "process_msgdm_results.Rmd", 
-              list(dataset = "all_species", normalize_msgdm = "Sorensen",
-                   orders_msgdm =  c(2, 4, 20)))
-
-render_report(analysis_script = "process_msgdm_results.Rmd", 
-              list(dataset = "wc", normalize_msgdm = "Sorensen",
-                   orders_msgdm =  c(2, 4, 20)))
-
-render_report(analysis_script = "process_msgdm_results.Rmd", 
-              list(dataset = "hs_no_zeros", normalize_msgdm = "Sorensen",
-                   orders_msgdm =  c(2, 3, 4)))
-```

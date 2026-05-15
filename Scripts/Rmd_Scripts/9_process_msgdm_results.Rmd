@@ -12,8 +12,9 @@ params:
   seed: 4
 ---
 
+#### Packages
 ```{r}
-here::i_am("Scripts/Rmd_Scripts/process_msgdm_results.Rmd")
+here::i_am("Scripts/Rmd_Scripts/9_process_msgdm_results.Rmd")
 
 library(rmarkdown)
 library(tidyverse)
@@ -476,7 +477,7 @@ dev_table[i, 2] <- with(summary(my_msgdms[[i]]$model), 1 - deviance/null.devianc
 }
 names(dev_table) <- c("Zeta order", "Deviance Explained")
 
-#I have checked and csv over-writes fines
+#I have checked and csv over-writes fine
 write_csv(dev_table, file = paste0(out_path, "/", "deviance_table.csv"))
 kable(dev_table, digits = 3)
 ```
