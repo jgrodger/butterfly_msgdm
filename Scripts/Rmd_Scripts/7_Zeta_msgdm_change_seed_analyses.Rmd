@@ -20,7 +20,7 @@ knitr::opts_chunk$set(echo = TRUE)
 
 #### Packages
 ```{r}
-here::i_am("Scripts/Rmd_Scripts/run_zeta_msgdm.Rmd")
+here::i_am("Scripts/Rmd_Scripts/7_Zeta_msgdm_change_seed_analyses.Rmd")
 
 library(tidyverse)
 library(zetadiv)

@@ -143,6 +143,8 @@ Note
 		•Fig S 4.1 Plot of contributions of different butterfly species to variance in zeta diversity for interpretation of msgdm results "Output/Spatial/zeta_declines_decays/all_species/contribution_zeta_variance.png"
 
  https://zsmith27.github.io/rmarkdown_crash-course/lesson-7-parameterized-reports.html		
+
+# Needs updating with current script names (updated partially 15/05/2026)
 5) 5_run_zeta_msgdm.Rmd
 	•What this does: runs r markdown files and renders parameterized reports 
 	for data analyses. 
@@ -154,7 +156,9 @@ Note
 		hs_no_zeros.
 	The following analyses are done NEEDS UPDATING
 		•Zeta diversity decline and decay. "Scripts/Rmd_Scripts/Zeta_declines_decays_analyses.Rmd"
-		•MSGDMs "Scripts/Rmd_Scripts/Zeta_msgdm_analyses.Rmd"
+		•MSGDMs 
+			•9_process_msgdm_results.RMD to get figures and tables
+			"Scripts/Rmd_Scripts/Zeta_msgdm_analyses.Rmd"
 			•note: sensitivity and robustness not yet done. They need to be 
 			added from butterflies_msgdm_prelim_22_Nov_2023.Rmd
 		•GAMs "Scripts/Rmd_Scripts/GAM_analyses.Rmd"
@@ -239,6 +243,7 @@ Note
 
  9) 9_process_msgdm_results.RMD
 	•What this does: makes forest plots for msgdms
+	•Run by: 5_run_zeta_msgdm.Rmd
 	•Inputs: msgdm outputs  from  7_Zeta_msgdm_analyses.Rmd in list "[dataset]_[normalize_msgdm]/zeta_msgdms.rds" 
 	•Outputs: 
 		•Single spline msgdm plots "[dataset]_[normalize_msgdm]_zeta_order[i]/msgdm_single_splines.rds"
