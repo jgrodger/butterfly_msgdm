@@ -256,7 +256,8 @@ Note
 		•Variance partitionining "[dataset]_[normalize_msgdm]_zeta_order[i]/variance_partitioning_table.csv"
 		
 	# Below still needs annotation and updating in this readme and the powerpoint
-	
+	#had a look at script below 17/05/2026. I had to install devtools and rtools so didn't get to far
+	# still need to run this
 	
 	
 9) GAM_compare_family_analyses.Rmd

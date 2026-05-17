@@ -12,6 +12,15 @@ params:
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
+library(devtools)
+install_github('mcooper/moranfast')
+
+library(moranfast)
+
+ozone <- read.table("https://stats.idre.ucla.edu/stat/r/faq/ozone.csv", sep=",", header=T)
+moranfast(ozone$Av8top, ozone$Lon, ozone$Lat)
+
+
 #### Parameters for this report
 ```{r}
 print(params)
@@ -34,6 +43,9 @@ conflicts_prefer(dplyr::select)
 conflicts_prefer(knitrProgressBar::progress_estimated)
 
 # there is a same-named function in dplyr, check it out
+# moranfast is not on Cran, requires Rtools and devtools to install
+# library(devtools)
+# install_github('mcooper/moranfast')
 ```
 
 #### Functions
@@ -83,7 +95,7 @@ gam_poisson <- update(gam_gaussian, family = "poisson", link = "log")
 
 gam_nb <- update(gam_gaussian, family = nb(link = "log"))
 
-#"When = = 0, the Tweedie distribution degenerates to the normal distribution; when p = 1, it becomes a Poisson distribution; when p = 2, it becomes a gamma distribution; when p = 3, it is an inverse Gaussian distribution. "
+#"When p = 0, the Tweedie distribution degenerates to the normal distribution; when p = 1, it becomes a Poisson distribution; when p = 2, it becomes a gamma distribution; when p = 3, it is an inverse Gaussian distribution. "
 #https://documentation.sas.com/doc/en/pgmsascdc/9.4_3.4/statug/statug_genmod_details28.htm
 
 gam_tweedie <- update(gam_poisson, family = tw())# tweedie distribution with p parameter estimated
@@ -104,6 +116,7 @@ for (i in 1:length(gam_list)){
   gam.check(gam_i)
 }
 ```
+
 ### Compare GAM summaries
 ```{r}
 for (i in 1:length(gam_list)){
@@ -123,8 +136,6 @@ for (i in 1:length(gam_list)){
 }
 ```
 
-
-
 ### Compare GAMs in terms of AIC
 ```{r}
 aic_table <- AIC(gam_gaussian, gam_poisson, gam_nb, gam_tweedie, gam_ziP) %>%
@@ -136,6 +147,8 @@ write_csv(aic_table, file = paste0(out_path, "/", "family_aic_table.csv"))
 
 kable(aic_table, digits = 2, align = "l")
 ```
+
+
 ### Moran's tests
 ```{r}
 for (i in 1:length(gam_list)){
@@ -146,8 +159,8 @@ for (i in 1:length(gam_list)){
           site.by.env.and.richness$x, site.by.env.and.richness$y))
 }
 ```
-# do as loop
 
+### Variogram Plots
 ```{r}
 
 for (i in 1:length(gam_list)){
