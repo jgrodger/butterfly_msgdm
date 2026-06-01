@@ -28,7 +28,7 @@ print(params)
 
 #### Packages
 ```{r}
-here::i_am("Scripts/Rmd_Scripts/GAM_compare_family_analyses.Rmd")
+here::i_am("Scripts/Rmd_Scripts/10_GAM_compare_family_analyses.Rmd")
 
 library(tidyverse)
 library(mgcv)

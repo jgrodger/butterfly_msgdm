@@ -50,7 +50,7 @@ render_report = function(analysis_script, params_list) {
                     paste0(here("Output/Spatial/msgdms/"), "/", params_list$dataset, "_" , params_list$normalize_msgdm)
                 } else if(analysis_script == "Zeta_msgdm_change_seed.Rmd") {
                     paste0(here("Output/Spatial/msgdms/"), "/", params_list$dataset, "_" , params_list$normalize_msgdm, "_" , params_list$my_seed)                 
-                } else if(analysis_script == "GAM_compare_family_analyses.Rmd") {
+                } else if(analysis_script == "10_GAM_compare_family_analyses.Rmd") {
                       paste0(here("Output/Spatial/GAM"), "/","GAM", "_" , params_list$dataset,  "/")  
                 } else if(analysis_script == "GAM_compare_spline_analyses.Rmd") {
                       paste0(here("Output/Spatial/GAM"), "/","GAM", "_" , params_list$dataset,  "/")
@@ -76,17 +76,17 @@ if(!dir.exists(out_path)) dir.create(out_path, recursive = TRUE)
 
 #### GAMS comparing different distribution families
 ```{r}
-render_report(analysis_script = "GAM_compare_family_analyses.Rmd", list(dataset = "all_species"))
+render_report(analysis_script = "10_GAM_compare_family_analyses.Rmd", list(dataset = "all_species"))
 Sys.Date()
 ```
 
 ```{r}
-render_report(analysis_script = "GAM_compare_family_analyses.Rmd", list(dataset = "wc"))
+render_report(analysis_script = "10_GAM_compare_family_analyses.Rmd", list(dataset = "wc"))
 Sys.Date()
 ```
 
 ```{r}
-render_report(analysis_script = "GAM_compare_family_analyses.Rmd", list(dataset = "hs"))
+render_report(analysis_script = "10_GAM_compare_family_analyses.Rmd", list(dataset = "hs"))
 Sys.Date()
 ```
 

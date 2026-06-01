@@ -254,27 +254,26 @@ Note
 			•Forest plots coloured by predictor, including associated p values "[dataset]_[normalize_msgdm]_zeta_order[i]/forest_plot.png"
 		•Variance (Deviance) explained "[dataset]_[normalize_msgdm]_zeta_order[i]/deviance_table.csv"
 		•Variance partitionining "[dataset]_[normalize_msgdm]_zeta_order[i]/variance_partitioning_table.csv"
+# run from 	 5_run_zeta_msgdm.Rmd 01/06/2026	
 		
-	# Below still needs annotation and updating in this readme and the powerpoint
-	#had a look at script below 17/05/2026. I had to install devtools and rtools so didn't get to far
-	# still need to run this
-	
-	
-9) GAM_compare_family_analyses.Rmd
-	•What this does: Called by run_zeta_msgdm.Rmd;
-		•Analyses with different distribution assumptions
-			•GAM analyses for different familes: compare
-				•Residual Plots
-				•Basis dimension checks
-				•Smooth plots
-				•Moran's I test
-				•AIC
+10) 10_GAM_compare_family_analyses.Rmd
+	•What this does
+			•GAM Analyses with different distribution assumptions
+		•Run by: 5_run_zeta_msgdm.Rmd
 	•Inputs: 
-		•Datasets produced by butterflies_combine_env_data.Rmd
+		•Datasets produced by 2_butterflies_combine_env_data.Rmd
 		•Basemap "./Data./Maps./gb_multipolygon_simplified.rds"
-	•Outputs: 
-		•GAM_compare_family_analyses.csv: Report to inspect and choose best distribution (family argument) to use.
-		•family_aic_table.csv: AIC table
+	•Outputs:
+		•GAM analyses for different familes: compare
+				•Residual Plots (not output elsewhere)
+				•Basis dimension checks (not output elsewhere)
+				•Smooth plots (not output elsewhere)
+				•Moran's I test (not output elsewhere)
+				•AIC 	"./Data/GAM/[dataset]/family_aic_table.csv" 
+# run from 	 5_run_zeta_msgdm.Rmd 01/06/2026	
+
+# Below still needs annotation and updating in this readme and the powerpoint
+	
 9A) GAM_comare_spline_analyses.Rmd
 			•GAM analyses, using family with lowest AIC and comparing spline 
 			methods
