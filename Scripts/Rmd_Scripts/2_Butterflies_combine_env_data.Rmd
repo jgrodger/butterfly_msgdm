@@ -8,7 +8,7 @@ output: html_notebook
 
 #### Setup and Packages
 ```{r}
-#All the packes are used, checked24/04/2024
+#All the packages are used, checked24/04/2024
 
 here::i_am("Scripts/Rmd_Scripts/2_Butterflies_combine_env_data.Rmd")
 
@@ -65,7 +65,7 @@ site.by.prec <- readRDS(here("./Data/Masked_Cropped_Environmental_Data/site_by_p
 
 #### Functions
 ```{r}
-# a nice little function for plotting a bloe fit line #https://stackoverflow.com/questions/35085261/how-to-use-loess-method-in-ggallyggpairs-using-wrap-function
+# a nice little function for plotting a loess fit line #https://stackoverflow.com/questions/35085261/how-to-use-loess-method-in-ggallyggpairs-using-wrap-function
 # Function to return points and geom_smooth
 # allow for the method to be changed
 my_fn <- function(data, mapping, method="loess", ...){
@@ -164,7 +164,7 @@ plot(rast(comb.check, crs = "EPSG:27700", type = "xyz"))
 write_rds(comb, file = here("./Data/Processed_Data/Spatial/map_all_env_vars.rds"))
 ```
 
-#### Merge env vars with site data to make site.by.env and site.by.xy dataframes
+#### Merge env vars with site data to make site.by.env dataframe
 ```{r}
 # Note, there is sometimes more than one site per gridref
 # Merge is used to keep sites that have data for all variables
@@ -196,7 +196,7 @@ head(site.by.env)
 
 ```
 
-#### Add species richness to site by enve for exploration
+#### Add species richness to site by env for exploration
 ```{r}
 species.rich <- data.frame(row.names(site.by.species)) %>%
   cbind(rowSums(site.by.species))
@@ -387,6 +387,11 @@ ggpairs(site.by.env,
 
 #### Obtain versions of dataset for analysis (i.e. all species, wider countryside species, habitat specialists)
 ```{r}
+# Rename rows before selecting x and y 
+site.by.env <- site.by.env %>%
+  column_to_rownames(var = "site.no")
+rownames(site.by.env) <- paste("site", rownames(site.by.env), sep = "_")
+
 # Finalise site.by.xy dataframe for analyses
 site.by.xy <- site.by.env %>%
   select(x, y)
@@ -399,9 +404,8 @@ group_by(xy) %>%
 
 # Finalise site.by.env dataframe for analyses
 site.by.env <- site.by.env %>%
-  column_to_rownames(var = "site.no") %>%
   select(-c(ngr.1km,  x, y, species.richness))
-rownames(site.by.env) <- paste("site", rownames(site.by.env), sep = "_")
+
 
 rownames(site.by.species) <- paste("site", rownames(site.by.species), sep = "_")
 site.by.species <- filter(site.by.species,
@@ -423,7 +427,8 @@ head(site.by.xy)
 ```
 #### Obtain datasets for wider countryside and habitat specialists (habitat specialists with and without rows that have no species)
 ```{r}
-species$species.no <- paste("species", species$species.no, sep = "_")
+# The line below, if run, means formatting of habitat.specialists and wider.countryside.spp does not match column names in site.by.species, resulting in no columns being selected. I am not sure why the line is here anymore so commented out.
+#species$species.no <- paste("species", species$species.no, sep = "_")
 
 # Obtain vectors of species.no for habitat specialists and wider countryside species
 habitat.specialists <- species[species$strategy == "Habitat specialist",]$species.no

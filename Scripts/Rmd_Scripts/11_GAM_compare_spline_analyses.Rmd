@@ -28,6 +28,7 @@ library(knitrProgressBar)
 library(tmap)
 library(mgcViz)
 library(gstat)
+library(moranfast)
 library(here)
 library(conflicted)
 
