@@ -119,6 +119,7 @@ Note
 			•habitat specialists INCLUDING sites with no habitat specialists "./Data/Processed_Data/Spatial/hs.rds"
 			•habitat specialists EXCLUDING sites with no habitat specialists. "./Data/Processed_Data/Spatial/hs_no_zeros.rds"
 		•Slimmed down site by env to just map environmental data•"./Data/Processed_Data/Spatial/map_all_env_vars.rds"))
+# corrections made 02/06/2026. testing scripts 10 and 11 showed datasets were not filtered correctly
 
 3) 3_butterflies_maps.Rmd		
 	•What this does: generates maps of the distribution of sites in our data,
@@ -296,7 +297,7 @@ Note
 		•spline_aic_table.csv: AIC table "/Output/Spatial/GAM/GAM_[dataset]/spline_aic_table.csv"
 		• variograms
 		
-		#error in output from script 2, no xy
+
 
 # Below still needs annotation and updating in this readme and the powerpoint		
 10)GAMM_analyses.Rmd
