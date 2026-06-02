@@ -16,7 +16,7 @@ knitr::opts_chunk$set(echo = TRUE)
 
 #### Packages
 ```{r, include=FALSE}
-here::i_am("Scripts/Rmd_Scripts/GAM_compare_spline_analyses.Rmd")
+here::i_am("Scripts/Rmd_Scripts/11_GAM_compare_spline_analyses.Rmd")
 
 library(tidyverse)
 library(sf)
@@ -30,11 +30,10 @@ library(mgcViz)
 library(gstat)
 library(here)
 library(conflicted)
+
 conflicts_prefer(dplyr::filter)
 conflicts_prefer(dplyr::select)
 conflicts_prefer(knitrProgressBar::progress_estimated)
-
-# there is a same-named function in dplyr, check it out
 ```
 
 #### Functions
@@ -70,6 +69,7 @@ gb <- readRDS(here("./Data/Maps/gb_multipolygon_simplified.rds"))
 ```{r}
 print(params)
 ```
+
 #### Prepare data for analysis
 ```{r}
 site.by.env.and.richness <- cbind(site.by.xy) %>%
@@ -77,7 +77,7 @@ site.by.env.and.richness <- cbind(site.by.xy) %>%
   rename(species.richness = 'rowSums(site.by.species)')
 ```
 
-## Run GAMs
+### Run GAMs
 
 #### Thin plate splines
 ```{r}
@@ -111,7 +111,7 @@ names(gam_list) <- c("gam_tp",  "gam_cr")
 # write_csv(aic_table, file = paste0(out_path, "/", "spline_aic_table.csv"))
 ```
 
-### Compare residual plots and perform basis dimension checking
+#### Compare residual plots and perform basis dimension checking
 ```{r}
 for (i in 1:length(gam_list)){
   print(names(gam_list[i]))  
@@ -120,7 +120,8 @@ for (i in 1:length(gam_list)){
   gam.check(gam_i)
 }
 ```
-### Compare GAM summaries
+
+#### Compare GAM summaries
 ```{r}
 for (i in 1:length(gam_list)){
   print(names(gam_list[i]))  
@@ -129,7 +130,7 @@ for (i in 1:length(gam_list)){
 }
 ```
 
-### Compare GAM smooth plots
+#### Compare GAM smooth plots
 ```{r}
 for (i in 1:length(gam_list)){
   print(names(gam_list[i]))  
@@ -139,7 +140,7 @@ for (i in 1:length(gam_list)){
 }
 ```
 
-### Compare Moran's tests
+#### Compare Moran's tests
 ```{r}
 for (i in 1:length(gam_list)){
   print(names(gam_list[i]))  
@@ -196,7 +197,7 @@ dev.off()
 }
 ```
 
-### Compare GAMs in terms of AIC
+#### Compare GAMs in terms of AIC
 ```{r}
 aic_table <- AIC(gam_tp, gam_cr) %>%
   arrange(AIC) %>% #order rows by AIC

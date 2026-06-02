@@ -242,8 +242,8 @@ Note
 			•msgdm_multiplot.png
 
  9) 9_process_msgdm_results.RMD
-	•What this does: makes forest plots for msgdms
 	•Run by: 5_run_zeta_msgdm.Rmd
+	•What this does: makes forest plots for msgdms
 	•Inputs: msgdm outputs  from  7_Zeta_msgdm_analyses.Rmd in list "[dataset]_[normalize_msgdm]/zeta_msgdms.rds" 
 	•Outputs: 
 		•Single spline msgdm plots "[dataset]_[normalize_msgdm]_zeta_order[i]/msgdm_single_splines.rds"
@@ -255,11 +255,13 @@ Note
 		•Variance (Deviance) explained "[dataset]_[normalize_msgdm]_zeta_order[i]/deviance_table.csv"
 		•Variance partitionining "[dataset]_[normalize_msgdm]_zeta_order[i]/variance_partitioning_table.csv"
 # run from 	 5_run_zeta_msgdm.Rmd 01/06/2026	
+
+
 		
-10) 10_GAM_compare_family_analyses.Rmd
+11) 10_GAM_compare_family_analyses.Rmd
+	•Run by: 5_run_zeta_msgdm.Rmd
 	•What this does
 			•GAM Analyses with different distribution assumptions
-		•Run by: 5_run_zeta_msgdm.Rmd
 	•Inputs: 
 		•Datasets produced by 2_butterflies_combine_env_data.Rmd
 		•Basemap "./Data./Maps./gb_multipolygon_simplified.rds"
@@ -272,9 +274,11 @@ Note
 				•AIC 	"./Data/GAM/[dataset]/family_aic_table.csv" 
 # run from 	 5_run_zeta_msgdm.Rmd 01/06/2026	
 
-# Below still needs annotation and updating in this readme and the powerpoint
+
 	
-9A) GAM_comare_spline_analyses.Rmd
+11) 11_GAM_comare_spline_analyses.Rmd
+	•Run by: 5_run_zeta_msgdm.Rmd
+	•What this does
 			•GAM analyses, using family with lowest AIC and comparing spline 
 			methods
 				•Compares AIC.
@@ -289,9 +293,12 @@ Note
 		•Basemap "./Data./Maps./gb_multipolygon_simplified.rds"
 	•Outputs: 
 		•GAM_compare_spline_analyses.csv: Report to inspect and choose best distribution (family argument) to use.
-		•spline_aic_table.csv: AIC table
+		•spline_aic_table.csv: AIC table "/Output/Spatial/GAM/GAM_[dataset]/spline_aic_table.csv"
 		• variograms
-	
+		
+		#error in output from script 2, no xy
+
+# Below still needs annotation and updating in this readme and the powerpoint		
 10)GAMM_analyses.Rmd
 	•NB, these are very time consuming
 	•What this does: Called by run_zeta_msgdm.Rmd;

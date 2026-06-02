@@ -52,7 +52,7 @@ render_report = function(analysis_script, params_list) {
                     paste0(here("Output/Spatial/msgdms/"), "/", params_list$dataset, "_" , params_list$normalize_msgdm, "_" , params_list$my_seed)                 
                 } else if(analysis_script == "10_GAM_compare_family_analyses.Rmd") {
                       paste0(here("Output/Spatial/GAM"), "/","GAM", "_" , params_list$dataset,  "/")  
-                } else if(analysis_script == "GAM_compare_spline_analyses.Rmd") {
+                } else if(analysis_script == "11_GAM_compare_spline_analyses.Rmd") {
                       paste0(here("Output/Spatial/GAM"), "/","GAM", "_" , params_list$dataset,  "/")
                 } else if(analysis_script == "process_GAMM_analyses.Rmd"){  
                       paste0(here("Output/Spatial/GAM/GAMM_"), params_list$dataset, "/", 
@@ -74,6 +74,7 @@ if(!dir.exists(out_path)) dir.create(out_path, recursive = TRUE)
 
 ### Code chunks below produce parameterized reports as specified in each
 
+
 #### GAMS comparing different distribution families
 ```{r}
 render_report(analysis_script = "10_GAM_compare_family_analyses.Rmd", list(dataset = "all_species"))
@@ -90,17 +91,18 @@ render_report(analysis_script = "10_GAM_compare_family_analyses.Rmd", list(datas
 Sys.Date()
 ```
 
+
 #### GAMS comparing different splines
 ```{r}
-render_report(analysis_script = "GAM_compare_spline_analyses.Rmd", list(dataset = "all_species"))
+render_report(analysis_script = "11_GAM_compare_spline_analyses.Rmd", list(dataset = "all_species"))
 ```
 
 ```{r}
-render_report(analysis_script = "GAM_compare_spline_analyses.Rmd", list(dataset = "wc"))
+render_report(analysis_script = "11_GAM_compare_spline_analyses.Rmd", list(dataset = "wc"))
 ```
 
 ```{r}
-render_report(analysis_script = "GAM_compare_spline_analyses.Rmd", list(dataset = "hs", family = "nb"))
+render_report(analysis_script = "11_GAM_compare_spline_analyses.Rmd", list(dataset = "hs", family = "nb"))
 ```
 
 ### GAMMS comparing different spatial autocorrelation structure
