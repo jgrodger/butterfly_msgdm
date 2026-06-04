@@ -319,8 +319,13 @@ Note
 
 process_GAMM_analyses
 
+GAMM_model_selection.Rmd
+
+GAMM_multipanel_plot.Rmd
+
 process_GAMMS_single_result_output
 
+#below script no longer used, all this done elsewhere
 GAMM_analyses.Rmd
 	•Run by: 5_run_zeta_msgdm.Rmd
 	•NB, these are very time consuming
