@@ -262,18 +262,18 @@ Note
 11) 10_GAM_compare_family_analyses.Rmd
 	•Run by: 5_run_zeta_msgdm.Rmd
 	•What this does
-			•GAM Analyses with different distribution assumptions
+		•GAM Analyses with different distribution assumptions
+			•Residual Plots (not output elsewhere)
+			•Basis dimension checks (not output elsewhere)
+			•Smooth plots (not output elsewhere)
+			•Moran's I test (not output elsewhere)
+			•AIC 	
 	•Inputs: 
 		•Datasets produced by 2_butterflies_combine_env_data.Rmd
 		•Basemap "./Data./Maps./gb_multipolygon_simplified.rds"
 	•Outputs:
-		•GAM analyses for different familes: compare
-				•Residual Plots (not output elsewhere)
-				•Basis dimension checks (not output elsewhere)
-				•Smooth plots (not output elsewhere)
-				•Moran's I test (not output elsewhere)
-				•AIC 	"./Data/GAM/[dataset]/family_aic_table.csv" 
-# run from 	 5_run_zeta_msgdm.Rmd 01/06/2026	
+		•AIC 	"./Data/GAM/[dataset]/family_aic_table.csv" 
+# run from 	 5_run_zeta_msgdm.Rmd 02/06/2026	
 
 
 	
@@ -290,17 +290,39 @@ Note
 				•approximate test null hypothesis that each smooth is actually 
 				zero
 	•Inputs: 
-		•Datasets produced by butterflies_combine_env_data.Rmd
+		•Datasets produced by 2_butterflies_combine_env_data.Rmd
 		•Basemap "./Data./Maps./gb_multipolygon_simplified.rds"
 	•Outputs: 
 		•GAM_compare_spline_analyses.csv: Report to inspect and choose best distribution (family argument) to use.
 		•spline_aic_table.csv: AIC table "/Output/Spatial/GAM/GAM_[dataset]/spline_aic_table.csv"
 		• variograms
+# run from 	 5_run_zeta_msgdm.Rmd 02/06/2026	
 		
+	
+12) 12_GAMM_compare_corstructs_analyses
+	•Standalone, run this script directly (NOT run by 5_run_zeta_msgdm.Rmd)
+	•What this does
+		•Finds best correlation structure (spatial autocorrelation) for each dataset
+		•For each dataset
+			•Prepares input for GAMMs
+			•Runs GAMMs with different correlation structures
+			•Writes results to file
+	•Inputs: datasets produced by 2_butterflies_combine_env_data.Rmd
+	•Outputs: For each dataset, list with all GAMM outputs 
+			•"/Output/Spatial/GAM/GAMM_all_species/gamm_cor_struct_compare.rds"
+			•"/Output/Spatial/GAM/GAMM_wc/gamm_cor_struct_compare.rds"
+			•"/Output/Spatial/GAM/GAMM_hs/gamm_corExp.rds"
+# Have not rerun GAMMS again in 2026, this requires significant computer time	
+
+# Below still needs annotation and updating in this readme and the powerpoint	
 
 
-# Below still needs annotation and updating in this readme and the powerpoint		
-10)GAMM_analyses.Rmd
+process_GAMM_analyses
+
+process_GAMMS_single_result_output
+
+GAMM_analyses.Rmd
+	•Run by: 5_run_zeta_msgdm.Rmd
 	•NB, these are very time consuming
 	•What this does: Called by run_zeta_msgdm.Rmd;
 	•analyses
@@ -310,7 +332,7 @@ Note
 	•For the best GAMM
 		•Plots residuals
 		•Calculates concurvity of smoothed terms
-	•Inputs: datasets produced by butterflies_combine_env_data.Rmd
+	•Inputs: datasets produced by 2_butterflies_combine_env_data.Rmd
 	•Outputs: For each dataset, list with all GAMM outputs 
 	"~[dataset]_gamm_cor_struct_compare.rds"
 	

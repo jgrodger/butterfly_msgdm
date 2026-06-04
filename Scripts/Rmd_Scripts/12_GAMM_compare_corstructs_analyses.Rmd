@@ -9,7 +9,7 @@ knitr::opts_chunk$set(echo = TRUE)
 
 #### Packages
 ```{r}
-here::i_am("Scripts/Rmd_Scripts/GAMM_compare_corstructs_analyses.Rmd")
+here::i_am("Scripts/Rmd_Scripts/12_GAMM_compare_corstructs_analyses.Rmd")
 library(tidyverse)
 #library(tmap)
 library(mgcv)
@@ -22,7 +22,6 @@ library(conflicted)
 conflicts_prefer(dplyr::filter)
 conflicts_prefer(dplyr::select)
 conflicts_prefer(knitrProgressBar::progress_estimated)
-# there is a same-named function in dplyr, check it out
 ```
 
 #### Functions
@@ -55,8 +54,6 @@ hs <- readRDS(here("./Data/Processed_Data/Spatial/hs.rds"))
 datasets <- list(all_species, wc, hs)
 names(datasets) <- c("all_species", "wc", "hs")
 ```
-
-
 
 #### for each dataset, prepare data for gamm input, remove transects that are duplicates for x and y coordinates (keep first one)
 ```{r}
@@ -111,14 +108,11 @@ corStructs <- list(corGaus(form = ~x+y, nugget = TRUE), corExp(form = ~x+y, nugg
 ```
 
 
-## run GAMMs and save
+### Run GAMMs and save
 
+These analyses are for the full model before dropping terms based on concurvity
 
-# Full model before dropping terms based on concurvity
-
-
-### Annoyingly, I did not succeed in a wrapper function and in the Markdown version, it was hanging
-### Therefore, I have copied and pasted and checked carefully
+Below code is copy and pasted fore each dataset. This non-ideal procedure is used because I did not get a function to work here
 
 
 #### All species, cubic regression splines, gaussian family
@@ -177,6 +171,7 @@ lmeCtlList=lmeControl(niterEM = 50)
 print(Sys.time())
 
 gamm_list <- list()
+
 # Loop through the gamms saving output in list
 # Nugget allows non-zero autocorrelation at 0 distance
 for (i in 1:length(corStructs)) {
@@ -207,22 +202,15 @@ write_rds(gamm_list ,
           file = filepath)
 ```
 
-#Habitat Specialists
+#### Habitat Specialists
 
-
-
-
-
-#try increasing niterEM from 25 to 50 for corExp
 ```{r}
 options(mgcv.vc.logrange = 5)
-lmeCtlList=lmeControl(niterEM = 50)
+lmeCtlList=lmeControl(niterEM = 50) #This tweak to settings was needed
 print(Sys.time())
 gamm_list <- list()
+
 # Loop through the gamms saving output in list
-
-
-
 # Nugget allows non-zero autocorrelation at 0 distance
 for (i in 1:length(corStructs)) {
 
@@ -235,9 +223,12 @@ my_gamm <- gamm(
   correlation = corStructs[[i]],
   control=lmeCtlList ,
   data = datasets$hs$gamm_input)
+
 print(i)
 print(Sys.time())
+
 gamm_list[[i]] <- my_gamm
+
 }
 
 names(gamm_list) <- c("gamm_corGaus", "gamm_corExp", "gamm_corLin",
@@ -256,7 +247,6 @@ filepath <- paste0(filedir, "/gamm_corExp.rds")
 filepath
 write_rds(my_gamm , 
           file = filepath)
-
 
 print(Sys.time())
 ```
