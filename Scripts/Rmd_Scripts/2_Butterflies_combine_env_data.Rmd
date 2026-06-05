@@ -427,8 +427,7 @@ head(site.by.xy)
 ```
 #### Obtain datasets for wider countryside and habitat specialists (habitat specialists with and without rows that have no species)
 ```{r}
-# The line below, if run, means formatting of habitat.specialists and wider.countryside.spp does not match column names in site.by.species, resulting in no columns being selected. I am not sure why the line is here anymore so commented out.
-#species$species.no <- paste("species", species$species.no, sep = "_")
+species$species.no <- paste("species", species$species.no, sep = "_")
 
 # Obtain vectors of species.no for habitat specialists and wider countryside species
 habitat.specialists <- species[species$strategy == "Habitat specialist",]$species.no
