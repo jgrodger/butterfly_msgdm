@@ -54,7 +54,7 @@ render_report = function(analysis_script, params_list) {
                       paste0(here("Output/Spatial/GAM"), "/","GAM", "_" , params_list$dataset,  "/")  
                 } else if(analysis_script == "11_GAM_compare_spline_analyses.Rmd") {
                       paste0(here("Output/Spatial/GAM"), "/","GAM", "_" , params_list$dataset,  "/")
-                } else if(analysis_script == "process_GAMM_analyses.Rmd"){  
+                } else if(analysis_script == "13_process_GAMM_analyses.Rmd"){  
                       paste0(here("Output/Spatial/GAM/GAMM_"), params_list$dataset, "/", 
                              params_list$analysis,  "//")
                 } else if(analysis_script == "process_GAMMS_single_result_output.Rmd"){  
@@ -110,21 +110,21 @@ render_report(analysis_script = "11_GAM_compare_spline_analyses.Rmd", list(datas
 
 #### All species
 ```{r}
-render_report(analysis_script = "process_GAMM_analyses.Rmd", 
+render_report(analysis_script = "13_process_GAMM_analyses.Rmd", 
               list(dataset = "all_species", 
                    analysis = "gamm_cor_struct_compare"))
 ```
 
 #### wider countryside
 ```{r}
-render_report(analysis_script = "process_GAMM_analyses.Rmd", 
+render_report(analysis_script = "13_process_GAMM_analyses.Rmd", 
               list(dataset = "wc", 
                    analysis = "gamm_cor_struct_compare"))
 ```
 
 #### Habitat Specialists
 ```{r}
-render_report(analysis_script = "process_GAMM_analyses.Rmd", 
+render_report(analysis_script = "13_process_GAMM_analyses.Rmd", 
               list(dataset = "hs", 
                    analysis = "gamm_cor_struct_compare"))
 ```

@@ -119,7 +119,7 @@ Note
 			•habitat specialists INCLUDING sites with no habitat specialists "./Data/Processed_Data/Spatial/hs.rds"
 			•habitat specialists EXCLUDING sites with no habitat specialists. "./Data/Processed_Data/Spatial/hs_no_zeros.rds"
 		•Slimmed down site by env to just map environmental data•"./Data/Processed_Data/Spatial/map_all_env_vars.rds"))
-# corrections made 02/06/2026. testing scripts 10 and 11 showed datasets were not filtered correctly
+# corrections made 02/06/2026 and 06/06/2026. I had previously inadvertently edited in a way that prevented filtering
 
 3) 3_butterflies_maps.Rmd		
 	•What this does: generates maps of the distribution of sites in our data,
@@ -308,7 +308,12 @@ Note
 			•Runs GAMMs with different correlation structures
 			•Writes results to file
 	•Inputs: datasets produced by 2_butterflies_combine_env_data.Rmd
-	•Outputs: For each dataset, list with all GAMM outputs 
+	•Outputs: 
+		For each dataset, gamm input
+			•"./Data/Processed_Data/Spatial/all_species_gamm_input.rds"
+			•"./Data/Processed_Data/Spatial/hs_gamm_input.rds"
+			•"./Data/Processed_Data/Spatial/wc_gamm_input.rds"
+		For each dataset, list with all GAMM outputs 
 			•"/Output/Spatial/GAM/GAMM_all_species/gamm_cor_struct_compare.rds"
 			•"/Output/Spatial/GAM/GAMM_wc/gamm_cor_struct_compare.rds"
 			•"/Output/Spatial/GAM/GAMM_hs/gamm_corExp.rds"
@@ -317,7 +322,10 @@ Note
 # Below still needs annotation and updating in this readme and the powerpoint	
 
 
-process_GAMM_analyses
+13) 13_process_GAMM_analyses
+	•What this does: 
+	•Inputs
+	•Outputs
 
 GAMM_model_selection.Rmd
 
