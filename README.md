@@ -333,21 +333,29 @@ Note
 			•Concurvity
 			•GAM summaries
 			•Smooth plots with partial residuals
-			•Inputs
+		•Inputs
+			•GAMM outputs from script 12_GAMM_compare_corstructs_analyses.Rmd
 	•Outputs
 		•Paramaterised reports for each dataset
 			•Output/Spatial/GAM/GAMM_all_species/gamm_cor_struct_compare/13_process_GAMM_analyses.html
 			Output/Spatial/GAM/GAMM_wc/gamm_cor_struct_compare/13_process_GAMM_analyses.html
 			Output/Spatial/GAM/GAMM_hs/gamm_cor_struct_compare/13_process_GAMM_analyses.html
 
+14_GAMM_model_selection.Rmd
+	•What this does: 
+	•Inputs
+	•Outputs
 
-
-
-GAMM_model_selection.Rmd
 
 GAMM_multipanel_plot.Rmd
+	•What this does: 
+	•Inputs
+	•Outputs
 
 process_GAMMS_single_result_output
+	•What this does: 
+	•Inputs
+	•Outputs
 
 #below script no longer used, all this done elsewhere
 GAMM_analyses.Rmd
