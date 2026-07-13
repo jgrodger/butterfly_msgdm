@@ -323,9 +323,25 @@ Note
 
 
 13) 13_process_GAMM_analyses
+	•Run by: 5_run_zeta_msgdm.Rmd
 	•What this does: 
-	•Inputs
+		•Performs analyses and makes plots to choose best correlation structure
+			•AIC table
+			•k-index tabke and residual plots from gam.check
+			•Custom residual plots because the ones from gam.check do not take into account family of distribution, so are not reliable
+			•Moran's tests
+			•Concurvity
+			•GAM summaries
+			•Smooth plots with partial residuals
+			•Inputs
 	•Outputs
+		•Paramaterised reports for each dataset
+			•Output/Spatial/GAM/GAMM_all_species/gamm_cor_struct_compare/13_process_GAMM_analyses.html
+			Output/Spatial/GAM/GAMM_wc/gamm_cor_struct_compare/13_process_GAMM_analyses.html
+			Output/Spatial/GAM/GAMM_hs/gamm_cor_struct_compare/13_process_GAMM_analyses.html
+
+
+
 
 GAMM_model_selection.Rmd
 
