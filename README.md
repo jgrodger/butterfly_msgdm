@@ -319,7 +319,6 @@ Note
 			•"/Output/Spatial/GAM/GAMM_hs/gamm_corExp.rds"
 # Have not rerun GAMMS again in 2026, this requires significant computer time	
 
-# Below still needs annotation and updating in this readme and the powerpoint	
 
 
 13) 13_process_GAMM_analyses
@@ -341,22 +340,27 @@ Note
 			Output/Spatial/GAM/GAMM_wc/gamm_cor_struct_compare/13_process_GAMM_analyses.html
 			Output/Spatial/GAM/GAMM_hs/gamm_cor_struct_compare/13_process_GAMM_analyses.html
 
-14_GAMM_model_selection.Rmd
+
+# Below still needs annotation and updating in this readme and the powerpoint	
+
+14_process_GAMMS_single_result_output
 	•What this does: 
 	•Inputs
 	•Outputs
-
 
 GAMM_multipanel_plot.Rmd
 	•What this does: 
 	•Inputs
 	•Outputs
 
-process_GAMMS_single_result_output
+
+	
+# I think this isn't used anymore, process_GAMMS_single_result_output.Rmd used instead	
+GAMM_model_selection.Rmd
 	•What this does: 
 	•Inputs
 	•Outputs
-
+	
 #below script no longer used, all this done elsewhere
 GAMM_analyses.Rmd
 	•Run by: 5_run_zeta_msgdm.Rmd

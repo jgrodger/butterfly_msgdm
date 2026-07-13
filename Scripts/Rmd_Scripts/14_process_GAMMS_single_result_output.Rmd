@@ -16,7 +16,7 @@ knitr::opts_chunk$set(echo = FALSE, message = FALSE)
 
 #### Packages
 ```{r }
-here::i_am("Scripts/Rmd_Scripts/process_GAMMS_single_result_output.Rmd")
+here::i_am("Scripts/Rmd_Scripts/14_process_GAMMS_single_result_output.Rmd")
 library(tidyverse)
 library(mgcv)
 library(mgcViz)

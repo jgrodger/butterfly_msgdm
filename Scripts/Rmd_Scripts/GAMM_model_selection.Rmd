@@ -9,7 +9,7 @@ knitr::opts_chunk$set(echo = TRUE)
 
 #### Packages
 ```{r}
-here::i_am("Scripts/Rmd_Scripts/GAMM_model_selection.Rmd")
+here::i_am("Scripts/Rmd_Scripts/14_GAMM_model_selection.Rmd")
 library(tidyverse)
 #library(tmap)
 library(mgcv)

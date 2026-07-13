@@ -57,7 +57,7 @@ render_report = function(analysis_script, params_list) {
                 } else if(analysis_script == "13_process_GAMM_analyses.Rmd"){  
                       paste0(here("Output/Spatial/GAM/GAMM_"), params_list$dataset, "/", 
                              params_list$analysis,  "//")
-                } else if(analysis_script == "process_GAMMS_single_result_output.Rmd"){  
+                } else if(analysis_script == "14_process_GAMMS_single_result_output.Rmd"){  
                       paste0(here("Output/Spatial/GAM/GAMM_"), params_list$dataset, "/", 
                              params_list$analysis, "/", params_list$corStruct, "//")
                 } else if(analysis_script == "9_process_msgdm_results.Rmd"){  
@@ -130,12 +130,12 @@ render_report(analysis_script = "13_process_GAMM_analyses.Rmd",
 ```
 
 ### GAMM model selection
-##### sink() didn't work this way so instead I changed the param in process_GAMMS_single_result_output.Rmd and ran it
+##### sink() didn't work this way so instead I changed the param in 14_process_GAMMS_single_result_output.Rmd and ran it
 
 #### All species
 ```{r}
 
-render_report(analysis_script = "process_GAMMS_single_result_output.Rmd",
+render_report(analysis_script = "14_process_GAMMS_single_result_output.Rmd",
               list(dataset = "all_species",
                    analysis = "gamm_model_select_as",
                    corStruct = "corExp"))
@@ -144,7 +144,7 @@ render_report(analysis_script = "process_GAMMS_single_result_output.Rmd",
 #### Wider Countryside
 ```{r}
 
-render_report(analysis_script = "process_GAMMS_single_result_output.Rmd",
+render_report(analysis_script = "14_process_GAMMS_single_result_output.Rmd",
               list(dataset = "wc",
                    analysis = "gamm_model_select_wc",
                    corStruct = "corExp"))
@@ -153,7 +153,7 @@ render_report(analysis_script = "process_GAMMS_single_result_output.Rmd",
 #### Habitat Specialists corGaus
 ```{r}
 
-render_report(analysis_script = "process_GAMMS_single_result_output.Rmd",
+render_report(analysis_script = "14_process_GAMMS_single_result_output.Rmd",
               list(dataset = "hs",
                    analysis = "gamm_model_select_hs",
                    corStruct = "corGaus"))
