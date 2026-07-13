@@ -19,7 +19,7 @@ knitr::opts_chunk$set(echo = TRUE)
 
 #### Packages
 ```{r}
-here::i_am("Scripts/Rmd_Scripts/Zeta_declines_decays_analyses.Rmd")
+here::i_am("Scripts/Rmd_Scripts/6_Zeta_declines_decays_analyses.Rmd")
 
 library(tidyverse)
 library(zetadiv)
