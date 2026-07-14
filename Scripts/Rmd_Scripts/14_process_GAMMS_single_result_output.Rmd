@@ -30,6 +30,7 @@ conflicts_prefer(dplyr::select)
 conflicts_prefer(knitrProgressBar::progress_estimated)
 # there is a same-named function in dplyr, check it out
 ```
+
 #### File paths
 ```{r}
 #gamm output has been saved in output already
@@ -56,12 +57,11 @@ my_gamm <- gamm_list[[3]]
 #### save gamm$gam summary output as text
 ```{r}
 out<-capture.output(summary(my_gamm$gam))
-cat(out,file = paste0(out_path, "gam_summ.txt"),sep="\n",append=TRUE)
+cat(out,file = paste0(out_path, "gam_summ.txt"),sep="\n",append=FALSE)
 ```
 
 
 #### read the text file and edit to create summary tables for presentation
-
 ```{r}
 gam_sum <- read.delim2(paste0(out_path, "gam_summ.txt")) # it comes in as a dataframe with one column
 names(gam_sum) <- "column"
@@ -86,9 +86,7 @@ par_sum <- if(str_ends(par_sum, "\\.")){
 } else {paste0(par_sum, " ns")
 }
 
-
-
-par_sum <- par_sum %>% 
+par_sum1 <- par_sum %>% 
   str_squish() %>% #merge column separators of multiple white spaces into single spaces
   str_replace_all("< ", "<") %>% #remove space between less than and p-value
   as.data.frame(nm = "column") %>%
@@ -99,6 +97,7 @@ par_sum <- par_sum %>%
 write_csv(par_sum, file = paste0(out_path, "/", "parametric_p_value_table.csv"))
 kable(par_sum, digits = 2)
 ```
+
 #### Then the smooths
 ##### add missing entries to Stars column
 ```{r}
@@ -122,7 +121,6 @@ smooth_sum <- smooth_sum %>%
     str_detect(column, pattern = " \\.") ~ column,
     .default = paste0(column, " ns")))
 ```
-
 
 ##### separate into variables etc
 ```{r}
@@ -154,7 +152,8 @@ smooth_sum <- smooth_sum %>%
 write_csv(smooth_sum, file = paste0(out_path, "/", "smooth_p_value_table.csv"))
 kable(smooth_sum, digits = 2)
 ```
-# extract and paste together other relevant summary info
+
+#### extract and paste together other relevant summary info
 ```{r}
 my_summary <- summary(my_gamm$gam)
 
