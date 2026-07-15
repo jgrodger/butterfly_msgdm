@@ -326,7 +326,7 @@ Note
 	•What this does: 
 		•Performs analyses and makes plots to choose best correlation structure
 			•AIC table
-			•k-index tabke and residual plots from gam.check
+			•k-index table and residual plots from gam.check
 			•Custom residual plots because the ones from gam.check do not take into account family of distribution, so are not reliable
 			•Moran's tests
 			•Concurvity
@@ -343,9 +343,19 @@ Note
 
 # Below still needs annotation and updating in this readme and the powerpoint	
 
-14_process_GAMMS_single_result_output
+
+14_GAMM_model_selection.Rmd
 	•What this does: 
+		•Runs GAMMs sequentially dropping ns variablles
 	•Inputs
+	•Outputs
+
+15_process_GAMMS_single_result_output
+	•Run by: 5_run_zeta_msgdm.Rmd
+	•What this does: 
+		•Drops ns terms sequentially from model
+	•Inputs
+		GAMM output from 14_GAMM_model_selection.Rmd
 	•Outputs
 
 GAMM_multipanel_plot.Rmd
@@ -355,7 +365,7 @@ GAMM_multipanel_plot.Rmd
 
 
 	
-# I think this isn't used anymore, process_GAMMS_single_result_output.Rmd used instead	
+
 GAMM_model_selection.Rmd
 	•What this does: 
 	•Inputs

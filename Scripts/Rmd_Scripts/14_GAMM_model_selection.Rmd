@@ -37,11 +37,29 @@ cor_gamms_hs <- readRDS(here("Output/Spatial/GAM/GAMM_hs/gamm_cor_struct_compare
 
 ```
 
+### Specify  correlation structures
+```{r}
+corStructs <- list(corGaus(form = ~x+y, nugget = TRUE), corExp(form = ~x+y, nugget = TRUE), corLin(form = ~x+y, nugget = TRUE), corRatio(form = ~x+y, nugget = TRUE), corSpher(form = ~x+y, nugget = TRUE) )
+```
+
+
+#### Datasets for gamms
+```{r}
+all_species <- readRDS(here("./Data/Processed_Data/Spatial/all_species.rds"))
+wc <- readRDS(here("./Data/Processed_Data/Spatial/wc.rds"))
+hs <- readRDS(here("./Data/Processed_Data/Spatial/hs.rds"))
+#hs_no_zeros <- readRDS(here("./Data/Processed_Data/Spatial/hs_no_zeros.rds"))
+
+# get all datasets in a list
+datasets <- list(all_species, wc, hs)
+names(datasets) <- c("all_species", "wc", "hs")
+```
 
 # NB method = "ML"
-
-
 ```{r}
+data_path <- here("Data/Processed_Data/Spatial//" )
+gamm_input <- readRDS(paste0(data_path, "all_species", "_gamm_input.rds"))
+
 gamm_selection_as <- list()
 
 full_model_gamm <- gamm(
@@ -52,7 +70,7 @@ full_model_gamm <- gamm(
   method = "ML",
   family = "gaussian",
   correlation = corStructs[[2]],
-  data = datasets$all_species$gamm_input)
+  data = gamm_input)
 gamm_selection_as[[1]] <- full_model_gamm
 
 
@@ -144,7 +162,10 @@ plot(drop_trees_pesticide_temp_gamm$gam, pages = 2)
 
 ```
 
-
+### WC
+```{r}
+gamm_input <- readRDS(paste0(data_path, "wc", "_gamm_input.rds"))
+```
 
 
 ```{r}
@@ -246,6 +267,11 @@ plot(drop_trees_pesticide_prec_gamm$gam, pages = 2)
 gam.check(drop_trees_pesticide_temp_gamm$gam)
 summary(drop_trees_pesticide_temp_gamm$gam)
 plot(drop_trees_pesticide_temp_gamm$gam, pages = 2)
+```
+
+### HS
+```{r}
+gamm_input <- readRDS(paste0(data_path, "hs", "_gamm_input.rds"))
 ```
 
 
