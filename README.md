@@ -353,7 +353,7 @@ Note
 		
 		
 		
-15_process_GAMMS_single_result_output
+15_process_GAMMS_model_selection
 	•Run by: 5_run_zeta_msgdm.Rmd
 	•What this does: 
 		•Produces statistical table comparing GAMMS with terms dropped from 14_GAMM_model_selection.Rmd
