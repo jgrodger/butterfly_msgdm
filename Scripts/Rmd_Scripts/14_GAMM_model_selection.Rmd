@@ -27,21 +27,26 @@ conflicts_prefer(knitrProgressBar::progress_estimated)
 
 # Model selection
 
-### load files from correlation structure analyses
-```{r}
-cor_gamms_as <- readRDS(here("Output/Spatial/GAM/GAMM_all_species/gamm_cor_struct_compare.rds"))
+<!-- ### load files from correlation structure analyses -->
+<!-- ```{r} -->
+<!-- cor_gamms_as <- readRDS(here("Output/Spatial/GAM/GAMM_all_species/gamm_cor_struct_compare.rds")) -->
 
-cor_gamms_wc <- readRDS(here("Output/Spatial/GAM/GAMM_wc/gamm_cor_struct_compare.rds"))
+<!-- cor_gamms_wc <- readRDS(here("Output/Spatial/GAM/GAMM_wc/gamm_cor_struct_compare.rds")) -->
 
-cor_gamms_hs <- readRDS(here("Output/Spatial/GAM/GAMM_hs/gamm_cor_struct_compare.rds"))
+<!-- cor_gamms_hs <- readRDS(here("Output/Spatial/GAM/GAMM_hs/gamm_cor_struct_compare.rds")) -->
 
-```
+<!-- ``` -->
 
 ### Specify  correlation structures
 ```{r}
 corStructs <- list(corGaus(form = ~x+y, nugget = TRUE), corExp(form = ~x+y, nugget = TRUE), corLin(form = ~x+y, nugget = TRUE), corRatio(form = ~x+y, nugget = TRUE), corSpher(form = ~x+y, nugget = TRUE) )
 ```
 
+#### File Paths
+```{r}
+out_path <-  here("Output/Spatial/GAM")
+if(!dir.exists(out_path)) dir.create(out_path)
+```
 
 #### Datasets for gamms
 ```{r}
@@ -57,9 +62,6 @@ names(datasets) <- c("all_species", "wc", "hs")
 
 # NB method = "ML"
 ```{r}
-data_path <- here("Data/Processed_Data/Spatial//" )
-gamm_input <- readRDS(paste0(data_path, "all_species", "_gamm_input.rds"))
-
 gamm_selection_as <- list()
 
 full_model_gamm <- gamm(
@@ -70,9 +72,8 @@ full_model_gamm <- gamm(
   method = "ML",
   family = "gaussian",
   correlation = corStructs[[2]],
-  data = gamm_input)
+  data = datasets$all_species$gamm_input)
 gamm_selection_as[[1]] <- full_model_gamm
-
 
 # while edf of zero means smooths could be made parametric terms, it makes little difference when they are not significant. Rather just drop entirely
 
@@ -86,7 +87,6 @@ drop_trees_gamm <- gamm(
   data = datasets$all_species$gamm_input)
 gamm_selection_as[[2]] <- drop_trees_gamm
 
-
 drop_trees_pesticide_gamm <- gamm(
   species.richness ~  s(mean.ann.temp, k = 6, bs = "cr") + s(log10.mean.ann.rain, k = 6, bs = "cr") +
   s(topographic.wetness, k = 6, bs = "cr") + s(ph, k = 4, bs = "cr") + s(total.n, k = 6, bs = "cr")  +
@@ -97,7 +97,6 @@ drop_trees_pesticide_gamm <- gamm(
   data = datasets$all_species$gamm_input)
 gamm_selection_as[[3]] <- drop_trees_pesticide_gamm
 
-
 drop_trees_pesticide_prec_gamm <- gamm(
   species.richness ~  s(mean.ann.temp, k = 6, bs = "cr")  +
   s(topographic.wetness, k = 6, bs = "cr") + s(ph, k = 4, bs = "cr") + s(total.n, k = 6, bs = "cr")  +
@@ -107,7 +106,6 @@ drop_trees_pesticide_prec_gamm <- gamm(
   correlation = corStructs[[2]],
   data = datasets$all_species$gamm_input)
 gamm_selection_as[[4]] <- drop_trees_pesticide_prec_gamm
-
 
 drop_trees_pesticide_temp_gamm <- gamm(
   species.richness ~  s(log10.mean.ann.rain, k = 6, bs = "cr") +
@@ -125,12 +123,10 @@ filepath <- paste0(filedir, "/gamm_model_select_as.rds")
 filepath
 write_rds(gamm_selection_as , 
           file = filepath)
-
 ```
 
 
 ```{r}
-
 # If already saved, load again to make figures and output
 gamm_selection_as <- readRDS(here("Output/Spatial/GAM/GAMM_all_species/gamm_model_select_as.rds"))
 
@@ -163,10 +159,6 @@ plot(drop_trees_pesticide_temp_gamm$gam, pages = 2)
 ```
 
 ### WC
-```{r}
-gamm_input <- readRDS(paste0(data_path, "wc", "_gamm_input.rds"))
-```
-
 
 ```{r}
 #to reach convergence
@@ -270,11 +262,6 @@ plot(drop_trees_pesticide_temp_gamm$gam, pages = 2)
 ```
 
 ### HS
-```{r}
-gamm_input <- readRDS(paste0(data_path, "hs", "_gamm_input.rds"))
-```
-
-
 
 #using corGaus instead of corExp as for this, it had lower AIC
 

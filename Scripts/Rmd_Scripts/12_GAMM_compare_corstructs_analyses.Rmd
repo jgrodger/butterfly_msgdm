@@ -55,52 +55,6 @@ datasets <- list(all_species, wc, hs)
 names(datasets) <- c("all_species", "wc", "hs")
 ```
 
-#### for each dataset, prepare data for gamm input, remove transects that are duplicates for x and y coordinates (keep first one)
-```{r}
-for (i in 1: length(datasets)){ 
-print(names(datasets[i]))
-  
-data <- datasets[[i]]
-
-site.by.species <- data$site.by.species
-site.by.env <- data$site.by.env
-site.by.xy <- data$site.by.xy
-sites <- data$sites
-
-# assemble xy, environmental vars and richness for analysis
-site.by.env.xy.richness <- cbind(site.by.env, rowSums(site.by.species)) %>%
-  cbind(site.by.xy) %>%
-rename(species.richness = 'rowSums(site.by.species)')
-
-#inspect duplicates to see how they arise
-dup_xy <- sites %>%
-  mutate(xy = paste(x,y)) %>%
-group_by(xy) %>% 
-  filter(n() > 1)
-
-print(kable(dup_xy, caption = names(datasets[i])))
-  
-#remove duplicates for rows with the same x and y coordinates
-gamm_input <- site.by.env.xy.richness %>%
-  mutate(xy = paste(x,y)) %>%
-  distinct(xy, .keep_all = TRUE)
-
-hist(gamm_input$species.richness, main = names(datasets[i]))
-
-# add the input for the gamm to each dataset
-write_rds(gamm_input, 
-          file = here(
-            paste0("./Data/Processed_Data/Spatial/", names(datasets[i]), "_gamm_input.rds" )
-            )
-          )
-
-gamm_input <- list(gamm_input)
-names(gamm_input) <- "gamm_input"
-datasets[[i]] <- c(datasets[[i]], gamm_input)
-}
-
-
-```
 
 #### Specify  correlation structures
 ```{r}

@@ -113,7 +113,7 @@ Note
 			•"./Output/Spatial/env_var_exploration/env_var_histograms_2.pdf"
 			•"./Output/Spatial/env_var_exploration/env_var_histograms_3.pdf"
 		•Processed Data: lists including site by species matrix, site by xy, 
-		site.by.env, sites, species dataframes for
+		site.by.env, sites, species and gamm_input dataframes for
 			•all butterfly species "./Data/Processed_Data/Spatial/all_species.rds"
 			•widercountryside species "./Data/Processed_Data/Spatial/wc.rds"
 			•habitat specialists INCLUDING sites with no habitat specialists "./Data/Processed_Data/Spatial/hs.rds"
@@ -309,10 +309,6 @@ Note
 			•Writes results to file
 	•Inputs: datasets produced by 2_butterflies_combine_env_data.Rmd
 	•Outputs: 
-		For each dataset, gamm input
-			•"./Data/Processed_Data/Spatial/all_species_gamm_input.rds"
-			•"./Data/Processed_Data/Spatial/hs_gamm_input.rds"
-			•"./Data/Processed_Data/Spatial/wc_gamm_input.rds"
 		For each dataset, list with all GAMM outputs 
 			•"/Output/Spatial/GAM/GAMM_all_species/gamm_cor_struct_compare.rds"
 			•"/Output/Spatial/GAM/GAMM_wc/gamm_cor_struct_compare.rds"
@@ -333,7 +329,7 @@ Note
 			•GAM summaries
 			•Smooth plots with partial residuals
 		•Inputs
-			•GAMM outputs from script 12_GAMM_compare_corstructs_analyses.Rmd
+			•datasets produced by 2_butterflies_combine_env_data.Rmd	
 	•Outputs
 		•Paramaterised reports for each dataset
 			•Output/Spatial/GAM/GAMM_all_species/gamm_cor_struct_compare/13_process_GAMM_analyses.html
@@ -341,35 +337,48 @@ Note
 			Output/Spatial/GAM/GAMM_hs/gamm_cor_struct_compare/13_process_GAMM_analyses.html
 
 
-# Below still needs annotation and updating in this readme and the powerpoint	
 
-
+#outputs could be saved in a better place
 14_GAMM_model_selection.Rmd
+	•stand alone notebook, not run by script_5
 	•What this does: 
-		•Runs GAMMs sequentially dropping ns variablles
+		•Runs GAMMs for each dataset sequentially dropping ns variables. When all terms significant, then drop one at a time
 	•Inputs
+		•datasets produced by 2_butterflies_combine_env_data.Rmd	
 	•Outputs
-
+		•Gamm outputs from analyses run for each dataset 
+		•./Output/Spatial/GAM/GAMM_all_species/gamm_model_select_hs.rds
+		•./Output/Spatial/GAM/GAMM_all_species/gamm_model_select_hs.rds
+		•./Output/Spatial/GAM/GAMM_all_species/gamm_model_select_hs.rds
+		
+		
+		
 15_process_GAMMS_single_result_output
 	•Run by: 5_run_zeta_msgdm.Rmd
 	•What this does: 
-		•Drops ns terms sequentially from model
+		•Produces statistical table comparing GAMMS with terms dropped from 14_GAMM_model_selection.Rmd
 	•Inputs
 		GAMM output from 14_GAMM_model_selection.Rmd
 	•Outputs
+		Folder for each dataset 
+			E.G..\Output\Spatial\GAM\GAMM_all_species\gamm_model_select_as\
+			Each folder has
+				parameterised report as a pdf
+				gam_summ.txt
+				parametric_p_value_table.csv
+				smooth_p_value_table.csv
+				gamm_info.csv
+	
+	
+	
+	
+# Below still needs annotation and updating in this readme and the powerpoint	
 
 GAMM_multipanel_plot.Rmd
 	•What this does: 
 	•Inputs
 	•Outputs
 
-
-	
-
-GAMM_model_selection.Rmd
-	•What this does: 
-	•Inputs
-	•Outputs
 	
 #below script no longer used, all this done elsewhere
 GAMM_analyses.Rmd

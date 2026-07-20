@@ -458,22 +458,78 @@ site.by.species.wc.no.zeros <- site.by.species.wc[rowSums(site.by.species.wc) > 
 print("number of sites with  wider countryside species")
 nrow(site.by.species.wc.no.zeros)
 
+# All species dataset is obtained by making a list of parts
+all_species <- list(site.by.species, site.by.xy, site.by.env, species, sites)
+names(all_species) <- c("site.by.species", "site.by.xy", "site.by.env", "species", "sites") 
+
+# The other datsets are obtained using a function
 wc <- filter_dataset(site.by.species.wc, site.by.xy, site.by.env, species, sites)
 hs <- filter_dataset(site.by.species.hs, site.by.xy, site.by.env, species, sites)
 
-wc.no.zeros <- filter_dataset(site.by.species.wc.no.zeros, site.by.xy, site.by.env, species, sites)
+#There are no sites with zero wider countryside species
+#wc.no.zeros <- filter_dataset(site.by.species.wc.no.zeros, site.by.xy, site.by.env, species, sites)
 hs.no.zeros <- filter_dataset(site.by.species.hs.no.zeros, site.by.xy, site.by.env, species, sites)
 
 toc()
 ```
 
+```{r}
+# get all datasets in a list
+datasets <- list(all_species, wc, hs, hs.no.zeros)
+names(datasets) <- c("all_species", "wc", "hs", "hs_no_zeros")
+```
+
+#### for each dataset, prepare data as a dataframe for gamm input, remove transects that are duplicates for x and y coordinates (keep first one). This happens when sites are very close together and same coordinates are used
+```{r}
+for (i in 1: length(datasets)){ 
+print(names(datasets[i]))
+  
+data <- datasets[[i]]
+
+site.by.species <- data$site.by.species
+site.by.env <- data$site.by.env
+site.by.xy <- data$site.by.xy
+sites <- data$sites
+
+# assemble xy, environmental vars and richness for analysis
+site.by.env.xy.richness <- cbind(site.by.env, rowSums(site.by.species)) %>%
+  cbind(site.by.xy) %>%
+rename(species.richness = 'rowSums(site.by.species)')
+
+#inspect duplicates to see how they arise
+dup_xy <- sites %>%
+  mutate(xy = paste(x,y)) %>%
+group_by(xy) %>% 
+  filter(n() > 1)
+
+print(kable(dup_xy, caption = names(datasets[i])))
+  
+#remove duplicates for rows with the same x and y coordinates
+gamm_input <- site.by.env.xy.richness %>%
+  mutate(xy = paste(x,y)) %>%
+  distinct(xy, .keep_all = TRUE)
+
+hist(gamm_input$species.richness, main = names(datasets[i]))
+
+# add the input for the gamm to each dataset
+gamm_input <- list(gamm_input)
+names(gamm_input) <- "gamm_input"
+datasets[[i]] <- c(datasets[[i]], gamm_input)
+}
+
+all_species <- datasets$all_species
+wc <- datasets$wc
+hs <- datasets$hs
+hs_no_zeros <- datasets$hs_no_zeros
+```
+
+
 #### Save data
 ```{r}
-all_species <- list(site.by.species, site.by.xy, site.by.env, species, sites)
-names(all_species) <- c("site.by.species", "site.by.xy", "site.by.env", "species", "sites") 
 write_rds(all_species, file = here("./Data/Processed_Data/Spatial/all_species.rds"))
 
 write_rds(wc, file = here("./Data/Processed_Data/Spatial/wc.rds"))
+
 #write_rds(wc.no.zeros, file = here("./Data/Processed_Data/Spatial/wc_no_zeros.rds"))
 
 write_rds(hs, file = here("./Data/Processed_Data/Spatial/hs.rds"))
