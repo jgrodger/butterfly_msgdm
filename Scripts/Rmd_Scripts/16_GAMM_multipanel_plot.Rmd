@@ -8,6 +8,7 @@ output: html_notebook
 ```{r}
 here::i_am("Scripts/Rmd_Scripts/16_Gamm_multipanel_plot.Rmd")
 library(tidyverse)
+library(grid)
 library(gridExtra)
 library(ggpubr)
 library(mgcv)
@@ -150,7 +151,7 @@ for (i in 1:18){
 
 ```
 
-#### create a new list with the panels in the order needed for plottin (they are plotted row-wize but my_panels has them column_Wize)
+#### create a new list with the panels in the order needed for plotting (they are plotted row-wise but my_panels has them column_wise)
 ```{r}
 # my_index gives index in the original list of panels for new list, but in the order the should be in for the new list. 
 # start_index is the first three entries for my_index, subsequent values of my_index are obtained by adding 1, 2, 3... to start_index entries
@@ -178,6 +179,7 @@ all_elements <- rbind(tableGrob(t(top_heads), theme = ttheme_minimal(), rows = "
 grid.newpage()
 grid.draw(all_elements)
 ```
+
 #### write multipanel plot to png
 ```{r}
 png(file = paste0(out_path, "gam_multiplot.png"), pointsize=10, width=1920, height=2800, res=300)
@@ -188,17 +190,17 @@ dev.off()
 ```
 
 #### example code from  https://stackoverflow.com/questions/45473843/put-row-and-column-titles-using-grid-arrange-in-r
-```{r}
-pl <- replicate(12, ggplot(), FALSE)
-
-#N <- length(pl)
-nr <- 4
-nc <- 3
-
-
-all_elements <- rbind(tableGrob(t(c(letters[1:nc])), theme = ttheme_minimal(), rows = ""), 
-                 cbind(tableGrob(LETTERS[1:nr], theme = ttheme_minimal()), 
-                       arrangeGrob(grobs = pl),  size = "last"), size = "last")
-grid.newpage()
-grid.draw(all_elements)
+# ```{r}
+# pl <- replicate(12, ggplot(), FALSE)
+# 
+# #N <- length(pl)
+# nr <- 4
+# nc <- 3
+# 
+# 
+# all_elements <- rbind(tableGrob(t(c(letters[1:nc])), theme = ttheme_minimal(), rows = ""), 
+#                  cbind(tableGrob(LETTERS[1:nr], theme = ttheme_minimal()), 
+#                        arrangeGrob(grobs = pl),  size = "last"), size = "last")
+# grid.newpage()
+# grid.draw(all_elements)
 ```

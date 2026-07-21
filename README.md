@@ -374,11 +374,23 @@ Note
 	
 # Below still needs annotation and updating in this readme and the powerpoint	
 
-GAMM_multipanel_plot.Rmd
+16_GAMM_multipanel_plot.Rmd
 	•What this does: 
+		• makes Fig 2, smooth plots of GAMMS in multipanel plot
 	•Inputs
+		GAMM output from 14_GAMM_model_selection.Rmd
 	•Outputs
+		./Output/Spatial/GAM/GAMM_fig/gam_multiplot.png
 
+
+
+
+
+12)generate_code_chunks_for_supp_report.Rmd
+	•What this does: Runs loops to automatically generated chunks for figures 
+	to avoid errors
+	•Inputs: NA.
+	•Outputs: code chunks manually copied to butterfly_msgdm_tables_figures_report.Rmd
 	
 #below script no longer used, all this done elsewhere
 GAMM_analyses.Rmd
@@ -404,11 +416,7 @@ GAMM_analyses.Rmd
 		•Note, some chunks are manually pasted in from generate_code_chunks_for_supp_report.Rmd
 	•Outputs: R markdown converted to html butterfly_msgdm_tables_figures_report.html
 
-12)generate_code_chunks_for_supp_report.Rmd
-	•What this does: Runs loops to automatically generated chunks for figures 
-	to avoid errors
-	•Inputs: NA.
-	•Outputs: code chunks manually copied to butterfly_msgdm_tables_figures_report.Rmd
+
 
 # Template for file documentation
 
