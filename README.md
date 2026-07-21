@@ -9,34 +9,74 @@ X)Filename
 	•Inputs
 	•Outputs
 ----------------------------------------------------------------------------------------------------------
-Order in which to run scripts: 
+## Order in which to run scripts: 
 
-The first two scripts must be run in order
+#### Run the following two scripts in order
 
 1_Process_CSV_Data.Rmd
 2_butterflies_combine_env_data.Rmd
 
-Then the following can be run in any order
-
+#### Run the following scripts in any order after running scripts 1_Process_CSV_Data.Rmd and 2_butterflies_combine_env_data.Rmd 
 3_butterflies_maps.Rmd	
 4_Occupancy_analyses.Rmd
-5_run_zeta_msgdm.Rmd
-	•Note, this file calls other files to run analyses and generate paramterised reports
 
-The following scripts are run via 5_run_zeta_msgdm.Rmd
+#### Run the following to call other scripts and generate parameterised reports (see below)
+5_Call_msgdm_and_gamm_scripts.Rmd
+	•This calls the markdowns and generates parameterised reports.
+	•Run the first two chunks every time. 
+	•Run other chunks as required.
+	•More about parameterised reports: see https://r4ds.had.co.nz/r-markdown.html
 
+#### Run the following scripts via 5_Call_msgdm_and_gamm_scripts.Rmd
 6_Zeta_declines_decays_analyses.Rmd
-	This is run by 5_run_zeta_msgdm.Rmd
 7_Zeta_msgdm_change_seed_analyses.Rmd
 
-Scripts
+#### Run the following scripts after running 7_Zeta_msgdm_change_seed_analyses.Rmd
+8_MSGDM_multipanel_plot.RMD
+9_process_msgdm_results.RMD
 
-R_Scripts
+#### Run the following scripts via 5_Call_msgdm_and_gamm_scripts.Rmd
+10_GAM_compare_family_analyses.Rmd
+11_GAM_comare_spline_analyses.Rmd
+
+#### Run the following script after running scripts 10_GAM_compare_family_analyses.Rmd and 11_GAM_comare_spline_analyses.Rmd
+12_GAMM_compare_corstructs_analyses.Rmd
+
+#### Run the following script via 5_Call_msgdm_and_gamm_scripts.Rmd after running script 12_GAMM_compare_corstructs_analyses.Rmd
+13_process_GAMM_analyses.Rmd
+
+#### Run the following script after running script 13_process_GAMM_analyses.Rmd
+14_GAMM_model_selection.Rmd
+
+#### Run the following script via 5_Call_msgdm_and_gamm_scripts.Rmd after running script 14_GAMM_model_selection.Rmd
+15_process_GAMMS_model_selection
+	•Run by: 5_Call_msgdm_and_gamm_scripts.Rmd
+	•What this does: 
+		•Produces statistical table comparing GAMMS with terms dropped from 14_GAMM_model_selection.Rmd
+	•Inputs
+		GAMM output from 14_GAMM_model_selection.Rmd
+	•Outputs
+		Folder for each dataset 
+			E.G..\Output\Spatial\GAM\GAMM_all_species\gamm_model_select_as\
+			Each folder has
+				parameterised report as a pdf
+				gam_summ.txt
+				parametric_p_value_table.csv
+				smooth_p_value_table.csv
+				gamm_info.csv
+	
+#### Run the following script after running script 14_GAMM_model_selection.Rmd	
+16_GAMM_multipanel_plot.Rmd
+
+#### R scripts that are called buy Rmd scripts
 butterfly_richness_turnover_functions.R
 	•What this does:
 		•loads functions used by other scripts, especially functions that are used by more than one script
 
-1) 1_Process_CSV_Data.Rmd
+## Documentation of Rmd Scrips
+
+
+1_Process_CSV_Data.Rmd
 	•What this does: 
 		•Data cleaning and subsetting(filtering) for UKBMS records, sites and 
 		species data.
@@ -68,7 +108,7 @@ butterfly_richness_turnover_functions.R
 
 Note
 	•Some plots may not print		
-2) 2_butterflies_combine_env_data.Rmd
+2_butterflies_combine_env_data.Rmd
 	•What this does:
 		•Data synthesis and processing: 
 			•Environmental variables:
@@ -121,7 +161,7 @@ Note
 		•Slimmed down site by env to just map environmental data•"./Data/Processed_Data/Spatial/map_all_env_vars.rds"))
 # corrections made 02/06/2026 and 06/06/2026. I had previously inadvertently edited in a way that prevented filtering
 
-3) 3_butterflies_maps.Rmd		
+3_butterflies_maps.Rmd		
 	•What this does: generates maps of the distribution of sites in our data,
 		including showing density of sites and mean species richness for each butterfly group and makes maps of environmental variables
 	•Inputs
@@ -132,7 +172,7 @@ Note
 		• Fig. 1 multipanel hexmaps of site density and species richness "Output/Spatial/Figures/Hex_dens_transects.png/"
 		• Fig. S1.1 multipanel maps of environmental variables "Output/Spatial/Figures/all_env_vars.png/"
 		
-4) 4_Occupancy_analyses.Rmd
+4_Occupancy_analyses.Rmd
 	•What this does: 
 		•Analyses and plots species contributions to variance of raw zeta 
 		diversity for different zeta orders, grouping by strategy (habitat specialist/habitat generalist).
@@ -145,8 +185,7 @@ Note
 
  https://zsmith27.github.io/rmarkdown_crash-course/lesson-7-parameterized-reports.html		
 
-# Needs updating with current script names (updated partially 15/05/2026)
-5) 5_run_zeta_msgdm.Rmd
+5_Call_msgdm_and_gamm_scripts.Rmd
 	•What this does: runs r markdown files and renders parameterized reports 
 	for data analyses. 
 	Analyses done for the first three or all four groups below
@@ -172,12 +211,10 @@ Note
 	•Outputs
 		•markdown reports
 
-
 6) 6_Zeta_declines_decays_analyses.Rmd
+	•Run by: 5_Call_msgdm_and_gamm_scripts.Rmd	
 	•What this does
 		•Creates a parameterised report
-		•Called by run_zeta_msgdm.Rmd
-		
 		•Zeta diversity: Calculates values.
 		•Zeta decline: Compares fit of exponential versus power-law decline in 
 		zeta diversity with zeta order, for different ranges of zeta 
@@ -208,20 +245,19 @@ Note
 		Markdown: Zeta_declines_decays_analyses.html
 			
 7) 7_Zeta_msgdm_change_seed_analyses.Rmd 
+	•Run by: 5_Call_msgdm_and_gamm_scripts.Rmd	
 	•What this does: 
 		•Creates a parameterised report
-		•Called by run_zeta_msgdm.Rmd
 		•Seed can be set as a paramter
-		
-	•Analyses 		
-		•Pearson and Spearman correlations of predictors
-		•MSGDM analyses
-		•Calculates deviance explained by MSGDM analyses from deviance and null 
-		deviance (note that this should be treated with caution in a non-linear 
-		model and other performance measures should routinely be used in
-		addition or instead.
-		•Ispline plots
-		•Deviance explained pie plots
+		•Analyses 		
+			•Pearson and Spearman correlations of predictors
+			•MSGDM analyses
+			•Calculates deviance explained by MSGDM analyses from deviance and null 
+			deviance (note that this should be treated with caution in a non-linear 
+			model and other performance measures should routinely be used in
+			addition or instead.
+			•Ispline plots
+			•Deviance explained pie plots
 	•Inputs: datasets produced by 2_butterflies_combine_env_data.Rmd
 			•all butterfly species "./Data/Processed_Data/Spatial/all_species.rds"
 			•widercountryside species "./Data/Processed_Data/Spatial/wc.rds"
@@ -243,7 +279,7 @@ Note
 			•msgdm_multiplot.png
 
  9) 9_process_msgdm_results.RMD
-	•Run by: 5_run_zeta_msgdm.Rmd
+	•Run by: 5_Call_msgdm_and_gamm_scripts.Rmd
 	•What this does: makes forest plots for msgdms
 	•Inputs: msgdm outputs  from  7_Zeta_msgdm_analyses.Rmd in list "[dataset]_[normalize_msgdm]/zeta_msgdms.rds" 
 	•Outputs: 
@@ -255,12 +291,11 @@ Note
 			•Forest plots coloured by predictor, including associated p values "[dataset]_[normalize_msgdm]_zeta_order[i]/forest_plot.png"
 		•Variance (Deviance) explained "[dataset]_[normalize_msgdm]_zeta_order[i]/deviance_table.csv"
 		•Variance partitionining "[dataset]_[normalize_msgdm]_zeta_order[i]/variance_partitioning_table.csv"
-# run from 	 5_run_zeta_msgdm.Rmd 01/06/2026	
+# run from 	 5_Call_msgdm_and_gamm_scripts.Rmd 01/06/2026	
 
 
-		
-11) 10_GAM_compare_family_analyses.Rmd
-	•Run by: 5_run_zeta_msgdm.Rmd
+10_GAM_compare_family_analyses.Rmd
+	•Run by: 5_Call_msgdm_and_gamm_scripts.Rmd
 	•What this does
 		•GAM Analyses with different distribution assumptions
 			•Residual Plots (not output elsewhere)
@@ -273,12 +308,11 @@ Note
 		•Basemap "./Data./Maps./gb_multipolygon_simplified.rds"
 	•Outputs:
 		•AIC 	"./Data/GAM/[dataset]/family_aic_table.csv" 
-# run from 	 5_run_zeta_msgdm.Rmd 02/06/2026	
+# run from 	 5_Call_msgdm_and_gamm_scripts.Rmd 02/06/2026	
 
 
-	
-11) 11_GAM_comare_spline_analyses.Rmd
-	•Run by: 5_run_zeta_msgdm.Rmd
+11_GAM_comare_spline_analyses.Rmd
+	•Run by: 5_Call_msgdm_and_gamm_scripts.Rmd
 	•What this does
 			•GAM analyses, using family with lowest AIC and comparing spline 
 			methods
@@ -296,11 +330,11 @@ Note
 		•GAM_compare_spline_analyses.csv: Report to inspect and choose best distribution (family argument) to use.
 		•spline_aic_table.csv: AIC table "/Output/Spatial/GAM/GAM_[dataset]/spline_aic_table.csv"
 		• variograms
-# run from 	 5_run_zeta_msgdm.Rmd 02/06/2026	
+# run from 	 5_Call_msgdm_and_gamm_scripts.Rmd 02/06/2026	
 		
 	
-12) 12_GAMM_compare_corstructs_analyses
-	•Standalone, run this script directly (NOT run by 5_run_zeta_msgdm.Rmd)
+12_GAMM_compare_corstructs_analyses
+	•Standalone script, not run by 5_Call_msgdm_and_gamm_scripts.Rmd)
 	•What this does
 		•Finds best correlation structure (spatial autocorrelation) for each dataset
 		•For each dataset
@@ -315,10 +349,8 @@ Note
 			•"/Output/Spatial/GAM/GAMM_hs/gamm_corExp.rds"
 # Have not rerun GAMMS again in 2026, this requires significant computer time	
 
-
-
-13) 13_process_GAMM_analyses
-	•Run by: 5_run_zeta_msgdm.Rmd
+13_process_GAMM_analyses
+	•Run by: 5_Call_msgdm_and_gamm_scripts.Rmd
 	•What this does: 
 		•Performs analyses and makes plots to choose best correlation structure
 			•AIC table
@@ -336,11 +368,9 @@ Note
 			Output/Spatial/GAM/GAMM_wc/gamm_cor_struct_compare/13_process_GAMM_analyses.html
 			Output/Spatial/GAM/GAMM_hs/gamm_cor_struct_compare/13_process_GAMM_analyses.html
 
-
-
 # outputs of 14 could be saved in a better place
 14_GAMM_model_selection.Rmd
-	•stand alone notebook, not run by script_5
+	•stand alone notebook, not run by 5_Call_msgdm_and_gamm_scripts.Rmd
 	•What this does: 
 		•Runs GAMMs for each dataset sequentially dropping ns variables. When all terms significant, then drop one at a time
 	•Inputs
@@ -354,7 +384,7 @@ Note
 		
 		
 15_process_GAMMS_model_selection
-	•Run by: 5_run_zeta_msgdm.Rmd
+	•Run by: 5_Call_msgdm_and_gamm_scripts.Rmd
 	•What this does: 
 		•Produces statistical table comparing GAMMS with terms dropped from 14_GAMM_model_selection.Rmd
 	•Inputs
@@ -368,11 +398,6 @@ Note
 				parametric_p_value_table.csv
 				smooth_p_value_table.csv
 				gamm_info.csv
-	
-	
-	
-	
-# Below still needs annotation and updating in this readme and the powerpoint	
 
 16_GAMM_multipanel_plot.Rmd
 	•What this does: 
@@ -382,7 +407,7 @@ Note
 	•Outputs
 		./Output/Spatial/GAM/GAMM_fig/gam_multiplot.png
 
-
+# Below still needs annotation and updating in this readme and the powerpoint	
 
 
 
@@ -394,7 +419,7 @@ Note
 	
 #below script no longer used, all this done elsewhere
 GAMM_analyses.Rmd
-	•Run by: 5_run_zeta_msgdm.Rmd
+	•Run by: 5_Call_msgdm_and_gamm_scripts.Rmd
 	•NB, these are very time consuming
 	•What this does: Called by run_zeta_msgdm.Rmd;
 	•analyses

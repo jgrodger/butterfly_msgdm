@@ -3,17 +3,19 @@ title: "Render Analysis Reports"
 output: html_notebook
 ---
 
-```{r}
-# Parameterised reports: see https://r4ds.had.co.nz/r-markdown.html
-```
- 
-# this calls the markdowns and generate reports with specified parameters
+# Parameterised Report Building Script
 
-# run the setup chunk and the functions chunk, then run the chunks for the analyses desired
+#### This calls the markdowns and generates parameterised reports.
+
+#### Run the first two chunks every time. 
+
+#### Run other chunks as required.
+
+#### More about parameterised reports: see https://r4ds.had.co.nz/r-markdown.html
 
 #### Packages
-```{r}
-here::i_am("Scripts/Rmd_Scripts/5_run_zeta_msgdm.Rmd")
+```{r 1 Load Packages}
+here::i_am("Scripts/Rmd_Scripts/5_Call_msgdm_and_gamm_scripts.Rmd")
 
 library(tidyverse)
 
@@ -31,7 +33,7 @@ conflicts_prefer(dplyr::select)
 ```
 
 ####  Load functions
-```{r}
+```{r 2 Load Packages}
 source(here("./Scripts/R_scripts/get_k_fold_performance.R"))
 
 source(here("./Scripts/R_scripts/Zeta.order.mc.sam.R"))
@@ -46,11 +48,13 @@ source(here("./Scripts/R_scripts/get_validation_different_seeds_and_samps.R"))
 render_report = function(analysis_script, params_list) {
   out_path <- if (analysis_script == "6_Zeta_declines_decays_analyses.Rmd"){
                     paste0(here("Output/Spatial/zeta_declines_decays"), "/", params_list$dataset,  "/")
-                } else if(analysis_script == "Zeta_msgdm_analyses.Rmd") { #check if this can be deleted
-                    paste0(here("Output/Spatial/msgdms/"), "/", params_list$dataset, "_" , params_list$normalize_msgdm)
-                } else if(analysis_script == "Zeta_msgdm_change_seed.Rmd") {
+                } else if(analysis_script ==  "7_Zeta_msgdm_change_seed_analyses.Rmd") {
                     paste0(here("Output/Spatial/msgdms/"), "/", params_list$dataset, "_" , params_list$normalize_msgdm, "_" , params_list$my_seed)                 
-                } else if(analysis_script == "10_GAM_compare_family_analyses.Rmd") {
+                } else if(analysis_script == "9_process_msgdm_results.Rmd"){  
+                      paste0(here("Output/Spatial/msgdms"), "/", 
+                      params_list$dataset, "_" , params_list$normalize_msgdm, "/", 
+                      "figs_tables/")
+                }else if(analysis_script == "10_GAM_compare_family_analyses.Rmd") {
                       paste0(here("Output/Spatial/GAM"), "/","GAM", "_" , params_list$dataset,  "/")  
                 } else if(analysis_script == "11_GAM_compare_spline_analyses.Rmd") {
                       paste0(here("Output/Spatial/GAM"), "/","GAM", "_" , params_list$dataset,  "/")
@@ -60,11 +64,7 @@ render_report = function(analysis_script, params_list) {
                 } else if(analysis_script == "15_process_GAMMS_single_result_output.Rmd"){  
                       paste0(here("Output/Spatial/GAM/GAMM_"), params_list$dataset, "/", 
                              params_list$analysis, "/", params_list$corStruct, "//")
-                } else if(analysis_script == "9_process_msgdm_results.Rmd"){  
-                      paste0(here("Output/Spatial/msgdms"), "/", 
-                      params_list$dataset, "_" , params_list$normalize_msgdm, "/", 
-                      "figs_tables/")
-                }
+                } 
 if(!dir.exists(out_path)) dir.create(out_path, recursive = TRUE)
   rmarkdown::render(input = analysis_script,
                     output_dir = out_path,
@@ -73,6 +73,118 @@ if(!dir.exists(out_path)) dir.create(out_path, recursive = TRUE)
 ```
 
 ### Code chunks below produce parameterized reports as specified in each
+
+### Zeta declines and decays
+##### By default, the time consuming zeta decay analysis does not run (in params list include "run_decay_analysis = TRUE" to make it run)
+```{r}
+tic()
+render_report(analysis_script = "6_Zeta_declines_decays_analyses.Rmd", list(dataset = "all_species", sam_ddecay = 10000, orders_ddecay = 2:100))
+toc()
+tic()
+render_report(analysis_script = "6_Zeta_declines_decays_analyses.Rmd", list(dataset = "wc", sam_ddecay = 10000, orders_ddecay = 2:100))
+toc()
+#render_report(analysis_script = "6_Zeta_declines_decays_analyses.Rmd", list(dataset = "wc_no_zeros", sam_ddecay = 10000, orders_ddecay = 2:100))
+tic()
+render_report(analysis_script = "6_Zeta_declines_decays_analyses.Rmd", list(dataset = "hs", sam_ddecay = 10000, orders_ddecay = 2:8)) # Computational issues at higher orders
+toc()
+tic()
+render_report(analysis_script = "6_Zeta_declines_decays_analyses.Rmd", list(dataset = "hs_no_zeros", sam_ddecay = 10000, orders_ddecay = 2:10)) # Computational issues at higher orders
+toc()
+```
+
+#### MSGDMS with different seeds 
+```{r}
+# All species
+tic()
+render_report(analysis_script = "7_Zeta_msgdm_change_seed_analyses.Rmd", list(dataset = "all_species",
+              orders_msgdm =  c(2, 4), sam_msgdm = 500000, normalize_msgdm = "Simpson", my_seed = 1))
+toc()
+
+tic()
+render_report(analysis_script = "Zeta_msgdm_change_seed.Rmd", list(dataset = "all_species",
+              orders_msgdm =  c(2, 4), sam_msgdm = 500000, normalize_msgdm = "Simpson", my_seed = 2))
+toc()
+
+
+tic()
+render_report(analysis_script = "Zeta_msgdm_change_seed.Rmd", list(dataset = "all_species",
+              orders_msgdm =  c(2, 4, 20), sam_msgdm = 500000, normalize_msgdm = "Simpson", my_seed = 4))
+toc()
+
+#Habitat specialists
+tic()
+render_report(analysis_script = "Zeta_msgdm_change_seed.Rmd", list(dataset = "hs_no_zeros",
+              orders_msgdm =  c(2, 4, 20), sam_msgdm = 500000, normalize_msgdm = "Simpson", my_seed = 4))
+toc()
+
+
+tic()
+render_report(analysis_script = "Zeta_msgdm_change_seed.Rmd", list(dataset = "wc",
+              orders_msgdm =  c(2, 4, 20), sam_msgdm = 500000, normalize_msgdm = "Simpson", my_seed = 4))
+toc()
+
+tic()
+render_report(analysis_script = "Zeta_msgdm_change_seed.Rmd", list(dataset = "all_species",
+              orders_msgdm =  c(2, 4, 20), sam_msgdm = 50000, normalize_msgdm = "Simpson", my_seed = 3))
+toc()
+
+tic()
+render_report(analysis_script = "Zeta_msgdm_change_seed.Rmd", list(dataset = "all_species",
+              orders_msgdm =  c(2, 4, 20), sam_msgdm = 50000, normalize_msgdm = "Simpson", my_seed = 4))
+toc()
+
+tic()
+render_report(analysis_script = "Zeta_msgdm_change_seed.Rmd", list(dataset = "all_species",
+              orders_msgdm =  c(2, 4, 20), sam_msgdm = 50000, normalize_msgdm = "Simpson", my_seed = 5))
+toc()
+
+```
+
+#### Generate tables and figures for MSGDMs for main text
+```{r}
+render_report(analysis_script = "9_process_msgdm_results.Rmd", 
+              list(dataset = "all_species", normalize_msgdm = "Simpson",
+                   orders_msgdm =  c(2, 4, 20), seed = 4))
+
+render_report(analysis_script = "9_process_msgdm_results.Rmd", 
+              list(dataset = "hs_no_zeros", normalize_msgdm = "Simpson",
+                   orders_msgdm =  c(2, 4, 20), seed = 4))
+
+render_report(analysis_script = "9_process_msgdm_results.Rmd", 
+              list(dataset = "wc", normalize_msgdm = "Simpson",
+                   orders_msgdm =  c(2, 4, 20), seed = 4))
+```
+
+
+
+#### Generate a overlapping but different set of tables and figures for msgdms
+##### Note, using zeta = 50 also produces similar results
+```{r}
+render_report(analysis_script = "9_process_msgdm_results.Rmd", 
+              list(dataset = "all_species", normalize_msgdm = "Simpson",
+                   orders_msgdm =  c(2, 4, 20)))
+
+render_report(analysis_script = "9_process_msgdm_results.Rmd", 
+              list(dataset = "wc", normalize_msgdm = "Simpson",
+                   orders_msgdm =  c(2, 4, 20)))
+
+render_report(analysis_script = "9_process_msgdm_results.Rmd", 
+              list(dataset = "hs_no_zeros", normalize_msgdm = "Simpson",
+                   orders_msgdm =  c(2, 3, 4)))
+
+render_report(analysis_script = "9_process_msgdm_results.Rmd", 
+              list(dataset = "all_species", normalize_msgdm = "Sorensen",
+                   orders_msgdm =  c(2, 4, 20)))
+
+render_report(analysis_script = "9_process_msgdm_results.Rmd", 
+              list(dataset = "wc", normalize_msgdm = "Sorensen",
+                   orders_msgdm =  c(2, 4, 20)))
+
+render_report(analysis_script = "9_process_msgdm_results.Rmd", 
+              list(dataset = "hs_no_zeros", normalize_msgdm = "Sorensen",
+                   orders_msgdm =  c(2, 3, 4)))
+```
+
 
 #### GAMS comparing different distribution families
 ```{r}
@@ -156,160 +268,9 @@ render_report(analysis_script = "15_process_GAMMS_single_result_output.Rmd",
                    analysis = "gamm_model_select_hs",
                    corStruct = "corGaus"))
 ```
-#####Note, final GAMMS conducted in GAMM_compare_corstructs_analyses.Rmd notebook
-
-### Zeta declines and decays
-##### By default, the time consuming zeta decay analysis does not run (in params list include "run_decay_analysis = TRUE" to make it run)
-```{r}
-tic()
-render_report(analysis_script = "6_Zeta_declines_decays_analyses.Rmd", list(dataset = "all_species", sam_ddecay = 10000, orders_ddecay = 2:100))
-toc()
-tic()
-render_report(analysis_script = "6_Zeta_declines_decays_analyses.Rmd", list(dataset = "wc", sam_ddecay = 10000, orders_ddecay = 2:100))
-toc()
-#render_report(analysis_script = "6_Zeta_declines_decays_analyses.Rmd", list(dataset = "wc_no_zeros", sam_ddecay = 10000, orders_ddecay = 2:100))
-tic()
-render_report(analysis_script = "6_Zeta_declines_decays_analyses.Rmd", list(dataset = "hs", sam_ddecay = 10000, orders_ddecay = 2:8)) # Computational issues at higher orders
-toc()
-tic()
-render_report(analysis_script = "6_Zeta_declines_decays_analyses.Rmd", list(dataset = "hs_no_zeros", sam_ddecay = 10000, orders_ddecay = 2:10)) # Computational issues at higher orders
-toc()
-```
-#### MSGDMS with different seeds 
-```{r}
-# All species
-tic()
-render_report(analysis_script = "Zeta_msgdm_change_seed.Rmd", list(dataset = "all_species",
-              orders_msgdm =  c(2, 4), sam_msgdm = 500000, normalize_msgdm = "Simpson", my_seed = 1))
-toc()
-
-tic()
-render_report(analysis_script = "Zeta_msgdm_change_seed.Rmd", list(dataset = "all_species",
-              orders_msgdm =  c(2, 4), sam_msgdm = 500000, normalize_msgdm = "Simpson", my_seed = 2))
-toc()
-
-
-tic()
-render_report(analysis_script = "Zeta_msgdm_change_seed.Rmd", list(dataset = "all_species",
-              orders_msgdm =  c(2, 4, 20), sam_msgdm = 500000, normalize_msgdm = "Simpson", my_seed = 4))
-toc()
-
-#Habitat specialists
-tic()
-render_report(analysis_script = "Zeta_msgdm_change_seed.Rmd", list(dataset = "hs_no_zeros",
-              orders_msgdm =  c(2, 4, 20), sam_msgdm = 500000, normalize_msgdm = "Simpson", my_seed = 4))
-toc()
-
-
-tic()
-render_report(analysis_script = "Zeta_msgdm_change_seed.Rmd", list(dataset = "wc",
-              orders_msgdm =  c(2, 4, 20), sam_msgdm = 500000, normalize_msgdm = "Simpson", my_seed = 4))
-toc()
-
-tic()
-render_report(analysis_script = "Zeta_msgdm_change_seed.Rmd", list(dataset = "all_species",
-              orders_msgdm =  c(2, 4, 20), sam_msgdm = 50000, normalize_msgdm = "Simpson", my_seed = 3))
-toc()
-
-tic()
-render_report(analysis_script = "Zeta_msgdm_change_seed.Rmd", list(dataset = "all_species",
-              orders_msgdm =  c(2, 4, 20), sam_msgdm = 50000, normalize_msgdm = "Simpson", my_seed = 4))
-toc()
-
-tic()
-render_report(analysis_script = "Zeta_msgdm_change_seed.Rmd", list(dataset = "all_species",
-              orders_msgdm =  c(2, 4, 20), sam_msgdm = 50000, normalize_msgdm = "Simpson", my_seed = 5))
-toc()
-
-```
 
 
 
-#### Generate tables and figures for MSGDMs for main text
-```{r}
-render_report(analysis_script = "9_process_msgdm_results.Rmd", 
-              list(dataset = "all_species", normalize_msgdm = "Simpson",
-                   orders_msgdm =  c(2, 4, 20), seed = 4))
 
-render_report(analysis_script = "9_process_msgdm_results.Rmd", 
-              list(dataset = "hs_no_zeros", normalize_msgdm = "Simpson",
-                   orders_msgdm =  c(2, 4, 20), seed = 4))
-
-render_report(analysis_script = "9_process_msgdm_results.Rmd", 
-              list(dataset = "wc", normalize_msgdm = "Simpson",
-                   orders_msgdm =  c(2, 4, 20), seed = 4))
-```
-
-
-
-#### Generate a overlapping but different set of tables and figures for msgdms
-##### Note, using zeta = 50 also produces similar results
-```{r}
-render_report(analysis_script = "9_process_msgdm_results.Rmd", 
-              list(dataset = "all_species", normalize_msgdm = "Simpson",
-                   orders_msgdm =  c(2, 4, 20)))
-
-render_report(analysis_script = "9_process_msgdm_results.Rmd", 
-              list(dataset = "wc", normalize_msgdm = "Simpson",
-                   orders_msgdm =  c(2, 4, 20)))
-
-render_report(analysis_script = "9_process_msgdm_results.Rmd", 
-              list(dataset = "hs_no_zeros", normalize_msgdm = "Simpson",
-                   orders_msgdm =  c(2, 3, 4)))
-
-render_report(analysis_script = "9_process_msgdm_results.Rmd", 
-              list(dataset = "all_species", normalize_msgdm = "Sorensen",
-                   orders_msgdm =  c(2, 4, 20)))
-
-render_report(analysis_script = "9_process_msgdm_results.Rmd", 
-              list(dataset = "wc", normalize_msgdm = "Sorensen",
-                   orders_msgdm =  c(2, 4, 20)))
-
-render_report(analysis_script = "9_process_msgdm_results.Rmd", 
-              list(dataset = "hs_no_zeros", normalize_msgdm = "Sorensen",
-                   orders_msgdm =  c(2, 3, 4)))
-```
-
-
-#### previous MSGDM analyses, code may not run if results with seed = 4 not available, probably delete this
-
-
-
-#### MSGDMs
-```{r}
-tic()
-render_report(analysis_script = "Zeta_msgdm_analyses.Rmd", list(dataset = "all_species",
-              orders_msgdm =  c(2, 3, 4, 6, 10, 15, 20, 50), sam_msgdm = 500000, normalize_msgdm = "Simpson"))
-toc()
-
-tic()
-render_report(analysis_script = "Zeta_msgdm_analyses.Rmd", list(dataset = "wc",  
-              orders_msgdm =  c(2, 3, 4, 6, 10, 15, 20, 50), sam_msgdm = 50000, normalize_msgdm = "Simpson"))
-toc()
-
-tic()
-render_report(analysis_script = "Zeta_msgdm_analyses.Rmd", list(dataset = "hs_no_zeros",  
-              orders_msgdm =  c(2, 3, 4, 5, 6), sam_msgdm = 50000, normalize_msgdm = "Simpson"))
-toc()
-
-tic()
-render_report(analysis_script = "Zeta_msgdm_analyses.Rmd", list(dataset = "all_species",
-              orders_msgdm =  c(2, 3, 4, 6, 10, 15, 20, 50), sam_msgdm = 50000, normalize_msgdm = "Sorensen"))
-toc()
-
-
-tic()
-render_report(analysis_script = "Zeta_msgdm_analyses.Rmd", list(dataset = "wc",  
-              orders_msgdm =  c(2, 3, 4, 6, 10, 15, 20, 50), sam_msgdm = 50000, normalize_msgdm = "Sorensen"))
-toc()
-
-
-
-tic()
-render_report(analysis_script = "Zeta_msgdm_analyses.Rmd", list(dataset = "hs_no_zeros",  
-              orders_msgdm =  c(2, 3, 4, 5, 6), sam_msgdm = 50000, normalize_msgdm = "Sorensen"))
-toc()
-
-```
 
 
