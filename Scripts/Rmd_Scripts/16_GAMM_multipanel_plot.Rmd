@@ -6,7 +6,7 @@ output: html_notebook
 # This makes figure 2
 
 ```{r}
-here::i_am("Scripts/Rmd_Scripts/Gamm_multipanel_fig.Rmd")
+here::i_am("Scripts/Rmd_Scripts/16_Gamm_multipanel_plot.Rmd")
 library(tidyverse)
 library(gridExtra)
 library(ggpubr)

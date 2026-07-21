@@ -338,7 +338,7 @@ Note
 
 
 
-#outputs could be saved in a better place
+# outputs of 14 could be saved in a better place
 14_GAMM_model_selection.Rmd
 	•stand alone notebook, not run by script_5
 	•What this does: 
