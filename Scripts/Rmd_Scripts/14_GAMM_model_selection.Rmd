@@ -12,7 +12,8 @@ knitr::opts_chunk$set(echo = TRUE)
 here::i_am("Scripts/Rmd_Scripts/14_GAMM_model_selection.Rmd")
 library(tidyverse)
 #library(tmap)
-library(mgcv)
+library(MuMIn)
+??library(mgcv)
 library(gstat)
 library(knitr)
 library(knitrProgressBar)
@@ -376,4 +377,24 @@ plot(drop_pesticide_trees_temp_gamm$gam, pages = 2)
 #AIC(full_model_gamm$gam, drop_pesticide_gamm$gam, drop_pesticide_trees_gamm$gam)
 ```
 
+
+
+```{r}
+set.seed(0)
+dat <- gamSim(6, n = 100, scale = 5, dist = "normal")
+
+fmm1 <- uGamm(y ~s(x0)+ s(x3) + s(x2), family = gaussian, data = dat, 
+    random = list(fac = ~1))
+
+getCall(fmm1)
+class(fmm1)
+
+gam1 <- gam(y ~s(x0)+ s(x3) + s(x2), family = gaussian, data = dat)
+
+plot(gam.hp(gam1))
+plot(gam.hp(fmm1$gam, type = "dev"))
+
+
+gam1$call
+```
 
