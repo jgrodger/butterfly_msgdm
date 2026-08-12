@@ -46,6 +46,26 @@ any(rownames(sites) != rownames(hs_data$site.by.species))
 sites <- sites %>%
   mutate(wc.richness = rowSums(wc_data$site.by.species),
          hs.richness = rowSums(hs_data$site.by.species))
+
+sites.with.hs <- filter(sites, hs.richness != 0)
+
+print("Mean and SD of richness of All Species")
+mean(sites$as.richness)
+sd(sites$as.richness)
+
+print("Mean and SD of richness of Wider Countryside Species")
+mean(sites$wc.richness)
+sd(sites$wc.richness)
+
+print("Mean and SD of richness of Habitat Specialists in All Sites")
+mean(sites$hs.richness)
+sd(sites$hs.richness)
+
+print("Mean and SD of richness of Habitat Specialists in Sites with 1 or more Habitat Specialist Present")
+mean(sites.with.hs$hs.richness)
+sd(sites.with.hs$hs.richness)
+
+
 ```
 
 #### Make and inspect point density plots with rectangles and hexagons, write hexagon plot as a png  

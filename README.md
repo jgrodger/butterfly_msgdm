@@ -9,6 +9,8 @@ X)Filename
 	•Inputs
 	•Outputs
 ----------------------------------------------------------------------------------------------------------
+# Data is processed and analyses are conducted by running Scripts in Rmd scripts Folder
+
 ## Order in which to run scripts: 
 
 #### Run the following two scripts in order
@@ -168,6 +170,7 @@ Note
 		•Basemap "./Data./Maps./gb_multipolygon_simplified.rds"
 		•Data "./Data/Processed_Data/Spatial/all_species.rds"
 	•Outputs
+		• Mean and SD of species richness reported in line
 		• Hexmap of site density "Output/Spatial/Figures/Hex_dens_transects.png/"
 		• Fig. 1 multipanel hexmaps of site density and species richness "Output/Spatial/Figures/Hex_dens_transects.png/"
 		• Fig. S1.1 multipanel maps of environmental variables "Output/Spatial/Figures/all_env_vars.png/"
@@ -416,6 +419,14 @@ Note
 	to avoid errors
 	•Inputs: NA.
 	•Outputs: code chunks manually copied to butterfly_msgdm_tables_figures_report.Rmd
+	
+	
+----------------------------------------------------------------------------------------------------------
+# Output for the main text and supplementary files is compiled by running scripts in "Mardowns" Folder
+
+butterfly_richness_turnover_report.Rmd calls the following and compiles to a single document
+
+	
 	
 #below script no longer used, all this done elsewhere
 GAMM_analyses.Rmd
