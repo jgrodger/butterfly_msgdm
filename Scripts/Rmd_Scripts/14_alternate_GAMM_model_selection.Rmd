@@ -1,0 +1,728 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+#### Packages
+```{r}
+here::i_am("Scripts/Rmd_Scripts/14_GAMM_model_selection.Rmd")
+library(tidyverse)
+#library(tmap)
+library(MuMIn)
+library(mgcv)
+library(gstat)
+library(knitr)
+library(knitrProgressBar)
+library(tictoc)
+library(here)
+library(conflicted)
+conflicts_prefer(dplyr::filter)
+conflicts_prefer(dplyr::select)
+conflicts_prefer(knitrProgressBar::progress_estimated)
+# there is a same-named function in dplyr, check it out
+```
+
+# Model selection
+
+<!-- ### load files from correlation structure analyses -->
+<!-- ```{r} -->
+<!-- cor_gamms_as <- readRDS(here("Output/Spatial/GAM/GAMM_all_species/gamm_cor_struct_compare.rds")) -->
+
+<!-- cor_gamms_wc <- readRDS(here("Output/Spatial/GAM/GAMM_wc/gamm_cor_struct_compare.rds")) -->
+
+<!-- cor_gamms_hs <- readRDS(here("Output/Spatial/GAM/GAMM_hs/gamm_cor_struct_compare.rds")) -->
+
+<!-- ``` -->
+
+### Specify  correlation structures
+```{r}
+corStructs <- list(corGaus(form = ~x+y, nugget = TRUE), corExp(form = ~x+y, nugget = TRUE), corLin(form = ~x+y, nugget = TRUE), corRatio(form = ~x+y, nugget = TRUE), corSpher(form = ~x+y, nugget = TRUE) )
+```
+
+#### File Paths
+```{r}
+out_path <-  here("Output/Spatial/GAM")
+if(!dir.exists(out_path)) dir.create(out_path)
+```
+
+#### Datasets for gamms
+```{r}
+all_species <- readRDS(here("./Data/Processed_Data/Spatial/all_species.rds"))
+wc <- readRDS(here("./Data/Processed_Data/Spatial/wc.rds"))
+hs <- readRDS(here("./Data/Processed_Data/Spatial/hs.rds"))
+#hs_no_zeros <- readRDS(here("./Data/Processed_Data/Spatial/hs_no_zeros.rds"))
+
+# get all datasets in a list
+datasets <- list(all_species, wc, hs)
+names(datasets) <- c("all_species", "wc", "hs")
+```
+
+
+#### get formulas for all combinations for possible use in asv.hp
+```{r}
+smooths <- c(
+  's(mean.ann.temp, k = 6, bs = "cr")', 
+  's(log10.mean.ann.rain, k = 6, bs = "cr")', 
+  's(topographic.wetness, k = 6, bs = "cr")',
+  's(ph, k = 4, bs = "cr")',
+  's(total.n, k = 6, bs = "cr")',
+  's(tree.density, k = 6, bs = "cr")',
+  's(log10.pesticide.risk, k = 6, bs = "cr")',
+  's(log10.humans, k = 6, bs = "cr"))'
+            )
+
+# Loop through to get combinations of size 1, 2, and 3
+# Generate all subsets of all possible lengths
+all_combos <- unlist(lapply(1:length(smooths), function(n) combn(smooths, n, FUN=function(row) paste0("species.richness ~ ", paste0(row, collapse = "+")))))
+
+all_combos[[1]]
+
+# to do: make look to do gamms with all formulas
+
+model <- gamm(as.formula(all_combos[[1]]),
+  method = "ML",
+  family = "gaussian",
+  correlation = corStructs[[2]],
+  data = datasets$all_species$gamm_input)
+
+summary(model$gam)
+
+```
+
+```{r}
+
+model_results <- list()
+# 4. Loop through the vector
+#for (form_str in formula_strings) {
+  for (i in 1:2) {
+  # Convert string to formula and run the model
+    model <- gamm(formula_list2[[i]], 
+  method = "ML",
+  family = "gaussian",
+  correlation = corStructs[[2]],
+  data = datasets$all_species$gamm_input)
+  # Store the model in the list using the string as the key
+  model_results[[i]] <- model
+  }
+
+for (i in seq_along(formulas_list)) {
+  models_list[[i]] <- lm(formulas_list[[i]], data = mtcars)
+}
+
+```
+
+
+```{r}
+ # "The information in the summary lme output on the fixed effects bit is not interesting neither; just use the anova(O4.gamm$gam) command for clearer information on the significance on individual terms." From Zuue et al 2009 page 339
+
+#examples of model comparison using lme objects for models with different smooths: page 377 in Zuur et al, https://drmowinckels.io/blog/2018/gamm-random-effects/
+
+##### On p-values in gam(): https://www.rdocumentation.org/packages/mgcv/versions/1.9-4/topics/anova.gam
+####reccomendation to use AIC()
+
+#Google AI query https://www.google.com/search?client=firefox-b-d&q=how+to+compare+models+fit+with++mgcv%3A%3Agamm+for+model+selection&fbs=ABfTbFVyMZGZf1hfvX9uKjN_-G8cqu7ocb7U6ah0xpkIrGMK4LpKPoHZrc4HVz9uOAATjT2whS8aQNdsb1nn47m_ZQdHnGlbmJEWuifzXWkNwOhGdQIZhSmnokr5ouqtk2Rl_-C5ScwOVbab55NM_A3kFRm3t7WWBf08gH0eO5Xh8LGY4HfqUSyfYF5mHZVjnlpPshNwfX8Xw_UNU4OAPR6-It3sYS4NlA&aep=10&ntc=1&sxsrf=APpeQntQvV2z3btvfq0eJOYcK5FW6xccdA%3A1787395536385&mstk=AUtExfBYO79tvtvMdCS6K4BD8jyEc6o1BxeLodELyKZKmraHB0Pl-UpvogGMoWxWbDkEkuoXyq3FibKqjJAOuFf8i198ZDoe7wMACF_7YJyEkMbSdi3hz_Frmh6xpNBlVQxLO2Y3u3YEnY2jb_HwDcA_gaM1Ut7EAxlizrk&aioh=3&csuir=1&udm=50&atvm=2&mtid=6oSJaufbJIPV7M8P7eOhwQ0
+
+#returns, inter alia, "2. What Lives Inside model$lme?The model$lme component is the true estimation engine of your model. It contains:The full likelihood of the data.The correctly estimated degrees of freedom for the random effects (the smooths).Any complex correlation structures you added (like correlation = corAR1() for time series).Because model$lme is a standard object from the nlme package, R’s core functions like AIC() and anova() know exactly how to read it. They can correctly count the parameters and calculate the exact log-likelihood to give you valid information criteria or p-values."
+
+
+
+# gam advice https://fromthebottomoftheheap.net/2021/02/02/random-effects-in-gams/
+```
+
+
+# NB method = "ML"
+
+### Run full model with all smooths
+
+```{r}
+gamm_selection_as <- list()
+
+Sys.time()
+#to reach convergence
+options(mgcv.vc.logrange = 5)
+lmeCtlList=lmeControl(niterEM = 50)
+
+full_model_gamm <- gamm(
+  species.richness ~ s(mean.ann.temp, k = 6, bs = "cr") + s(log10.mean.ann.rain, k = 6, bs = "cr") +
+  s(topographic.wetness, k = 6, bs = "cr") + s(ph, k = 4, bs = "cr") + 
+  s(total.n, k = 6, bs = "cr") + s(tree.density, k = 6, bs = "cr") +
+  s(log10.pesticide.risk, k = 6, bs = "cr") + s(log10.humans, k = 6, bs = "cr"),
+  method = "ML",
+  family = "gaussian",
+  correlation = corStructs[[2]],
+  data = datasets$all_species$gamm_input)
+gamm_selection_as[[1]] <- full_model_gamm
+
+Sys.time()
+```
+### Drop one term at a time
+
+```{r}
+
+
+Sys.time()
+#to reach convergence
+options(mgcv.vc.logrange = 5)
+lmeCtlList=lmeControl(niterEM = 50)
+drop_temp_gamm <- gamm(
+  species.richness ~  s(log10.mean.ann.rain, k = 6, bs = "cr") +
+  s(topographic.wetness, k = 6, bs = "cr") + s(ph, k = 4, bs = "cr") + 
+  s(total.n, k = 6, bs = "cr") + s(tree.density, k = 6, bs = "cr") +
+  s(log10.pesticide.risk, k = 6, bs = "cr") + s(log10.humans, k = 6, bs = "cr"),
+  method = "ML",
+  family = "gaussian",
+  correlation = corStructs[[2]],
+  data = datasets$all_species$gamm_input)
+gamm_selection_as[[2]] <- drop_temp_gamm 
+
+Sys.time()
+
+drop_rain_gamm <- gamm(
+  species.richness ~ s(mean.ann.temp, k = 6, bs = "cr") + 
+  s(topographic.wetness, k = 6, bs = "cr") + s(ph, k = 4, bs = "cr") + 
+  s(total.n, k = 6, bs = "cr") + s(tree.density, k = 6, bs = "cr") +
+  s(log10.pesticide.risk, k = 6, bs = "cr") + s(log10.humans, k = 6, bs = "cr"),
+  method = "ML",
+  family = "gaussian",
+  correlation = corStructs[[2]],
+  data = datasets$all_species$gamm_input)
+gamm_selection_as[[3]] <- drop_rain_gamm
+
+Sys.time()
+
+drop_wet_gamm <- gamm(
+  species.richness ~ s(mean.ann.temp, k = 6, bs = "cr") + s(log10.mean.ann.rain, k = 6, bs = "cr") +
+   s(ph, k = 4, bs = "cr") + 
+  s(total.n, k = 6, bs = "cr") + s(tree.density, k = 6, bs = "cr") +
+  s(log10.pesticide.risk, k = 6, bs = "cr") + s(log10.humans, k = 6, bs = "cr"),
+  method = "ML",
+  family = "gaussian",
+  correlation = corStructs[[2]],
+  data = datasets$all_species$gamm_input)
+gamm_selection_as[[4]] <- drop_wet_gamm
+
+Sys.time()
+
+drop_ph_gamm <- gamm(
+  species.richness ~ s(mean.ann.temp, k = 6, bs = "cr") + s(log10.mean.ann.rain, k = 6, bs = "cr") +
+  s(topographic.wetness, k = 6, bs = "cr")  + 
+  s(total.n, k = 6, bs = "cr") + s(tree.density, k = 6, bs = "cr") +
+  s(log10.pesticide.risk, k = 6, bs = "cr") + s(log10.humans, k = 6, bs = "cr"),
+  method = "ML",
+  family = "gaussian",
+  correlation = corStructs[[2]],
+  data = datasets$all_species$gamm_input)
+gamm_selection_as[[5]] <- drop_ph_gamm 
+
+Sys.time()
+
+drop_n_gamm <- gamm(
+  species.richness ~ s(mean.ann.temp, k = 6, bs = "cr") + s(log10.mean.ann.rain, k = 6, bs = "cr") +
+  s(topographic.wetness, k = 6, bs = "cr") + s(ph, k = 4, bs = "cr") + 
+   s(tree.density, k = 6, bs = "cr") +
+  s(log10.pesticide.risk, k = 6, bs = "cr") + s(log10.humans, k = 6, bs = "cr"),
+  method = "ML",
+  family = "gaussian",
+  correlation = corStructs[[2]],
+  data = datasets$all_species$gamm_input)
+gamm_selection_as[[6]] <- drop_n_gamm
+
+Sys.time()
+
+drop_trees_gamm <- gamm(
+  species.richness ~ s(mean.ann.temp, k = 6, bs = "cr") + s(log10.mean.ann.rain, k = 6, bs = "cr") +
+  s(topographic.wetness, k = 6, bs = "cr") + s(ph, k = 4, bs = "cr") + 
+  s(total.n, k = 6, bs = "cr") + 
+  s(log10.pesticide.risk, k = 6, bs = "cr") + s(log10.humans, k = 6, bs = "cr"),
+  method = "ML",
+  family = "gaussian",
+  correlation = corStructs[[2]],
+  data = datasets$all_species$gamm_input)
+gamm_selection_as[[7]] <- drop_trees_gamm
+
+Sys.time()
+
+drop_pesticide_gamm <- gamm(
+  species.richness ~ s(mean.ann.temp, k = 6, bs = "cr") + s(log10.mean.ann.rain, k = 6, bs = "cr") +
+  s(topographic.wetness, k = 6, bs = "cr") + s(ph, k = 4, bs = "cr") + 
+  s(total.n, k = 6, bs = "cr") + s(tree.density, k = 6, bs = "cr") +
+   + s(log10.humans, k = 6, bs = "cr"),
+  method = "ML",
+  family = "gaussian",
+  correlation = corStructs[[2]],
+  data = datasets$all_species$gamm_input)
+gamm_selection_as[[8]] <- drop_pesticide_gamm
+
+Sys.time()
+
+drop_humans_gamm <- gamm(
+  species.richness ~ s(mean.ann.temp, k = 6, bs = "cr") + s(log10.mean.ann.rain, k = 6, bs = "cr") +
+  s(topographic.wetness, k = 6, bs = "cr") + s(ph, k = 4, bs = "cr") + 
+  s(total.n, k = 6, bs = "cr") + s(tree.density, k = 6, bs = "cr") +
+  s(log10.pesticide.risk, k = 6, bs = "cr"),
+  method = "ML",
+  family = "gaussian",
+  correlation = corStructs[[2]],
+  data = datasets$all_species$gamm_input)
+gamm_selection_as[[9]] <- drop_humans_gamm
+Sys.time()
+
+
+
+names(gamm_selection_as) <-c ("full_model", "drop_temp", "drop_rain", "drop_wet", "drop_ph", "drop_n","drop_trees", "drop_pesticide", "drop_humans") 
+
+
+filedir <- paste0(here(out_path), "/GAMM_as")
+if(!dir.exists(filedir)) dir.create(filedir)
+filepath <- paste0(filedir, "/gamm_model_select_as2.rds")
+filepath
+write_rds(gamm_selection_wc , 
+          file = filepath)
+```
+
+
+```{r}
+# If already saved, load again to make figures and output
+gamm_selection_as <- readRDS(here("Output/Spatial/GAM/GAMM_as/gamm_model_select_as2.rds"))
+
+full_model_gamm <- gamm_selection_as[[1]]
+drop_temp_gamm <- gamm_selection_as[[2]]
+drop_rain_gamm <- gamm_selection_as[[3]]
+drop_wet_gamm <- gamm_selection_as[[4]]
+drop_ph_gamm <- gamm_selection_as[[5]]
+drop_n_gamm <- gamm_selection_as[[6]]
+drop_trees_gamm <- gamm_selection_as[[7]]
+drop_pesticide_gamm <- gamm_selection_as[[8]]
+drop_humans_gamm <- gamm_selection_as[[9]]
+
+gam.check(full_model_gamm$gam)
+plot(full_model_gamm$gam, pages = 2)
+
+summary(full_model_gamm$gam)
+summary(drop_temp_gamm$gam)
+summary(drop_rain_gamm$gam)
+summary(drop_wet_gamm$gam)
+summary(drop_ph_gamm$gam)
+summary(drop_n_gamm$gam)
+summary(drop_pesticide_gamm$gam)
+summary(drop_humans_gamm$gam)
+
+BIC(full_model_gamm$lme, drop_temp_gamm$lme)
+BIC(full_model_gamm$lme, drop_rain_gamm$lme)
+BIC(full_model_gamm$lme, drop_wet_gamm$lme)
+BIC(full_model_gamm$lme, drop_ph_gamm$lme)
+BIC(full_model_gamm$lme, drop_n_gamm$lme)
+BIC(full_model_gamm$lme, drop_trees_gamm$lme)
+BIC(full_model_gamm$lme, drop_pesticide_gamm$lme)
+BIC(full_model_gamm$lme, drop_humans_gamm$lme)
+```
+
+### WC
+
+### Run full model with all smooths
+
+```{r}
+gamm_selection_wc <- list()
+
+Sys.time()
+#to reach convergence
+options(mgcv.vc.logrange = 5)
+lmeCtlList=lmeControl(niterEM = 50)
+
+full_model_gamm <- gamm(
+  species.richness ~ s(mean.ann.temp, k = 6, bs = "cr") + s(log10.mean.ann.rain, k = 6, bs = "cr") +
+  s(topographic.wetness, k = 6, bs = "cr") + s(ph, k = 4, bs = "cr") + 
+  s(total.n, k = 6, bs = "cr") + s(tree.density, k = 6, bs = "cr") +
+  s(log10.pesticide.risk, k = 6, bs = "cr") + s(log10.humans, k = 6, bs = "cr"),
+  method = "ML",
+  family = "gaussian",
+  correlation = corStructs[[2]],
+  data = datasets$wc$gamm_input)
+gamm_selection_wc[[1]] <- full_model_gamm
+
+Sys.time()
+```
+### Drop one term at a time
+
+```{r}
+
+
+Sys.time()
+#to reach convergence
+options(mgcv.vc.logrange = 5)
+lmeCtlList=lmeControl(niterEM = 50)
+drop_temp_gamm <- gamm(
+  species.richness ~  s(log10.mean.ann.rain, k = 6, bs = "cr") +
+  s(topographic.wetness, k = 6, bs = "cr") + s(ph, k = 4, bs = "cr") + 
+  s(total.n, k = 6, bs = "cr") + s(tree.density, k = 6, bs = "cr") +
+  s(log10.pesticide.risk, k = 6, bs = "cr") + s(log10.humans, k = 6, bs = "cr"),
+  method = "ML",
+  family = "gaussian",
+  correlation = corStructs[[2]],
+  data = datasets$wc$gamm_input)
+gamm_selection_wc[[2]] <- drop_temp_gamm 
+
+Sys.time()
+
+drop_rain_gamm <- gamm(
+  species.richness ~ s(mean.ann.temp, k = 6, bs = "cr") + 
+  s(topographic.wetness, k = 6, bs = "cr") + s(ph, k = 4, bs = "cr") + 
+  s(total.n, k = 6, bs = "cr") + s(tree.density, k = 6, bs = "cr") +
+  s(log10.pesticide.risk, k = 6, bs = "cr") + s(log10.humans, k = 6, bs = "cr"),
+  method = "ML",
+  family = "gaussian",
+  correlation = corStructs[[2]],
+  data = datasets$wc$gamm_input)
+gamm_selection_wc[[3]] <- drop_rain_gamm
+
+Sys.time()
+
+drop_wet_gamm <- gamm(
+  species.richness ~ s(mean.ann.temp, k = 6, bs = "cr") + s(log10.mean.ann.rain, k = 6, bs = "cr") +
+   s(ph, k = 4, bs = "cr") + 
+  s(total.n, k = 6, bs = "cr") + s(tree.density, k = 6, bs = "cr") +
+  s(log10.pesticide.risk, k = 6, bs = "cr") + s(log10.humans, k = 6, bs = "cr"),
+  method = "ML",
+  family = "gaussian",
+  correlation = corStructs[[2]],
+  data = datasets$wc$gamm_input)
+gamm_selection_wc[[4]] <- drop_wet_gamm
+
+Sys.time()
+
+drop_ph_gamm <- gamm(
+  species.richness ~ s(mean.ann.temp, k = 6, bs = "cr") + s(log10.mean.ann.rain, k = 6, bs = "cr") +
+  s(topographic.wetness, k = 6, bs = "cr")  + 
+  s(total.n, k = 6, bs = "cr") + s(tree.density, k = 6, bs = "cr") +
+  s(log10.pesticide.risk, k = 6, bs = "cr") + s(log10.humans, k = 6, bs = "cr"),
+  method = "ML",
+  family = "gaussian",
+  correlation = corStructs[[2]],
+  data = datasets$wc$gamm_input)
+gamm_selection_wc[[5]] <- drop_ph_gamm 
+
+Sys.time()
+
+drop_n_gamm <- gamm(
+  species.richness ~ s(mean.ann.temp, k = 6, bs = "cr") + s(log10.mean.ann.rain, k = 6, bs = "cr") +
+  s(topographic.wetness, k = 6, bs = "cr") + s(ph, k = 4, bs = "cr") + 
+   s(tree.density, k = 6, bs = "cr") +
+  s(log10.pesticide.risk, k = 6, bs = "cr") + s(log10.humans, k = 6, bs = "cr"),
+  method = "ML",
+  family = "gaussian",
+  correlation = corStructs[[2]],
+  data = datasets$wc$gamm_input)
+gamm_selection_wc[[6]] <- drop_n_gamm
+
+Sys.time()
+
+drop_trees_gamm <- gamm(
+  species.richness ~ s(mean.ann.temp, k = 6, bs = "cr") + s(log10.mean.ann.rain, k = 6, bs = "cr") +
+  s(topographic.wetness, k = 6, bs = "cr") + s(ph, k = 4, bs = "cr") + 
+  s(total.n, k = 6, bs = "cr") + 
+  s(log10.pesticide.risk, k = 6, bs = "cr") + s(log10.humans, k = 6, bs = "cr"),
+  method = "ML",
+  family = "gaussian",
+  correlation = corStructs[[2]],
+  data = datasets$wc$gamm_input)
+gamm_selection_wc[[7]] <- drop_trees_gamm
+
+Sys.time()
+
+drop_pesticide_gamm <- gamm(
+  species.richness ~ s(mean.ann.temp, k = 6, bs = "cr") + s(log10.mean.ann.rain, k = 6, bs = "cr") +
+  s(topographic.wetness, k = 6, bs = "cr") + s(ph, k = 4, bs = "cr") + 
+  s(total.n, k = 6, bs = "cr") + s(tree.density, k = 6, bs = "cr") +
+   + s(log10.humans, k = 6, bs = "cr"),
+  method = "ML",
+  family = "gaussian",
+  correlation = corStructs[[2]],
+  data = datasets$wc$gamm_input)
+gamm_selection_wc[[8]] <- drop_pesticide_gamm
+
+Sys.time()
+
+drop_humans_gamm <- gamm(
+  species.richness ~ s(mean.ann.temp, k = 6, bs = "cr") + s(log10.mean.ann.rain, k = 6, bs = "cr") +
+  s(topographic.wetness, k = 6, bs = "cr") + s(ph, k = 4, bs = "cr") + 
+  s(total.n, k = 6, bs = "cr") + s(tree.density, k = 6, bs = "cr") +
+  s(log10.pesticide.risk, k = 6, bs = "cr"),
+  method = "ML",
+  family = "gaussian",
+  correlation = corStructs[[2]],
+  data = datasets$wc$gamm_input)
+gamm_selection_wc[[9]] <- drop_humans_gamm
+Sys.time()
+
+
+
+names(gamm_selection_wc) <-c ("full_model", "drop_temp", "drop_rain", "drop_wet", "drop_ph", "drop_n","drop_trees", "drop_pesticide", "drop_humans") 
+
+
+filedir <- paste0(here(out_path), "/GAMM_wc")
+if(!dir.exists(filedir)) dir.create(filedir)
+filepath <- paste0(filedir, "/gamm_model_select_wc2.rds")
+filepath
+write_rds(gamm_selection_wc , 
+          file = filepath)
+```
+```{r}
+# If already saved
+gamm_selection_wc <- readRDS(here("Output/Spatial/GAM/GAMM_wc/gamm_model_select_wc2.rds"))
+
+full_model_gamm <- gamm_selection_wc[[1]]
+drop_temp_gamm <- gamm_selection_wc[[2]]
+drop_rain_gamm <- gamm_selection_wc[[3]]
+drop_wet_gamm <- gamm_selection_wc[[4]]
+drop_ph_gamm <- gamm_selection_wc[[5]]
+drop_n_gamm <- gamm_selection_wc[[6]]
+drop_trees_gamm <- gamm_selection_wc[[7]]
+drop_pesticide_gamm <- gamm_selection_wc[[8]]
+drop_humans_gamm <- gamm_selection_wc[[9]]
+
+
+gam.check(full_model_gamm$gam)
+plot(full_model_gamm$gam, pages = 2)
+
+summary(full_model_gamm$gam)
+summary(drop_temp_gamm$gam)
+summary(drop_rain_gamm$gam)
+summary(drop_wet_gamm$gam)
+summary(drop_ph_gamm$gam)
+summary(drop_n_gamm$gam)
+summary(drop_pesticide_gamm$gam)
+summary(drop_humans_gamm$gam)
+
+
+BIC(full_model_gamm$lme, drop_temp_gamm$lme)
+BIC(full_model_gamm$lme, drop_rain_gamm$lme)
+BIC(full_model_gamm$lme, drop_wet_gamm$lme)
+BIC(full_model_gamm$lme, drop_ph_gamm$lme)
+BIC(full_model_gamm$lme, drop_n_gamm$lme)
+BIC(full_model_gamm$lme, drop_trees_gamm$lme)
+BIC(full_model_gamm$lme, drop_pesticide_gamm$lme)
+BIC(full_model_gamm$lme, drop_humans_gamm$lme)
+```
+
+### hs
+
+### This takes ages due to PQL iterating
+
+### Run full model with all smooths
+
+```{r}
+gamm_selection_hs <- list()
+
+Sys.time()
+#to reach convergence
+options(mgcv.vc.logrange = 5)
+#increased iterations and evaluations https://stackoverflow.com/questions/68122117/nlminb-problem-convergence-error-code-1-message-iteration-limit-reached-wit
+lmeCtlList=lmeControl(niterEM = 50, msMaxIter = 1000, msMaxEval = 1000)
+
+full_model_gamm <- gamm(
+  species.richness ~ s(mean.ann.temp, k = 6, bs = "cr") + s(log10.mean.ann.rain, k = 6, bs = "cr") +
+  s(topographic.wetness, k = 6, bs = "cr") + s(ph, k = 4, bs = "cr") + 
+  s(total.n, k = 6, bs = "cr") + s(tree.density, k = 6, bs = "cr") +
+  s(log10.pesticide.risk, k = 6, bs = "cr") + s(log10.humans, k = 6, bs = "cr"),
+  method = "ML",
+    family = negbin(theta = 4.663),    
+  control=lmeCtlList,
+  correlation = corStructs[[1]],
+  data = datasets$hs$gamm_input)
+gamm_selection_hs[[1]] <- full_model_gamm
+
+Sys.time()
+```
+### Drop one term at a time
+
+```{r}
+
+
+Sys.time()
+#to reach convergence
+drop_temp_gamm <- gamm(
+  species.richness ~  s(log10.mean.ann.rain, k = 6, bs = "cr") +
+  s(topographic.wetness, k = 6, bs = "cr") + s(ph, k = 4, bs = "cr") + 
+  s(total.n, k = 6, bs = "cr") + s(tree.density, k = 6, bs = "cr") +
+  s(log10.pesticide.risk, k = 6, bs = "cr") + s(log10.humans, k = 6, bs = "cr"),
+  method = "ML",
+    family = negbin(theta = 4.663),    
+  control=lmeCtlList,
+  correlation = corStructs[[1]],
+  data = datasets$hs$gamm_input)
+gamm_selection_hs[[2]] <- drop_temp_gamm 
+
+Sys.time()
+
+drop_rain_gamm <- gamm(
+  species.richness ~ s(mean.ann.temp, k = 6, bs = "cr") + 
+  s(topographic.wetness, k = 6, bs = "cr") + s(ph, k = 4, bs = "cr") + 
+  s(total.n, k = 6, bs = "cr") + s(tree.density, k = 6, bs = "cr") +
+  s(log10.pesticide.risk, k = 6, bs = "cr") + s(log10.humans, k = 6, bs = "cr"),
+  method = "ML",
+    family = negbin(theta = 4.663),    
+  control=lmeCtlList,
+  correlation = corStructs[[1]],
+  data = datasets$hs$gamm_input)
+gamm_selection_hs[[3]] <- drop_rain_gamm
+
+Sys.time()
+
+drop_wet_gamm <- gamm(
+  species.richness ~ s(mean.ann.temp, k = 6, bs = "cr") + s(log10.mean.ann.rain, k = 6, bs = "cr") +
+   s(ph, k = 4, bs = "cr") + 
+  s(total.n, k = 6, bs = "cr") + s(tree.density, k = 6, bs = "cr") +
+  s(log10.pesticide.risk, k = 6, bs = "cr") + s(log10.humans, k = 6, bs = "cr"),
+  method = "ML",
+    family = negbin(theta = 4.663),    
+  control=lmeCtlList,
+  correlation = corStructs[[1]],
+  data = datasets$hs$gamm_input)
+gamm_selection_hs[[4]] <- drop_wet_gamm
+
+Sys.time()
+
+drop_ph_gamm <- gamm(
+  species.richness ~ s(mean.ann.temp, k = 6, bs = "cr") + s(log10.mean.ann.rain, k = 6, bs = "cr") +
+  s(topographic.wetness, k = 6, bs = "cr")  + 
+  s(total.n, k = 6, bs = "cr") + s(tree.density, k = 6, bs = "cr") +
+  s(log10.pesticide.risk, k = 6, bs = "cr") + s(log10.humans, k = 6, bs = "cr"),
+  method = "ML",
+    family = negbin(theta = 4.663),    
+  control=lmeCtlList,
+  correlation = corStructs[[1]],
+  data = datasets$hs$gamm_input)
+gamm_selection_hs[[5]] <- drop_ph_gamm 
+
+Sys.time()
+
+drop_n_gamm <- gamm(
+  species.richness ~ s(mean.ann.temp, k = 6, bs = "cr") + s(log10.mean.ann.rain, k = 6, bs = "cr") +
+  s(topographic.wetness, k = 6, bs = "cr") + s(ph, k = 4, bs = "cr") + 
+   s(tree.density, k = 6, bs = "cr") +
+  s(log10.pesticide.risk, k = 6, bs = "cr") + s(log10.humans, k = 6, bs = "cr"),
+  method = "ML",
+    family = negbin(theta = 4.663),    
+  control=lmeCtlList,
+  correlation = corStructs[[1]],
+  data = datasets$hs$gamm_input)
+gamm_selection_hs[[6]] <- drop_n_gamm
+
+Sys.time()
+
+drop_trees_gamm <- gamm(
+  species.richness ~ s(mean.ann.temp, k = 6, bs = "cr") + s(log10.mean.ann.rain, k = 6, bs = "cr") +
+  s(topographic.wetness, k = 6, bs = "cr") + s(ph, k = 4, bs = "cr") + 
+  s(total.n, k = 6, bs = "cr") + 
+  s(log10.pesticide.risk, k = 6, bs = "cr") + s(log10.humans, k = 6, bs = "cr"),
+  method = "ML",
+    family = negbin(theta = 4.663),    
+  control=lmeCtlList,
+  correlation = corStructs[[1]],
+  data = datasets$hs$gamm_input)
+gamm_selection_hs[[7]] <- drop_trees_gamm
+
+Sys.time()
+
+drop_pesticide_gamm <- gamm(
+  species.richness ~ s(mean.ann.temp, k = 6, bs = "cr") + s(log10.mean.ann.rain, k = 6, bs = "cr") +
+  s(topographic.wetness, k = 6, bs = "cr") + s(ph, k = 4, bs = "cr") + 
+  s(total.n, k = 6, bs = "cr") + s(tree.density, k = 6, bs = "cr") +
+   + s(log10.humans, k = 6, bs = "cr"),
+  method = "ML",
+    family = negbin(theta = 4.663),    
+  control=lmeCtlList,
+  correlation = corStructs[[1]],
+  data = datasets$hs$gamm_input)
+gamm_selection_hs[[8]] <- drop_pesticide_gamm
+
+Sys.time()
+
+drop_humans_gamm <- gamm(
+  species.richness ~ s(mean.ann.temp, k = 6, bs = "cr") + s(log10.mean.ann.rain, k = 6, bs = "cr") +
+  s(topographic.wetness, k = 6, bs = "cr") + s(ph, k = 4, bs = "cr") + 
+  s(total.n, k = 6, bs = "cr") + s(tree.density, k = 6, bs = "cr") +
+  s(log10.pesticide.risk, k = 6, bs = "cr"),
+  method = "ML",
+    family = negbin(theta = 4.663),    
+  control=lmeCtlList,
+  correlation = corStructs[[1]],
+  data = datasets$hs$gamm_input)
+gamm_selection_hs[[9]] <- drop_humans_gamm
+Sys.time()
+
+
+
+names(gamm_selection_hs) <-c ("full_model", "drop_temp", "drop_rain", "drop_wet", "drop_ph", "drop_n","drop_trees", "drop_pesticide", "drop_humans") 
+
+
+filedir <- paste0(here(out_path), "/GAMM_hs")
+if(!dir.exists(filedir)) dir.create(filedir)
+filepath <- paste0(filedir, "/gamm_model_select_hs2.rds")
+filepath
+write_rds(gamm_selection_hs , 
+          file = filepath)
+```
+#using corGaus instead of corExp as for this, it had lower AIC
+
+
+```{r}
+# If already saved, load again to make figures and output
+gamm_selection_hs <- readRDS(here("Output/Spatial/GAM/GAMM_hs/gamm_model_select_hs2.rds"))
+
+full_model_gamm <- gamm_selection_hs[[1]]
+drop_temp_gamm <- gamm_selection_hs[[2]]
+drop_rain_gamm <- gamm_selection_hs[[3]]
+drop_wet_gamm <- gamm_selection_hs[[4]]
+drop_ph_gamm <- gamm_selection_hs[[5]]
+drop_n_gamm <- gamm_selection_hs[[6]]
+drop_trees_gamm <- gamm_selection_hs[[7]]
+drop_pesticide_gamm <- gamm_selection_hs[[8]]
+drop_humans_gamm <- gamm_selection_hs[[9]]
+
+
+gam.check(full_model_gamm$gam)
+plot(full_model_gamm$gam, pages = 2)
+
+summary(full_model_gamm$gam)
+summary(drop_temp_gamm$gam)
+summary(drop_rain_gamm$gam)
+summary(drop_wet_gamm$gam)
+summary(drop_ph_gamm$gam)
+summary(drop_n_gamm$gam)
+summary(drop_pesticide_gamm$gam)
+summary(drop_humans_gamm$gam)
+
+#google search query "what method is used by gamm::mgcv with "family=negbin"
+
+#Not but gamm4 won't work with correlation structure
+BIC(full_model_gamm$lme)
+BIC(drop_temp_gamm$lme)
+BIC(drop_rain_gamm$lme)
+BIC(drop_wet_gamm$lme)
+BIC(drop_ph_gamm$lme)
+BIC(drop_n_gamm$lme)
+BIC(drop_trees_gamm$lme)
+BIC(drop_pesticide_gamm$lme)
+BIC(drop_humans_gamm$lme)
+
+
+# marginal and conditional pseudo r-squared 
+
+#" are two measures of goodness-of-fit for mixed-effects models (models that contain both fixed and random effects). The marginal \(R^{2}\) measures the variance explained by the fixed effects alone, while the conditional \(R^{2}\) measures the variance explained by both the fixed and random effects combined."
+
+# help function claims that this represents variance explained
+r.squaredGLMM(full_model_gamm$lme)
+r.squaredGLMM(drop_temp_gamm$lme)
+r.squaredGLMM(drop_rain_gamm$lme)
+r.squaredGLMM(drop_wet_gamm$lme)
+r.squaredGLMM(drop_ph_gamm$lme)
+r.squaredGLMM(drop_n_gamm$lme)
+r.squaredGLMM(drop_trees_gamm$lme)
+r.squaredGLMM(drop_pesticide_gamm$lme)
+r.squaredGLMM(drop_humans_gamm$lme)
+```

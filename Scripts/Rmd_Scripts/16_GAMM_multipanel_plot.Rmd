@@ -5,6 +5,9 @@ output: html_notebook
 `
 # This makes figure 2
 
+
+#### see also  https://ecogambler.netlify.app/blog/interpreting-gams/
+#### https://www.rdocumentation.org/packages/mgcv/versions/1.9-4/topics/plot.gam
 ```{r}
 here::i_am("Scripts/Rmd_Scripts/16_Gamm_multipanel_plot.Rmd")
 library(tidyverse)
