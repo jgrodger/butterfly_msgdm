@@ -18,6 +18,8 @@ library(gstat)
 library(knitr)
 library(knitrProgressBar)
 library(tictoc)
+library(foreach)
+library(doParallel)
 library(here)
 library(conflicted)
 conflicts_prefer(dplyr::filter)
@@ -25,6 +27,14 @@ conflicts_prefer(dplyr::select)
 conflicts_prefer(knitrProgressBar::progress_estimated)
 # there is a same-named function in dplyr, check it out
 ```
+
+```{r}
+cores <- detectCores() - 1 
+cl <- makeCluster(cores)
+
+```
+
+
 
 # Model selection
 
@@ -63,6 +73,7 @@ names(datasets) <- c("all_species", "wc", "hs")
 
 
 #### get formulas for all combinations for possible use in asv.hp
+
 ```{r}
 smooths <- c(
   's(mean.ann.temp, k = 6, bs = "cr")', 
@@ -72,7 +83,7 @@ smooths <- c(
   's(total.n, k = 6, bs = "cr")',
   's(tree.density, k = 6, bs = "cr")',
   's(log10.pesticide.risk, k = 6, bs = "cr")',
-  's(log10.humans, k = 6, bs = "cr"))'
+  's(log10.humans, k = 6, bs = "cr")'
             )
 
 # Loop through to get combinations of size 1, 2, and 3
@@ -81,9 +92,13 @@ all_combos <- unlist(lapply(1:length(smooths), function(n) combn(smooths, n, FUN
 
 all_combos[[1]]
 
+```
+
+```{r}
+
 # to do: make look to do gamms with all formulas
 
-model <- gamm(as.formula(all_combos[[1]]),
+model <- gamm(as.formula(all_combos[[8]]),
   method = "ML",
   family = "gaussian",
   correlation = corStructs[[2]],
@@ -91,16 +106,21 @@ model <- gamm(as.formula(all_combos[[1]]),
 
 summary(model$gam)
 
-```
 
-```{r}
 
 model_results <- list()
-# 4. Loop through the vector
+
 #for (form_str in formula_strings) {
   for (i in 1:2) {
-  # Convert string to formula and run the model
-    model <- gamm(formula_list2[[i]], 
+    
+# Print the iteration number and the current system time
+  cat("Iteration:", i, "| Time:", as.character(Sys.time()), "\n")
+  
+#. Force R to print the line immediately to the console
+  flush.console()
+  
+# Convert string to formula and run the model
+    model <- gamm(as.formula(all_combos[[i]]), 
   method = "ML",
   family = "gaussian",
   correlation = corStructs[[2]],
@@ -109,9 +129,46 @@ model_results <- list()
   model_results[[i]] <- model
   }
 
-for (i in seq_along(formulas_list)) {
-  models_list[[i]] <- lm(formulas_list[[i]], data = mtcars)
+summary(model_results[[1]]$gam)
+summary(model_results[[2]]$gam)
+
+for (i in 1:5) {
+  # 1. Print the iteration number and the current system time
+  cat("Iteration:", i, "| Time:", as.character(Sys.time()), "\n")
+  
+  # 2. Force R to print the line immediately to the console
+  flush.console()
+  
+  # 3. Simulated workload (pauses execution for 1.5 seconds)
+  Sys.sleep(1.5) 
 }
+```
+```{r}
+registerDoParallel(cl)
+
+# Use .combine to format the output (e.g., 'c' for a vector, 'rbind' 
+
+result_list <- foreach(i = 1:8) %do% {
+gamm(as.formula(all_combos[[i]]), 
+  method = "ML",
+  family = "gaussian",
+  correlation = corStructs[[2]],
+  data = datasets$all_species$gamm_input)
+  
+ # cat("Iteration:", i, "| Time:", as.character(Sys.time()), "\n")
+  
+  # 2. Force R to print the line immediately to the console
+#  flush.console()
+}
+# Output: list(2, 4, 6)
+
+
+
+stopCluster(cl)
+
+summary(result_list[[1]]$gam)
+summary(result_list[[2]]$gam)
+summary(result_list[[8]]$gam)
 
 ```
 
