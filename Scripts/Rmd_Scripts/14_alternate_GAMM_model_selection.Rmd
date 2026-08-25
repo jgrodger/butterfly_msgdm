@@ -29,7 +29,9 @@ conflicts_prefer(knitrProgressBar::progress_estimated)
 ```
 
 ```{r}
-cores <- detectCores() - 1 
+#cores <- detectCores() - 1 
+
+cores <- 50
 cl <- makeCluster(cores)
 
 ```
@@ -108,70 +110,203 @@ summary(model$gam)
 
 
 
-model_results <- list()
-
-#for (form_str in formula_strings) {
-  for (i in 1:2) {
-    
-# Print the iteration number and the current system time
-  cat("Iteration:", i, "| Time:", as.character(Sys.time()), "\n")
-  
-#. Force R to print the line immediately to the console
-  flush.console()
-  
-# Convert string to formula and run the model
-    model <- gamm(as.formula(all_combos[[i]]), 
-  method = "ML",
-  family = "gaussian",
-  correlation = corStructs[[2]],
-  data = datasets$all_species$gamm_input)
-  # Store the model in the list using the string as the key
-  model_results[[i]] <- model
-  }
-
-summary(model_results[[1]]$gam)
-summary(model_results[[2]]$gam)
-
-for (i in 1:5) {
-  # 1. Print the iteration number and the current system time
-  cat("Iteration:", i, "| Time:", as.character(Sys.time()), "\n")
-  
-  # 2. Force R to print the line immediately to the console
-  flush.console()
-  
-  # 3. Simulated workload (pauses execution for 1.5 seconds)
-  Sys.sleep(1.5) 
-}
+# model_results <- list()
+# 
+# #for (form_str in formula_strings) {
+#   for (i in 1:2) {
+#     
+# # Print the iteration number and the current system time
+#   cat("Iteration:", i, "| Time:", as.character(Sys.time()), "\n")
+#   
+# #. Force R to print the line immediately to the console
+#   flush.console()
+#   
+# # Convert string to formula and run the model
+#     model <- gamm(as.formula(all_combos[[i]]), 
+#   method = "ML",
+#   family = "gaussian",
+#   correlation = corStructs[[2]],
+#   data = datasets$all_species$gamm_input)
+#   # Store the model in the list using the string as the key
+#   model_results[[i]] <- model
+#   }
+# 
+# summary(model_results[[1]]$gam)
+# summary(model_results[[2]]$gam)
+# 
+# for (i in 1:5) {
+#   # 1. Print the iteration number and the current system time
+#   cat("Iteration:", i, "| Time:", as.character(Sys.time()), "\n")
+#   
+#   # 2. Force R to print the line immediately to the console
+#   flush.console()
+#   
+#   # 3. Simulated workload (pauses execution for 1.5 seconds)
+#   Sys.sleep(1.5) 
+# }
 ```
+
+# All species factorial
 ```{r}
+# set file path
+filedir <- paste0(here(out_path), "/GAMM_all_species/factorial/")
+if(!dir.exists(filedir)) dir.create(filedir)
+filedir
+
+#set up cluster
+cl <- makeCluster(cores)
 registerDoParallel(cl)
 
+#do gamms in parralel
 # Use .combine to format the output (e.g., 'c' for a vector, 'rbind' 
-
-result_list <- foreach(i = 1:8) %do% {
-gamm(as.formula(all_combos[[i]]), 
+result_list <- foreach(i = 1:length(all_combos), .packages = "mgcv", .errorhandling = "pass") %dopar% {
+tryCatch({
+igamm <- gamm(as.formula(all_combos[[i]]), 
   method = "ML",
   family = "gaussian",
   correlation = corStructs[[2]],
   data = datasets$all_species$gamm_input)
+  # print time in console
+  cat("Iteration:", i, "| Time:", as.character(Sys.time()), "\n")
+  #flush.console()  
   
- # cat("Iteration:", i, "| Time:", as.character(Sys.time()), "\n")
+  # Create a unique filename dynamically
+  igamm_name <- paste0("gamm_iteration_", i, ".rds")
+  ifilepath <- paste0(filedir, igamm_name)
+  saveRDS(igamm, file = ifilepath)
   
-  # 2. Force R to print the line immediately to the console
-#  flush.console()
-}
+  igamm
+}, error = function(e) {
+    # Action to take if an error occurs
+    warning(paste("Failed processing element:", i, "-", e$message))
+    return(NULL) # Return a default safe value
+  })
+ }
 # Output: list(2, 4, 6)
-
-
 
 stopCluster(cl)
 
+#print some summaries
 summary(result_list[[1]]$gam)
-summary(result_list[[2]]$gam)
-summary(result_list[[8]]$gam)
+summary(result_list[[22]]$gam)
+summary(result_list[[255]]$gam)
+
+#write to file
+filepath <- paste0(filedir, "/gamm_model_select_factorial.rds")
+filepath
+write_rds(result_list, 
+          file = filepath)
 
 ```
 
+# wc factorial
+```{r}
+# set file path
+filedir <- paste0(here(out_path), "/GAMM_wc/factorial/")
+if(!dir.exists(filedir)) dir.create(filedir)
+filedir
+
+#set up cluster
+cl <- makeCluster(cores)
+registerDoParallel(cl)
+
+#do gamms in parralel
+# Use .combine to format the output (e.g., 'c' for a vector, 'rbind' 
+result_list <- foreach(i = 1:length(all_combos), .packages = "mgcv", .errorhandling = "pass") %dopar% {
+tryCatch({
+igamm <- gamm(as.formula(all_combos[[i]]), 
+  method = "ML",
+  family = "gaussian",
+  correlation = corStructs[[2]],
+  data = datasets$wc$gamm_input)
+  # print time in console
+  cat("Iteration:", i, "| Time:", as.character(Sys.time()), "\n")
+  #flush.console()  
+  
+  # Create a unique filename dynamically
+  igamm_name <- paste0("gamm_iteration_", i, ".rds")
+  ifilepath <- paste0(filedir, igamm_name)
+  saveRDS(igamm, file = ifilepath)
+  
+  igamm
+}, error = function(e) {
+    # Action to take if an error occurs
+    warning(paste("Failed processing element:", i, "-", e$message))
+    return(NULL) # Return a default safe value
+  })
+ }
+# Output: list(2, 4, 6)
+
+stopCluster(cl)
+
+#print some summaries
+summary(result_list[[1]]$gam)
+summary(result_list[[22]]$gam)
+summary(result_list[[255]]$gam)
+
+#write to file
+filepath <- paste0(filedir, "/gamm_model_select_factorial.rds")
+filepath
+write_rds(result_list, 
+          file = filepath)
+
+```
+
+# hs factorial
+```{r}
+# set file path
+filedir <- paste0(here(out_path), "/GAMM_hs/factorial/")
+if(!dir.exists(filedir)) dir.create(filedir)
+filedir
+
+#set up cluster
+cl <- makeCluster(cores)
+registerDoParallel(cl)
+
+#do gamms in parralel
+# Use .combine to format the output (e.g., 'c' for a vector, 'rbind' 
+result_list <- foreach(i = 1:length(all_combos), .packages = "mgcv", .errorhandling = "pass") %dopar% {
+tryCatch({
+  options(mgcv.vc.logrange = 5)
+  lmeCtlList=lmeControl(niterEM = 50, msMaxIter = 1000, msMaxEval = 1000)
+igamm <- gamm(as.formula(all_combos[[i]]), 
+  method = "ML",
+  family = negbin(theta = 4.663),    
+  control=lmeCtlList,
+  correlation = corStructs[[1]],
+  data = datasets$hs$gamm_input)
+  # print time in console
+  cat("Iteration:", i, "| Time:", as.character(Sys.time()), "\n")
+  #flush.console()  
+  
+  # Create a unique filename dynamically
+  igamm_name <- paste0("gamm_iteration_", i, ".rds")
+  ifilepath <- paste0(filedir, igamm_name)
+  saveRDS(igamm, file = ifilepath)
+  
+  igamm
+}, error = function(e) {
+    # Action to take if an error occurs
+    warning(paste("Failed processing element:", i, "-", e$message))
+    return(NULL) # Return a default safe value
+  })
+ }
+# Output: list(2, 4, 6)
+
+stopCluster(cl)
+
+#print some summaries
+summary(result_list[[1]]$gam)
+summary(result_list[[22]]$gam)
+summary(result_list[[255]]$gam)
+
+#write to file
+filepath <- paste0(filedir, "/gamm_model_select_factorial.rds")
+filepath
+write_rds(result_list, 
+          file = filepath)
+
+```
 
 ```{r}
  # "The information in the summary lme output on the fixed effects bit is not interesting neither; just use the anova(O4.gamm$gam) command for clearer information on the significance on individual terms." From Zuue et al 2009 page 339
