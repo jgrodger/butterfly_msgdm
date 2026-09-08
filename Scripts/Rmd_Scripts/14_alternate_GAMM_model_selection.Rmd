@@ -98,6 +98,21 @@ all_combos[[1]]
 
 ```
 
+
+#### get combinations of predictors for asv.hp
+
+```{r}
+simple_terms <- c('temp', 'prec', 'wet', 'ph', 'nitrogen', 'trees', 'pesticide', 'humans')
+
+# Loop through to get combinations of size 1, 2, and 3
+# Generate all subsets of all possible lengths
+term_combos <- unlist(lapply(1:length(simple_terms), function(n) combn(simple_terms, n, FUN=function(row)  paste0(row, collapse = "+"))))
+
+term_combos[[1]]
+
+```
+
+
 ```{r}
 
 # to do: make look to do gamms with all formulas
@@ -200,19 +215,6 @@ write_rds(result_list,
           file = filepath)
 
 ```
-#### get combinations of predictors for asv.hp
-
-```{r}
-simple_terms <- c('temp', 'prec', 'wet', 'ph', 'nitrogen', 'trees', 'pesticide', 'humans')
-
-# Loop through to get combinations of size 1, 2, and 3
-# Generate all subsets of all possible lengths
-term_combos <- unlist(lapply(1:length(simple_terms), function(n) combn(simple_terms, n, FUN=function(row)  paste0(row, collapse = "+"))))
-
-term_combos[[1]]
-
-```
-
 
 
 ```{r}
@@ -225,7 +227,6 @@ rsqs <- sapply(as_gamms,function(x) {
   summary(x$gam)$r.sq
 }) 
 
-
 my.hp.data <- data.frame(cbind(term_combos, rsqs))
 
 # Hierarchical partitioning based on ASV
@@ -234,37 +235,10 @@ asv.hp(my.hp.data)
 # Hierarchical partitioning and commonality analysis
 asv.hp(my.hp.data, commonality = TRUE)
 
-#example code from help function
-
-
-hp.data <- data.frame(
-  variables = c(
-    "x1",
-    "x2",
-    "x3",
-    "x1+x2",
-    "x1+x3",
-    "x2+x3",
-    "x1+x2+x3"
-  ),
-  R2 = c(
-    0.18,
-    0.12,
-    0.10,
-    0.24,
-    0.22,
-    0.19,
-    0.30
-  )
-)
-
-# Hierarchical partitioning based on ASV
-asv.hp(hp.data)
-
-# Hierarchical partitioning and commonality analysis
-asv.hp(hp.data, commonality = TRUE)
-
-
+filepath <- paste0(filedir, "/gamm_as_hp_data.rds")
+filepath
+write_rds(my.hp.data, 
+          file = filepath)
 ```
 
 
@@ -321,6 +295,32 @@ write_rds(result_list,
 
 ```
 
+
+
+```{r}
+wc_gamms <- readRDS(here("./Output/Spatial/GAM/GAMM_wc/factorial//gamm_model_select_factorial.rds"))
+
+#Extract adjusted r squared value from gamm models
+rsqs <- sapply(wc_gamms,function(x) {
+  summary(x$gam)$r.sq
+}) 
+
+my.hp.data <- data.frame(cbind(term_combos, rsqs))
+
+# Hierarchical partitioning based on ASV
+asv.hp(my.hp.data)
+
+# Hierarchical partitioning and commonality analysis
+asv.hp(my.hp.data, commonality = TRUE)
+
+filepath <- paste0(filedir, "/gamm_wc_hp_data.rds")
+filepath
+write_rds(my.hp.data, 
+          file = filepath)
+
+
+```
+
 # hs factorial
 ```{r}
 # set file path
@@ -374,6 +374,26 @@ filepath <- paste0(filedir, "/gamm_model_select_factorial.rds")
 filepath
 write_rds(result_list, 
           file = filepath)
+
+```
+
+
+
+```{r}
+hs_gamms <- readRDS(here("./Output/Spatial/GAM/GAMM_hs/factorial//gamm_model_select_factorial.rds"))
+
+#Extract adjusted r squared value from gamm models
+rsqs <- sapply(hs_gamms,function(x) {
+  summary(x$gam)$r.sq
+}) 
+
+my.hp.data <- data.frame(cbind(term_combos, rsqs))
+
+# Hierarchical partitioning based on ASV
+asv.hp(my.hp.data)
+
+# Hierarchical partitioning and commonality analysis
+asv.hp(my.hp.data, commonality = TRUE)
 
 ```
 
