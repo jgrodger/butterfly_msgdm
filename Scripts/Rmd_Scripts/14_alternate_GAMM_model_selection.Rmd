@@ -29,7 +29,7 @@ conflicts_prefer(dplyr::select)
 conflicts_prefer(knitrProgressBar::progress_estimated)
 # there is a same-named function in dplyr, check it out
 ```
-
+#### Set up copies of R running in parallel. I played it safe and used about half of available cores. This was probably overcautious 
 ```{r}
 #cores <- detectCores() - 1 
 
@@ -37,20 +37,6 @@ cores <- 50
 cl <- makeCluster(cores)
 
 ```
-
-
-
-# Model selection
-
-<!-- ### load files from correlation structure analyses -->
-<!-- ```{r} -->
-<!-- cor_gamms_as <- readRDS(here("Output/Spatial/GAM/GAMM_all_species/gamm_cor_struct_compare.rds")) -->
-
-<!-- cor_gamms_wc <- readRDS(here("Output/Spatial/GAM/GAMM_wc/gamm_cor_struct_compare.rds")) -->
-
-<!-- cor_gamms_hs <- readRDS(here("Output/Spatial/GAM/GAMM_hs/gamm_cor_struct_compare.rds")) -->
-
-<!-- ``` -->
 
 ### Specify  correlation structures
 ```{r}
@@ -75,9 +61,7 @@ datasets <- list(all_species, wc, hs)
 names(datasets) <- c("all_species", "wc", "hs")
 ```
 
-
-#### get formulas for all combinations for possible use in asv.hp
-
+#### Get formulas for all combinations of smooths for use doing gamms on all combinations of smooths
 ```{r}
 smooths <- c(
   's(mean.ann.temp, k = 6, bs = "cr")', 
@@ -90,7 +74,6 @@ smooths <- c(
   's(log10.humans, k = 6, bs = "cr")'
             )
 
-# Loop through to get combinations of size 1, 2, and 3
 # Generate all subsets of all possible lengths
 all_combos <- unlist(lapply(1:length(smooths), function(n) combn(smooths, n, FUN=function(row) paste0("species.richness ~ ", paste0(row, collapse = "+")))))
 
@@ -98,72 +81,16 @@ all_combos[[1]]
 
 ```
 
-
-#### get combinations of predictors for asv.hp
-
+#### get combinations of names of predictor values corresponding to smooths for use in a spread sheet for asv.hp, in combination with adjustd r-squared values from corresponding gamms
 ```{r}
 simple_terms <- c('temp', 'prec', 'wet', 'ph', 'nitrogen', 'trees', 'pesticide', 'humans')
 
-# Loop through to get combinations of size 1, 2, and 3
 # Generate all subsets of all possible lengths
 term_combos <- unlist(lapply(1:length(simple_terms), function(n) combn(simple_terms, n, FUN=function(row)  paste0(row, collapse = "+"))))
-
 term_combos[[1]]
-
 ```
 
-
-```{r}
-
-# to do: make look to do gamms with all formulas
-
-model <- gamm(as.formula(all_combos[[8]]),
-  method = "ML",
-  family = "gaussian",
-  correlation = corStructs[[2]],
-  data = datasets$all_species$gamm_input)
-
-summary(model$gam)
-
-
-
-# model_results <- list()
-# 
-# #for (form_str in formula_strings) {
-#   for (i in 1:2) {
-#     
-# # Print the iteration number and the current system time
-#   cat("Iteration:", i, "| Time:", as.character(Sys.time()), "\n")
-#   
-# #. Force R to print the line immediately to the console
-#   flush.console()
-#   
-# # Convert string to formula and run the model
-#     model <- gamm(as.formula(all_combos[[i]]), 
-#   method = "ML",
-#   family = "gaussian",
-#   correlation = corStructs[[2]],
-#   data = datasets$all_species$gamm_input)
-#   # Store the model in the list using the string as the key
-#   model_results[[i]] <- model
-#   }
-# 
-# summary(model_results[[1]]$gam)
-# summary(model_results[[2]]$gam)
-# 
-# for (i in 1:5) {
-#   # 1. Print the iteration number and the current system time
-#   cat("Iteration:", i, "| Time:", as.character(Sys.time()), "\n")
-#   
-#   # 2. Force R to print the line immediately to the console
-#   flush.console()
-#   
-#   # 3. Simulated workload (pauses execution for 1.5 seconds)
-#   Sys.sleep(1.5) 
-# }
-```
-
-# All species factorial
+#### Run gamms for all combinations of smooths for all species
 ```{r}
 # set file path
 filedir <- paste0(here(out_path), "/GAMM_all_species/factorial/")
@@ -216,7 +143,7 @@ write_rds(result_list,
 
 ```
 
-
+#### Variation partitioning for all species
 ```{r}
 as_gamms <- readRDS(here("./Output/Spatial/GAM/GAMM_all_species/factorial//gamm_model_select_factorial.rds"))
 
@@ -227,8 +154,7 @@ rsqs <- sapply(as_gamms,function(x) {
   summary(x$gam)$r.sq
 }) 
 
-
-
+# Make a dataframe where first column is terms in the model and second is adusted r-squared
 my.hp.data <- data.frame(cbind(term_combos, rsqs))
 
 #change negative r squared values to zero
@@ -240,6 +166,8 @@ asv.hp(my.hp.data)
 # Hierarchical partitioning and commonality analysis
 asv.hp(my.hp.data, commonality = TRUE)
 
+
+filedir <- paste0(here(out_path), "/GAMM_all_species/factorial/")
 filepath <- paste0(filedir, "/gamm_as_hp_data.rds")
 filepath
 write_rds(my.hp.data, 
@@ -251,8 +179,7 @@ write_rds(my.hp.data,
 #           file = filepath)
 ```
 
-
-# wc factorial
+#### Run gamms for all combinations of smooths for wc species
 ```{r}
 # set file path
 filedir <- paste0(here(out_path), "/GAMM_wc/factorial/")
@@ -305,8 +232,7 @@ write_rds(result_list,
 
 ```
 
-
-
+#### Variation partitioning for wc species
 ```{r}
 wc_gamms <- readRDS(here("./Output/Spatial/GAM/GAMM_wc/factorial//gamm_model_select_factorial.rds"))
 
@@ -315,7 +241,7 @@ rsqs <- sapply(wc_gamms,function(x) {
   summary(x$gam)$r.sq
 }) 
 
-
+# Make a dataframe where first column is terms in the model and second is adusted r-squared
 my.hp.data <- data.frame(cbind(term_combos, rsqs))
 
 # Hierarchical partitioning based on ASV
@@ -332,7 +258,7 @@ write_rds(my.hp.data,
 
 ```
 
-# hs factorial
+#### Run gamms for all combinations of smooths for hs species
 ```{r}
 # set file path
 filedir <- paste0(here(out_path), "/GAMM_hs/factorial/")
@@ -388,18 +314,15 @@ write_rds(result_list,
 
 ```
 
-
-
+#### Variation partitioning for hsl species
 ```{r}
 hs_gamms <- readRDS(here("./Output/Spatial/GAM/GAMM_hs/factorial//gamm_model_select_factorial.rds"))
 
 rsq1 <- summary(hs_gamms[[255]]$gam)$r.sq
 
+#model 77 didn't converge. For the time being  I have set its r-squared to zero
 rsqs <- vector("numeric",255)
 
-
-
-#model 77 didn't converge
 
 for (i in 1:76){
   
@@ -415,6 +338,7 @@ rsqs[i] <- summary(hs_gamms[[i]]$gam)$r.sq
 #   summary(x$gam)$r.sq
 # })
 
+# Make a dataframe where first column is terms in the model and second is adusted r-squared
 my.hp.data <- data.frame(cbind(term_combos, rsqs))
 
 # Hierarchical partitioning based on ASV

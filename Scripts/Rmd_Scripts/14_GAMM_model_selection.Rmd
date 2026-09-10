@@ -62,6 +62,9 @@ names(datasets) <- c("all_species", "wc", "hs")
 ```
 
 # NB method = "ML"
+#### Backwards model selection
+
+#### Run models for model selection for all species
 ```{r}
 gamm_selection_as <- list()
 
@@ -126,7 +129,7 @@ write_rds(gamm_selection_as ,
           file = filepath)
 ```
 
-
+#### Compare models
 ```{r}
 # If already saved, load again to make figures and output
 gamm_selection_as <- readRDS(here("Output/Spatial/GAM/GAMM_all_species/gamm_model_select_as.rds"))
@@ -159,8 +162,7 @@ plot(drop_trees_pesticide_temp_gamm$gam, pages = 2)
 
 ```
 
-### WC
-
+#### Run models for model selection for WC species
 ```{r}
 #to reach convergence
 options(mgcv.vc.logrange = 5)
@@ -231,6 +233,8 @@ write_rds(gamm_selection_wc ,
           file = filepath)
 ```
 
+
+#### Compare models
 ```{r}
 # If already saved
 gamm_selection_wc <- readRDS(here("Output/Spatial/GAM/GAMM_wc/gamm_model_select_wc.rds"))
@@ -262,7 +266,7 @@ summary(drop_trees_pesticide_temp_gamm$gam)
 plot(drop_trees_pesticide_temp_gamm$gam, pages = 2)
 ```
 
-### HS
+#### Run models for model selection for HS species
 
 #using corGaus instead of corExp as for this, it had lower AIC
 
@@ -341,8 +345,7 @@ write_rds(gamm_selection_hs ,
           file = filepath)
 ```
 
-
-
+#### Compare models
 ```{r}
 #if already saved
 gamm_selection_hs <- readRDS(here("Output/Spatial/GAM/GAMM_hs/gamm_model_select_hs.rds"))
@@ -753,6 +756,8 @@ filepath
 write_rds(gamm_selection_wc , 
           file = filepath)
 ```
+
+
 ```{r}
 # If already saved
 gamm_selection_wc <- readRDS(here("Output/Spatial/GAM/GAMM_wc/gamm_model_select_wc2.rds"))
