@@ -313,30 +313,80 @@ write_rds(result_list,
           file = filepath)
 
 ```
+# try to get model 77 to converg
+```{r}
+# get formula
+#as.formula(all_combos[[77]])
+
+# increase msMaxIter and msMaxEvalto 2000 each but then got this error
+
+# Error in lme.formula(fixed = fixed, random = random, data = data, correlation = correlation, :
+# nlminb problem, convergence error code = 1
+# message = false convergence (8)
+
+#reduce k to 5
+
+options(mgcv.vc.logrange = 5)
+  lmeCtlList=lmeControl(niterEM = 50, msMaxIter = 2000, msMaxEval = 2000)
+gamm.77 <- gamm(species.richness ~ s(topographic.wetness, k = 5, bs = "cr") + 
+    s(total.n, k = 5, bs = "cr") + s(tree.density, k = 5, bs = "cr"), 
+  method = "ML",
+  family = negbin(theta = 4.663),    
+  control=lmeCtlList,
+  correlation = corStructs[[1]],
+  data = datasets$hs$gamm_input)
+
+summary(gamm.77$gam)
+
+# add this one to results list
+hs_gamms <- readRDS(here("./Output/Spatial/GAM/GAMM_hs/factorial//gamm_model_select_factorial.rds"))
+hs_gamms[[77]] <- gamm.77
+filepath <- paste0(filedir, "/gamm_model_select_factorial.rds")
+filepath
+write_rds(hs_gamms, 
+          file = filepath)
+
+#prouces this output
+# Family: Negative Binomial(4.663) 
+# Link function: log 
+# 
+# Formula:
+# species.richness ~ s(topographic.wetness, k = 5, bs = "cr") + 
+#     s(total.n, k = 5, bs = "cr") + s(tree.density, k = 5, bs = "cr")
+# 
+# Parametric coefficients:
+#             Estimate Std. Error t value Pr(>|t|)    
+# (Intercept)  0.88363    0.05407   16.34   <2e-16 ***
+# ---
+# Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+# 
+# Approximate significance of smooth terms:
+#                          edf Ref.df      F p-value    
+# s(topographic.wetness) 3.094  3.094 32.826 < 2e-16 ***
+# s(total.n)             2.821  2.821  4.240 0.00912 ** 
+# s(tree.density)        2.912  2.912  0.532 0.63692    
+# ---
+# Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+# 
+# R-sq.(adj) =  0.174   
+#   Scale est. = 1.3184    n = 1241
+```
+
+
 
 #### Variation partitioning for hsl species
 ```{r}
 hs_gamms <- readRDS(here("./Output/Spatial/GAM/GAMM_hs/factorial//gamm_model_select_factorial.rds"))
 
-rsq1 <- summary(hs_gamms[[255]]$gam)$r.sq
+rsq1 <- summary(hs_gamms[[77]]$gam)$r.sq
 
-#model 77 didn't converge. For the time being  I have set its r-squared to zero
 rsqs <- vector("numeric",255)
 
-
-for (i in 1:76){
-  
-rsqs[i] <- summary(hs_gamms[[i]]$gam)$r.sq  
-}
-  
-for (i in 78:255){
-  
-rsqs[i] <- summary(hs_gamms[[i]]$gam)$r.sq  
-}  
 #Extract adjusted r squared value from gamm models
-# rsqs <- sapply(hs_gamms,function(x) {
-#   summary(x$gam)$r.sq
-# })
+rsqs <- sapply(hs_gamms,function(x) {
+  summary(x$gam)$r.sq
+})
+
 
 # Make a dataframe where first column is terms in the model and second is adusted r-squared
 my.hp.data <- data.frame(cbind(term_combos, rsqs))
