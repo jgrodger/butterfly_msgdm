@@ -260,6 +260,7 @@ write_rds(my.hp.data,
 
 #### Run gamms for all combinations of smooths for hs species
 ```{r}
+
 # set file path
 filedir <- paste0(here(out_path), "/GAMM_hs/factorial/")
 if(!dir.exists(filedir)) dir.create(filedir)
