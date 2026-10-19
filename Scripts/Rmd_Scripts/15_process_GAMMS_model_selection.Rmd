@@ -36,18 +36,20 @@ conflicts_prefer(knitrProgressBar::progress_estimated)
 ```{r}
 #gamm output has been saved in output already
 
+as_gamms <- readRDS(here("./Output/Spatial/GAM/GAMM_all_species/factorial//gamm_model_select_factorial.rds"))
+
 data_path <- here("Data/Processed_Data/Spatial//" )
-gamm_path <-  here(paste0("Output/Spatial/GAM/GAMM_", params$dataset, "//"))
+gamm_path <-  here(paste0("Output/Spatial/GAM/GAMM_", params$dataset, "//factorial//gamm_model_select_factorial.rds"))
 out_path <-  here(paste0("Output/Spatial/GAM/GAMM_", params$dataset, "/", params$analysis, "/", params$corStruct, "//"))
 if(!dir.exists(out_path)) dir.create(out_path)
 ```
 
 #### Load GAMM output 
 ```{r}
-gamm_list <- readRDS(paste0(gamm_path, params$analysis, ".rds"))
+gamm_list <- readRDS(paste0(gamm_path))
 
-# this happens to work for my analyses. I haven't allowed for choosing another analysis from model selection
-my_gamm <- gamm_list[[3]]
+# output for full model
+my_gamm <- gamm_list[[255]]
 
 #choose the one specified in params
 # get() finds object with name specified as a character string
@@ -182,75 +184,5 @@ kable(info_sum)
 
 ```
 
-#gam.hp estimates importance of different smooths but does not work on gamms
-# Here we compare output from gamm and gam with a smooth that accounts for spatial autocorrelation
 
-#### This does not yet work for GAMM
-```{r}
-# R-squared values from all possible combinations of three predictors
-hp.data <- data.frame(
-  variables = c(
-    "x1",
-    "x2",
-    "x3",
-    "x1+x2",
-    "x1+x3",
-    "x2+x3",
-    "x1+x2+x3"
-  ),
-  R2 = c(
-    0.18,
-    0.12,
-    0.10,
-    0.24,
-    0.22,
-    0.19,
-    0.30
-  )
-)
-
-# Hierarchical partitioning based on ASV
-asv.hp(hp.data)
-
-# Hierarchical partitioning and commonality analysis
-asv.hp(hp.data, commonality = TRUE)
-
-#plot(gam.hp(my_gamm$gam, type = "dev"))
-```
-
-```{r}
-all_species <- readRDS(here("./Data/Processed_Data/Spatial/all_species.rds"))
-wc <- readRDS(here("./Data/Processed_Data/Spatial/wc.rds"))
-hs <- readRDS(here("./Data/Processed_Data/Spatial/hs.rds"))
-#hs_no_zeros <- readRDS(here("./Data/Processed_Data/Spatial/hs_no_zeros.rds"))
-
-# get all datasets in a list
-datasets <- list(all_species, wc, hs)
-names(datasets) <- c("all_species", "wc", "hs")
-
-
-#https://lexcomber.r-universe.dev/articles/stgam/stgam_vc_models_chaco.html
-# bs = tp because of above 
-gam_xy <- gam(
-  species.richness ~ s(x, y, k= 100, bs = "tp") + s(mean.ann.temp, k = 6, bs = "cr") + s(log10.mean.ann.rain, k = 6, bs = "cr") +
-  s(topographic.wetness, k = 6, bs = "cr") + s(ph, k = 4, bs = "cr") + s(total.n, k = 6, bs = "cr")  +
-  s(log10.humans, k = 6, bs = "cr"),
-  method = "ML",
-  family = "gaussian",
-  data = datasets$all_species$gamm_input)
-
-
-plot(gam.hp(gam_xy, type = "dev"))
-```
-
-```{r}
-gam.check(gam_xy)
-summary(gam_xy)
-plot(gam_xy, pages = 2)
-```
-```{r}
-gam.check(my_gamm$gam)
-summary(my_gamm$gam)
-plot(my_gamm$gam, pages = 2)
-```
 

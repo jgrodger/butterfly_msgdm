@@ -1,0 +1,256 @@
+---
+title: ""
+output: pdf_document
+
+params:
+  analysis: "gamm_model_select_as"
+  dataset: "all_species"
+  corStruct: "corExp"
+---
+
+
+```{r include = FALSE}
+knitr::opts_chunk$set(echo = FALSE, message = FALSE)
+```
+
+
+#### Packages
+```{r }
+here::i_am("Scripts/Rmd_Scripts/15b_process_GAMMS_model_selection_old.Rmd")
+library(tidyverse)
+library(mgcv)
+library(mgcViz)
+library(knitr)
+library(knitrProgressBar)
+library(tictoc)
+library(gam.hp)
+library(here)
+library(conflicted)
+conflicts_prefer(dplyr::filter)
+conflicts_prefer(dplyr::select)
+conflicts_prefer(knitrProgressBar::progress_estimated)
+# there is a same-named function in dplyr, check it out
+```
+
+#### File paths
+```{r}
+#gamm output has been saved in output already
+
+data_path <- here("Data/Processed_Data/Spatial//" )
+gamm_path <-  here(paste0("Output/Spatial/GAM/GAMM_", params$dataset, "//"))
+out_path <-  here(paste0("Output/Spatial/GAM/GAMM_", params$dataset, "/", params$analysis, "/", params$corStruct, "//"))
+if(!dir.exists(out_path)) dir.create(out_path)
+```
+
+#### Load GAMM output 
+```{r}
+gamm_list <- readRDS(paste0(gamm_path, params$analysis, ".rds"))
+
+# this happens to work for my analyses. I haven't allowed for choosing another analysis from model selection
+my_gamm <- gamm_list[[3]]
+
+#choose the one specified in params
+# get() finds object with name specified as a character string
+#my_gamm <- get(paste0("gamm_", params$corStruct))
+
+```
+
+#### save gamm$gam summary output as text
+```{r}
+out<-capture.output(summary(my_gamm$gam))
+cat(out,file = paste0(out_path, "gam_summ.txt"),sep="\n",append=FALSE)
+```
+
+
+#### read the text file and edit to create summary tables for presentation
+```{r}
+gam_sum <- read.delim2(paste0(out_path, "gam_summ.txt")) # it comes in as a dataframe with one column
+names(gam_sum) <- "column"
+```
+
+#### First the parametric terms (only the intercept up to now)
+```{r}
+#get names for table columns
+my_names <- c("Term", "Estimate", "SE", "t", "p", "Stars") #add remaining names needed
+
+# get the row I need
+par_sum <- gam_sum %>%
+  filter(
+      str_detect(column, "Intercept")
+  )
+
+# We need to add an ns so ther are the same number of elements as for the headings
+par_sum <- if(str_ends(par_sum, "\\.")){
+  par_sum
+} else if (str_ends(par_sum, "\\*")){
+  par_sum
+} else {paste0(par_sum, " ns")
+}
+
+par_sum1 <- par_sum %>% 
+  str_squish() %>% #merge column separators of multiple white spaces into single spaces
+  str_replace_all("< ", "<") %>% #remove space between less than and p-value
+  as.data.frame(nm = "column") %>%
+  separate_wider_delim(column, delim = " ", names = my_names) %>% # separate into multiple columns
+  mutate(p = paste0(p, Stars), .keep = "unused") %>% # add stars to p-value in one column
+  mutate_all(funs(type.convert(as.character(.), as.is = TRUE))) #This converts columns into the format that looks best to the function 
+
+write_csv(par_sum, file = paste0(out_path, "/", "parametric_p_value_table.csv"))
+kable(par_sum, digits = 2)
+```
+
+#### Then the smooths
+##### add missing entries to Stars column
+```{r}
+names(gam_sum) <- ("column")
+
+#keep rows with "s(" but not "=" as the latter is in rows for the formula
+smooth_sum <- gam_sum %>%
+  filter(
+      str_detect(column, "s\\(")
+  )
+
+smooth_sum <- smooth_sum %>%
+  filter(
+      !str_detect(column, "\\=")
+  )
+
+#add missing "ns" entries to stars column
+smooth_sum <- smooth_sum %>%
+  mutate(column = case_when(
+    str_detect(column, pattern = "\\*") ~ column,
+    str_detect(column, pattern = " \\.") ~ column,
+    .default = paste0(column, " ns")))
+```
+
+##### separate into variables etc
+```{r}
+#This is mostly a copy and paste of the code above
+
+#get names for table columns
+
+my_names <- c("Smooth term", "edf", "Ref.df", "F", "p", "Stars")
+
+#separate out columns
+smooth_sum <- smooth_sum %>%
+  mutate(
+    column = str_squish(column),
+    column = str_replace_all(column, "< ", "<")) %>% 
+  separate_wider_delim(column, delim = " ", names = my_names) %>%
+  mutate(p = paste0(p, Stars), .keep = "unused") %>%
+  mutate_all(funs(type.convert(as.character(.), as.is = TRUE))) 
+
+# check <- smooth_sum %>%
+#   mutate(
+#     column = str_squish(column),
+#     column = str_replace_all(column, "< ", "<")) %>% 
+#   separate_wider_delim(column, delim = " ", names = my_names) %>%
+#   mutate(p = paste0(p, Stars), .keep = "unused") 
+# 
+# 
+# check1<- apply(check, 1, type.convert(as.character(.), as.is = TRUE)) 
+
+write_csv(smooth_sum, file = paste0(out_path, "/", "smooth_p_value_table.csv"))
+kable(smooth_sum, digits = 2)
+```
+
+#### extract and paste together other relevant summary info
+```{r}
+my_summary <- summary(my_gamm$gam)
+
+my_fam <- my_summary$family$family
+
+my_link <- my_summary$family$link
+
+my_cor <- params$corStruct
+
+my_rsq <-  my_summary$r.sq %>%
+  signif(3) %>%
+  as.character
+
+my_scale <-  my_summary$scale %>%
+  signif(3) %>%
+  as.character
+
+my_n <- my_summary$n %>%
+  as.character()
+
+info_sum <- data.frame(Thing = c("Family", "Link", "Correlation Structure", "R-sq.(adj)", "Scale est.", "n"), Value = c(my_fam, my_link, my_cor, my_rsq, my_scale, my_n))
+
+write_csv(info_sum, file = paste0(out_path, "/", "gamm_info.csv"))
+kable(info_sum)
+
+```
+
+#gam.hp estimates importance of different smooths but does not work on gamms
+# Here we compare output from gamm and gam with a smooth that accounts for spatial autocorrelation
+
+#### This does not yet work for GAMM
+```{r}
+# R-squared values from all possible combinations of three predictors
+hp.data <- data.frame(
+  variables = c(
+    "x1",
+    "x2",
+    "x3",
+    "x1+x2",
+    "x1+x3",
+    "x2+x3",
+    "x1+x2+x3"
+  ),
+  R2 = c(
+    0.18,
+    0.12,
+    0.10,
+    0.24,
+    0.22,
+    0.19,
+    0.30
+  )
+)
+
+# Hierarchical partitioning based on ASV
+asv.hp(hp.data)
+
+# Hierarchical partitioning and commonality analysis
+asv.hp(hp.data, commonality = TRUE)
+
+#plot(gam.hp(my_gamm$gam, type = "dev"))
+```
+
+```{r}
+all_species <- readRDS(here("./Data/Processed_Data/Spatial/all_species.rds"))
+wc <- readRDS(here("./Data/Processed_Data/Spatial/wc.rds"))
+hs <- readRDS(here("./Data/Processed_Data/Spatial/hs.rds"))
+#hs_no_zeros <- readRDS(here("./Data/Processed_Data/Spatial/hs_no_zeros.rds"))
+
+# get all datasets in a list
+datasets <- list(all_species, wc, hs)
+names(datasets) <- c("all_species", "wc", "hs")
+
+
+#https://lexcomber.r-universe.dev/articles/stgam/stgam_vc_models_chaco.html
+# bs = tp because of above 
+gam_xy <- gam(
+  species.richness ~ s(x, y, k= 100, bs = "tp") + s(mean.ann.temp, k = 6, bs = "cr") + s(log10.mean.ann.rain, k = 6, bs = "cr") +
+  s(topographic.wetness, k = 6, bs = "cr") + s(ph, k = 4, bs = "cr") + s(total.n, k = 6, bs = "cr")  +
+  s(log10.humans, k = 6, bs = "cr"),
+  method = "ML",
+  family = "gaussian",
+  data = datasets$all_species$gamm_input)
+
+
+plot(gam.hp(gam_xy, type = "dev"))
+```
+
+```{r}
+gam.check(gam_xy)
+summary(gam_xy)
+plot(gam_xy, pages = 2)
+```
+```{r}
+gam.check(my_gamm$gam)
+summary(my_gamm$gam)
+plot(my_gamm$gam, pages = 2)
+```
+
