@@ -1,0 +1,132 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+#### Packages
+```{r}
+here::i_am("Scripts/Rmd_Scripts/14c_GAMMs_variation_partioning.Rmd")
+library(tidyverse)
+library(MuMIn)
+library(mgcv)
+library(asv.hp)
+library(here)
+library(conflicted)
+conflicts_prefer(dplyr::filter)
+conflicts_prefer(dplyr::select)
+```
+
+
+
+#### File Paths
+```{r}
+out_path <-  here("Output/Spatial/GAM")
+if(!dir.exists(out_path)) dir.create(out_path)
+```
+
+
+
+#### get combinations of names of predictor values corresponding to smooths for use in a spread sheet for asv.hp, in combination with adjustd r-squared values from corresponding gamms
+```{r}
+simple_terms <- c('temp', 'prec', 'wet', 'ph', 'nitrogen', 'trees', 'pesticide', 'humans')
+
+# Generate all subsets of all possible lengths
+term_combos <- unlist(lapply(1:length(simple_terms), function(n) combn(simple_terms, n, FUN=function(row)  paste0(row, collapse = "+"))))
+term_combos[[1]]
+```
+
+#### Variation partitioning for all species
+```{r}
+as_gamms <- readRDS(here("./Output/Spatial/GAM/GAMM_all_species/factorial//gamm_model_select_factorial.rds"))
+
+rsq1 <- summary(as_gamms[[1]]$gam)$r.sq
+
+#Extract adjusted r squared value from gamm models
+rsqs <- sapply(as_gamms,function(x) {
+  summary(x$gam)$r.sq
+}) 
+
+# Make a dataframe where first column is terms in the model and second is adusted r-squared
+my.hp.data <- data.frame(cbind(term_combos, rsqs))
+
+#change negative r squared values to zero
+my.hp.data$rsqs <- if_else(rsqs < 0, 0, rsqs)
+
+# Hierarchical partitioning based on ASV
+asv.hp(my.hp.data)
+
+# Hierarchical partitioning and commonality analysis
+asv.hp(my.hp.data, commonality = TRUE)
+
+
+filedir <- paste0(here(out_path), "/GAMM_all_species/factorial/")
+filepath <- paste0(filedir, "/gamm_as_hp_data.rds")
+filepath
+write_rds(my.hp.data, 
+          file = filepath)
+
+# filepath <- paste0(filedir, "/gamm_as_hp_data_nonneg.rds")
+# filepath
+# write_rds(my.hp.data, 
+#           file = filepath)
+```
+#### Variation partitioning for wc species
+```{r}
+wc_gamms <- readRDS(here("./Output/Spatial/GAM/GAMM_wc/factorial//gamm_model_select_factorial.rds"))
+
+#Extract adjusted r squared value from gamm models
+rsqs <- sapply(wc_gamms,function(x) {
+  summary(x$gam)$r.sq
+}) 
+
+# Make a dataframe where first column is terms in the model and second is adusted r-squared
+my.hp.data <- data.frame(cbind(term_combos, rsqs))
+
+# Hierarchical partitioning based on ASV
+asv.hp(my.hp.data)
+
+# Hierarchical partitioning and commonality analysis
+asv.hp(my.hp.data, commonality = TRUE)
+
+filepath <- paste0(filedir, "/gamm_wc_hp_data.rds")
+filepath
+write_rds(my.hp.data, 
+          file = filepath)
+
+
+```
+
+
+#### Variation partitioning for hsl species
+```{r}
+hs_gamms <- readRDS(here("./Output/Spatial/GAM/GAMM_hs/factorial//gamm_model_select_factorial.rds"))
+
+rsq1 <- summary(hs_gamms[[77]]$gam)$r.sq
+
+rsqs <- vector("numeric",255)
+
+#Extract adjusted r squared value from gamm models
+rsqs <- sapply(hs_gamms,function(x) {
+  summary(x$gam)$r.sq
+})
+
+
+# Make a dataframe where first column is terms in the model and second is adusted r-squared
+my.hp.data <- data.frame(cbind(term_combos, rsqs))
+
+# Hierarchical partitioning based on ASV
+asv.hp(my.hp.data)
+
+# Hierarchical partitioning and commonality analysis
+asv.hp(my.hp.data, commonality = TRUE)
+
+
+filepath <- paste0(filedir, "/gamm_hs_hp_data.rds")
+filepath
+write_rds(my.hp.data, 
+          file = filepath)
+```

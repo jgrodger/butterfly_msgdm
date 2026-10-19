@@ -11,26 +11,19 @@ knitr::opts_chunk$set(echo = TRUE)
 ```{r}
 here::i_am("Scripts/Rmd_Scripts/14b_GAMMs_all_combos.Rmd")
 library(tidyverse)
-#library(tmap)
 library(MuMIn)
 library(mgcv)
-# library(gstat)
-# library(knitr)
-# library(knitrProgressBar)
-# library(tictoc)
-# library(foreach)
-# library(doParallel)
-# library(gam.hp)
 library(asv.hp)
 library(here)
 library(conflicted)
 conflicts_prefer(dplyr::filter)
 conflicts_prefer(dplyr::select)
-conflicts_prefer(knitrProgressBar::progress_estimated)
-# there is a same-named function in dplyr, check it out
 ```
 #### Set up copies of R running in parallel. I played it safe and used about half of available cores. This was probably overcautious 
 ```{r}
+
+# I was conservative in my usage of cores. I could have used 95 out of 96. I would do that next time. 
+
 #cores <- detectCores() - 1 
 
 cores <- 50
@@ -143,41 +136,6 @@ write_rds(result_list,
 
 ```
 
-#### Variation partitioning for all species
-```{r}
-as_gamms <- readRDS(here("./Output/Spatial/GAM/GAMM_all_species/factorial//gamm_model_select_factorial.rds"))
-
-rsq1 <- summary(as_gamms[[1]]$gam)$r.sq
-
-#Extract adjusted r squared value from gamm models
-rsqs <- sapply(as_gamms,function(x) {
-  summary(x$gam)$r.sq
-}) 
-
-# Make a dataframe where first column is terms in the model and second is adusted r-squared
-my.hp.data <- data.frame(cbind(term_combos, rsqs))
-
-#change negative r squared values to zero
-my.hp.data$rsqs <- if_else(rsqs < 0, 0, rsqs)
-
-# Hierarchical partitioning based on ASV
-asv.hp(my.hp.data)
-
-# Hierarchical partitioning and commonality analysis
-asv.hp(my.hp.data, commonality = TRUE)
-
-
-filedir <- paste0(here(out_path), "/GAMM_all_species/factorial/")
-filepath <- paste0(filedir, "/gamm_as_hp_data.rds")
-filepath
-write_rds(my.hp.data, 
-          file = filepath)
-
-# filepath <- paste0(filedir, "/gamm_as_hp_data_nonneg.rds")
-# filepath
-# write_rds(my.hp.data, 
-#           file = filepath)
-```
 
 #### Run gamms for all combinations of smooths for wc species
 ```{r}
@@ -232,31 +190,6 @@ write_rds(result_list,
 
 ```
 
-#### Variation partitioning for wc species
-```{r}
-wc_gamms <- readRDS(here("./Output/Spatial/GAM/GAMM_wc/factorial//gamm_model_select_factorial.rds"))
-
-#Extract adjusted r squared value from gamm models
-rsqs <- sapply(wc_gamms,function(x) {
-  summary(x$gam)$r.sq
-}) 
-
-# Make a dataframe where first column is terms in the model and second is adusted r-squared
-my.hp.data <- data.frame(cbind(term_combos, rsqs))
-
-# Hierarchical partitioning based on ASV
-asv.hp(my.hp.data)
-
-# Hierarchical partitioning and commonality analysis
-asv.hp(my.hp.data, commonality = TRUE)
-
-filepath <- paste0(filedir, "/gamm_wc_hp_data.rds")
-filepath
-write_rds(my.hp.data, 
-          file = filepath)
-
-
-```
 
 #### Run gamms for all combinations of smooths for hs species
 ```{r}
@@ -314,6 +247,8 @@ write_rds(result_list,
           file = filepath)
 
 ```
+
+
 # try to get model 77 to converg
 ```{r}
 # get formula
@@ -374,33 +309,3 @@ write_rds(hs_gamms,
 ```
 
 
-
-#### Variation partitioning for hsl species
-```{r}
-hs_gamms <- readRDS(here("./Output/Spatial/GAM/GAMM_hs/factorial//gamm_model_select_factorial.rds"))
-
-rsq1 <- summary(hs_gamms[[77]]$gam)$r.sq
-
-rsqs <- vector("numeric",255)
-
-#Extract adjusted r squared value from gamm models
-rsqs <- sapply(hs_gamms,function(x) {
-  summary(x$gam)$r.sq
-})
-
-
-# Make a dataframe where first column is terms in the model and second is adusted r-squared
-my.hp.data <- data.frame(cbind(term_combos, rsqs))
-
-# Hierarchical partitioning based on ASV
-asv.hp(my.hp.data)
-
-# Hierarchical partitioning and commonality analysis
-asv.hp(my.hp.data, commonality = TRUE)
-
-
-filepath <- paste0(filedir, "/gamm_hs_hp_data.rds")
-filepath
-write_rds(my.hp.data, 
-          file = filepath)
-```
