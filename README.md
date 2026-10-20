@@ -384,14 +384,27 @@ Note
 		•./Output/Spatial/GAM/GAMM_all_species/gamm_model_select_hs.rds
 		•./Output/Spatial/GAM/GAMM_all_species/gamm_model_select_hs.rds
 		
-		
-		
+14b_GAMMs_all_combos.Rmd	
+	•stand alone notebook, not run by 5_Call_msgdm_and_gamm_scripts.Rmd
+	•NB, this is to be run in parallel as you need to run over 750 gamms
+	•What this does: 
+		•Runs GAMMs for all possible combinations of variables, to prouce output to be used for variation partitioning
+	•Inputs
+		•datasets produced by 2_butterflies_combine_env_data.Rmd	
+	•Outputs
+		•Gamm outputs from analyses run for each dataset 
+		•./Output/Spatial/GAM/GAMM_all_species/factorial//gamm_model_select_factorial.rds
+		•./Output/Spatial/GAM/GAMM_wc/factorial//gamm_model_select_factorial.rds
+		•./Output/Spatial/GAM/GAMM_hs/factorial//gamm_model_select_factorial.rds
+
+
+# This needs to be updated, now using summary value for smooths from mgcv::gamm
 15_process_GAMMS_model_selection
 	•Run by: 5_Call_msgdm_and_gamm_scripts.Rmd
 	•What this does: 
-		•Produces statistical table comparing GAMMS with terms dropped from 14_GAMM_model_selection.Rmd
+		•Produces statistical table for smooth terms from summary of gam object from mgcv::gam
 	•Inputs
-		GAMM output from 14_GAMM_model_selection.Rmd
+		GAMM output from 14b_GAMMs_all_combos.Rmd
 	•Outputs
 		Folder for each dataset 
 			E.G..\Output\Spatial\GAM\GAMM_all_species\gamm_model_select_as\
@@ -401,7 +414,9 @@ Note
 				parametric_p_value_table.csv
 				smooth_p_value_table.csv
 				gamm_info.csv
+				gamm_full_model.rds
 
+#X labels still need updating
 16_GAMM_multipanel_plot.Rmd
 	•What this does: 
 		• makes Fig 2, smooth plots of GAMMS in multipanel plot
@@ -411,7 +426,6 @@ Note
 		./Output/Spatial/GAM/GAMM_fig/gam_multiplot.png
 
 # Below still needs annotation and updating in this readme and the powerpoint	
-
 
 
 12)generate_code_chunks_for_supp_report.Rmd

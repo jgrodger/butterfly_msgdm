@@ -36,8 +36,6 @@ conflicts_prefer(knitrProgressBar::progress_estimated)
 ```{r}
 #gamm output has been saved in output already
 
-as_gamms <- readRDS(here("./Output/Spatial/GAM/GAMM_all_species/factorial//gamm_model_select_factorial.rds"))
-
 data_path <- here("Data/Processed_Data/Spatial//" )
 gamm_path <-  here(paste0("Output/Spatial/GAM/GAMM_", params$dataset, "//factorial//gamm_model_select_factorial.rds"))
 out_path <-  here(paste0("Output/Spatial/GAM/GAMM_", params$dataset, "/", params$analysis, "/", params$corStruct, "//"))
@@ -50,6 +48,9 @@ gamm_list <- readRDS(paste0(gamm_path))
 
 # output for full model
 my_gamm <- gamm_list[[255]]
+
+write_rds(my_gamm, 
+          file = paste0(out_path, "/", "full_model_gamm.rds"))
 
 #choose the one specified in params
 # get() finds object with name specified as a character string
