@@ -127,9 +127,9 @@ panel_letters <- c("A", "D", "G", "J", "M", "P", "S", "V",
                    "C", "F", "I", "L", "O", "R", "U", "X")
 
 
-#NEEDS UPDATING
+#simple_terms <- c('temp', 'prec', 'wet', 'ph', 'nitrogen', 'trees', 'pesticide', 'humans')
 # x-axis legends
-x_labels <- c("Temperature", "Log Prec.", "Top. Wet.", "pH", "Nit. Dep.", "Log Humans")
+x_labels <- c("Temperature", "Log Prec.", "Top. Wet.", "pH", "Nit. Dep.", "Trees", "Pesticide", "Log Humans")
 
 
 for (i in 1:24){
