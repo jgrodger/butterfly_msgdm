@@ -416,7 +416,6 @@ Note
 				gamm_info.csv
 				gamm_full_model.rds
 
-#X labels still need updating
 16_GAMM_multipanel_plot.Rmd
 	•What this does: 
 		• makes Fig 2, smooth plots of GAMMS in multipanel plot
@@ -438,8 +437,17 @@ Note
 ----------------------------------------------------------------------------------------------------------
 # Output for the main text and supplementary files is compiled by running scripts in "Mardowns" Folder
 
-butterfly_richness_turnover_report.Rmd calls the following and compiles to a single document
 
+# NB, you have to click Knit!
+
+# To do, add variation partitioning to report (and manuscript)
+butterfly_richness_turnover_report.Rmd calls the following and compiles to a single document
+	• M1_maintext_display.Rmd
+	• S1_data_proc_occ_supp.Rmd
+	• S2_richness_supp.Rmd
+	• S3_zeta_dec_supp.Rmd
+	• S4_msgdm_supp.Rmd
+	
 	
 	
 #below script no longer used, all this done elsewhere
