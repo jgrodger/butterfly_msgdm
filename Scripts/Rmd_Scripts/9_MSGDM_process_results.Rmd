@@ -14,7 +14,7 @@ params:
 
 #### Packages
 ```{r}
-here::i_am("Scripts/Rmd_Scripts/9_process_msgdm_results.Rmd")
+here::i_am("Scripts/Rmd_Scripts/9_MSGDM_process_results.Rmd")
 
 library(rmarkdown)
 library(tidyverse)

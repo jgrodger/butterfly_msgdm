@@ -50,7 +50,7 @@ render_report = function(analysis_script, params_list) {
                     paste0(here("Output/Spatial/zeta_declines_decays"), "/", params_list$dataset,  "/")
                 } else if(analysis_script ==  "7_Zeta_msgdm_change_seed_analyses.Rmd") {
                     paste0(here("Output/Spatial/msgdms/"), "/", params_list$dataset, "_" , params_list$normalize_msgdm, "_" , params_list$my_seed)                 
-                } else if(analysis_script == "9_process_msgdm_results.Rmd"){  
+                } else if(analysis_script == "9_MSGDM_process_results.Rmd"){  
                       paste0(here("Output/Spatial/msgdms"), "/", 
                       params_list$dataset, "_" , params_list$normalize_msgdm, "/", 
                       "figs_tables/")
@@ -58,10 +58,10 @@ render_report = function(analysis_script, params_list) {
                       paste0(here("Output/Spatial/GAM"), "/","GAM", "_" , params_list$dataset,  "/")  
                 } else if(analysis_script == "11_GAM_compare_spline_analyses.Rmd") {
                       paste0(here("Output/Spatial/GAM"), "/","GAM", "_" , params_list$dataset,  "/")
-                } else if(analysis_script == "13_process_GAMM_analyses.Rmd"){  
+                } else if(analysis_script == "13_GAMM_compare_corstructs_process.Rmd"){  
                       paste0(here("Output/Spatial/GAM/GAMM_"), params_list$dataset, "/", 
                              params_list$analysis,  "//")
-                } else if(analysis_script == "15_process_GAMMS_model_selection.Rmd"){  
+                } else if(analysis_script == "16_GAMM_full_model_table.Rmd"){  
                       paste0(here("Output/Spatial/GAM/GAMM_"), params_list$dataset, "/", 
                              params_list$analysis, "/", params_list$corStruct, "//")
                 } 
@@ -142,15 +142,15 @@ toc()
 
 #### Generate tables and figures for MSGDMs for main text
 ```{r}
-render_report(analysis_script = "9_process_msgdm_results.Rmd", 
+render_report(analysis_script = "9_MSGDM_process_results.Rmd", 
               list(dataset = "all_species", normalize_msgdm = "Simpson",
                    orders_msgdm =  c(2, 4, 20), seed = 4))
 
-render_report(analysis_script = "9_process_msgdm_results.Rmd", 
+render_report(analysis_script = "9_MSGDM_process_results.Rmd", 
               list(dataset = "hs_no_zeros", normalize_msgdm = "Simpson",
                    orders_msgdm =  c(2, 4, 20), seed = 4))
 
-render_report(analysis_script = "9_process_msgdm_results.Rmd", 
+render_report(analysis_script = "9_MSGDM_process_results.Rmd", 
               list(dataset = "wc", normalize_msgdm = "Simpson",
                    orders_msgdm =  c(2, 4, 20), seed = 4))
 ```
@@ -160,27 +160,27 @@ render_report(analysis_script = "9_process_msgdm_results.Rmd",
 #### Generate a overlapping but different set of tables and figures for msgdms
 ##### Note, using zeta = 50 also produces similar results
 ```{r}
-render_report(analysis_script = "9_process_msgdm_results.Rmd", 
+render_report(analysis_script = "9_MSGDM_process_results.Rmd", 
               list(dataset = "all_species", normalize_msgdm = "Simpson",
                    orders_msgdm =  c(2, 4, 20)))
 
-render_report(analysis_script = "9_process_msgdm_results.Rmd", 
+render_report(analysis_script = "9_MSGDM_process_results.Rmd", 
               list(dataset = "wc", normalize_msgdm = "Simpson",
                    orders_msgdm =  c(2, 4, 20)))
 
-render_report(analysis_script = "9_process_msgdm_results.Rmd", 
+render_report(analysis_script = "9_MSGDM_process_results.Rmd", 
               list(dataset = "hs_no_zeros", normalize_msgdm = "Simpson",
                    orders_msgdm =  c(2, 3, 4)))
 
-render_report(analysis_script = "9_process_msgdm_results.Rmd", 
+render_report(analysis_script = "9_MSGDM_process_results.Rmd", 
               list(dataset = "all_species", normalize_msgdm = "Sorensen",
                    orders_msgdm =  c(2, 4, 20)))
 
-render_report(analysis_script = "9_process_msgdm_results.Rmd", 
+render_report(analysis_script = "9_MSGDM_process_results.Rmd", 
               list(dataset = "wc", normalize_msgdm = "Sorensen",
                    orders_msgdm =  c(2, 4, 20)))
 
-render_report(analysis_script = "9_process_msgdm_results.Rmd", 
+render_report(analysis_script = "9_MSGDM_process_results.Rmd", 
               list(dataset = "hs_no_zeros", normalize_msgdm = "Sorensen",
                    orders_msgdm =  c(2, 3, 4)))
 ```
@@ -221,21 +221,21 @@ render_report(analysis_script = "11_GAM_compare_spline_analyses.Rmd", list(datas
 
 #### All species
 ```{r}
-render_report(analysis_script = "13_process_GAMM_analyses.Rmd", 
+render_report(analysis_script = "13_GAMM_compare_corstructs_process.Rmd", 
               list(dataset = "all_species", 
                    analysis = "gamm_cor_struct_compare"))
 ```
 
 #### wider countryside
 ```{r}
-render_report(analysis_script = "13_process_GAMM_analyses.Rmd", 
+render_report(analysis_script = "13_GAMM_compare_corstructs_process.Rmd", 
               list(dataset = "wc", 
                    analysis = "gamm_cor_struct_compare"))
 ```
 
 #### Habitat Specialists
 ```{r}
-render_report(analysis_script = "13_process_GAMM_analyses.Rmd", 
+render_report(analysis_script = "13_GAMM_compare_corstructs_process.Rmd", 
               list(dataset = "hs", 
                    analysis = "gamm_cor_struct_compare"))
 ```
@@ -245,7 +245,7 @@ render_report(analysis_script = "13_process_GAMM_analyses.Rmd",
 #### All species
 ```{r}
 
-render_report(analysis_script = "15_process_GAMMS_model_selection.Rmd",
+render_report(analysis_script = "16_GAMM_full_model_table.Rmd",
               list(dataset = "all_species",
                    analysis = "gamm_model_select_as",
                    corStruct = "corExp"))
@@ -254,7 +254,7 @@ render_report(analysis_script = "15_process_GAMMS_model_selection.Rmd",
 #### Wider Countryside
 ```{r}
 
-render_report(analysis_script = "15_process_GAMMS_model_selection.Rmd",
+render_report(analysis_script = "16_GAMM_full_model_table.Rmd",
               list(dataset = "wc",
                    analysis = "gamm_model_select_wc",
                    corStruct = "corExp"))
@@ -263,7 +263,7 @@ render_report(analysis_script = "15_process_GAMMS_model_selection.Rmd",
 #### Habitat Specialists corGaus
 ```{r}
 
-render_report(analysis_script = "15_process_GAMMS_model_selection.Rmd",
+render_report(analysis_script = "16_GAMM_full_model_table.Rmd",
               list(dataset = "hs",
                    analysis = "gamm_model_select_hs",
                    corStruct = "corGaus"))
