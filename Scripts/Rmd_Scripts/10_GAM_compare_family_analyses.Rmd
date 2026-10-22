@@ -28,10 +28,6 @@ print(params)
 
 #### Packages
 ```{r}
-```
-
-
-```{r}
 here::i_am("Scripts/Rmd_Scripts/10_GAM_compare_family_analyses.Rmd")
 
 library(tidyverse)

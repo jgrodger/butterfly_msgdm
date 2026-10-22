@@ -9,11 +9,12 @@ knitr::opts_chunk$set(echo = TRUE)
 
 #### Packages
 ```{r}
-here::i_am("Scripts/Rmd_Scripts/15_GAMM_variation_partioning.Rmd")
+here::i_am("Scripts/Rmd_Scripts/15_GAMM_variation_partitioning.Rmd")
 library(tidyverse)
 library(MuMIn)
 library(mgcv)
 library(asv.hp)
+library(knitr)
 library(here)
 library(conflicted)
 conflicts_prefer(dplyr::filter)
@@ -56,11 +57,22 @@ my.hp.data <- data.frame(cbind(term_combos, rsqs))
 #change negative r squared values to zero
 my.hp.data$rsqs <- if_else(rsqs < 0, 0, rsqs)
 
-# Hierarchical partitioning based on ASV
-asv.hp(my.hp.data)
-
 # Hierarchical partitioning and commonality analysis
-asv.hp(my.hp.data, commonality = TRUE)
+# produce variation partitioning table and commonality table
+var_part <- asv.hp(my.hp.data, commonality = TRUE)
+
+var_part
+```
+#### Write the tables for output
+```{r}
+
+
+# make table into dataframe for write_csv
+hi_part<- data.frame(var_part$hierarchical.partitioning)
+
+write_csv(hi_part, file = paste0(out_path, "/GAMM_all_species/factorial/hi_part.csv"))
+
+kable(hi_part, digits = 2, align = "l")
 
 
 filedir <- paste0(here(out_path), "/GAMM_all_species/factorial/")
@@ -68,12 +80,11 @@ filepath <- paste0(filedir, "/gamm_as_hp_data.rds")
 filepath
 write_rds(my.hp.data, 
           file = filepath)
-
-# filepath <- paste0(filedir, "/gamm_as_hp_data_nonneg.rds")
-# filepath
-# write_rds(my.hp.data, 
-#           file = filepath)
 ```
+
+
+
+
 #### Variation partitioning for wc species
 ```{r}
 wc_gamms <- readRDS(here("./Output/Spatial/GAM/GAMM_wc/factorial//gamm_model_select_factorial.rds"))
@@ -99,7 +110,6 @@ write_rds(my.hp.data,
 
 
 ```
-
 
 #### Variation partitioning for hsl species
 ```{r}

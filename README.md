@@ -52,6 +52,9 @@ X)Filename
 #### Run the following script after running script 13_process_GAMM_analyses.Rmd
 14_GAMM_model_selection.Rmd
 
+
+# 15 to do: finish producing output tables for variation partitioning and incorporate into markdown
+
 #### Run the following script via 5_Call_msgdm_and_gamm_scripts.Rmd after running script 14_GAMM_model_selection.Rmd
 15_process_GAMMS_model_selection
 	•Run by: 5_Call_msgdm_and_gamm_scripts.Rmd
