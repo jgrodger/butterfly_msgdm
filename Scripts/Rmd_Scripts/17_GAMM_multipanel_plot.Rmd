@@ -150,6 +150,19 @@ for (i in 1:24){
     p_i <-  p_i + 
       ylab(" ")
   }
+  
+  if (is.element(i, 1:8)) {
+    p_i <-  p_i + 
+      ylim(10,24)
+    } else {
+      if (is.element(i, 9:16)) {
+      p_i <-  p_i + 
+        ylim(13.2, 16.7)
+      } else {
+       p_i <-  p_i + 
+        ylim(0, 2.2)
+     }  
+    }
     # add panel labels to each panel
   p_i <- p_i +
     annotation_custom(grid::textGrob(panel_letters[i], 0.15, 0.9, gp = grid::gpar(fontsize = 6))) 
