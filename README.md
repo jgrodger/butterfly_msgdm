@@ -72,8 +72,11 @@ X)Filename
 				smooth_p_value_table.csv
 				gamm_info.csv
 	
-#### Run the following script after running script 14_GAMM_model_selection.Rmd	
-16_GAMM_multipanel_plot.Rmd
+
+16_GAMM_full_model_table.Rmd
+
+
+1f_GAMM_multipanel_plot.Rmd
 
 #### R scripts that are called buy Rmd scripts
 butterfly_richness_turnover_functions.R
@@ -319,7 +322,7 @@ Note
 # run from 	 5_Call_msgdm_and_gamm_scripts.Rmd 02/06/2026	
 
 
-11_GAM_comare_spline_analyses.Rmd
+11_GAM_compare_spline_analyses.Rmd
 	•Run by: 5_Call_msgdm_and_gamm_scripts.Rmd
 	•What this does
 			•GAM analyses, using family with lowest AIC and comparing spline 
@@ -445,7 +448,7 @@ butterfly_richness_turnover_report.Rmd calls the following and compiles to a sin
 	• S4_msgdm_supp.Rmd
 	
 
-12)generate_code_chunks_for_supp_report.Rmd
+generate_code_chunks_for_supp_report.Rmd
 	•What this does: Runs loops to automatically generated chunks for figures 
 	to avoid errors
 	•Inputs: NA.

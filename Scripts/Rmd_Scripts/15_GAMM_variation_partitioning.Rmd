@@ -62,17 +62,27 @@ my.hp.data$rsqs <- if_else(rsqs < 0, 0, rsqs)
 var_part <- asv.hp(my.hp.data, commonality = TRUE)
 
 var_part
+
+part_out <- data.frame(var_part$hierarchical.partitioning)
+
+#change negative values to zero and recalculate percent
+part_out <- part_out %>% 
+  mutate(Percent_contribution = pmax(I.perc..., 0)) %>%
+  mutate(Percent_contribution = (Percent_contribution / sum(Percent_contribution, na.rm = TRUE)) * 100) %>%
+  select(Percent_contribution)
+part_out
+names(part_out)
 ```
 #### Write the tables for output
 ```{r}
 
 
 # make table into dataframe for write_csv
-hi_part<- data.frame(var_part$hierarchical.partitioning)
 
-write_csv(hi_part, file = paste0(out_path, "/GAMM_all_species/factorial/hi_part.csv"))
 
-kable(hi_part, digits = 2, align = "l")
+write_csv(part_out, file = paste0(out_path, "/GAMM_all_species/factorial/hi_part.csv"))
+
+kable(part_out, digits = 2, align = "l")
 
 
 filedir <- paste0(here(out_path), "/GAMM_all_species/factorial/")
