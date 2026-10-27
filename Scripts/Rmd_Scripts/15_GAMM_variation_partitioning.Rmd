@@ -61,17 +61,17 @@ my.hp.data$rsqs <- if_else(rsqs < 0, 0, rsqs)
 # produce variation partitioning table and commonality table
 var_part <- asv.hp(my.hp.data, commonality = TRUE)
 
-var_part
-
 part_out <- data.frame(var_part$hierarchical.partitioning)
+
+part_out
 
 #change negative values to zero and recalculate percent
 part_out <- part_out %>% 
   mutate(Percent_contribution = pmax(I.perc..., 0)) %>%
   mutate(Percent_contribution = (Percent_contribution / sum(Percent_contribution, na.rm = TRUE)) * 100) %>%
   select(Percent_contribution)
+
 part_out
-names(part_out)
 ```
 #### Write the tables for output
 ```{r}
@@ -108,20 +108,46 @@ rsqs <- sapply(wc_gamms,function(x) {
 my.hp.data <- data.frame(cbind(term_combos, rsqs))
 
 # Hierarchical partitioning based on ASV
-asv.hp(my.hp.data)
+var_part <- asv.hp(my.hp.data, commonality = TRUE)
 
-# Hierarchical partitioning and commonality analysis
-asv.hp(my.hp.data, commonality = TRUE)
+part_out <- data.frame(var_part$hierarchical.partitioning)
 
+part_out
+
+#change negative values to zero and recalculate percent
+part_out <- part_out %>% 
+  mutate(Percent_contribution = pmax(I.perc..., 0)) %>%
+  mutate(Percent_contribution = (Percent_contribution / sum(Percent_contribution, na.rm = TRUE)) * 100) %>%
+  select(Percent_contribution)
+
+part_out
+
+
+
+```
+
+#### Write the tables for output
+```{r}
+
+
+# make table into dataframe for write_csv
+
+
+write_csv(part_out, file = paste0(out_path, "/GAMM_wc/factorial/hi_part.csv"))
+
+kable(part_out, digits = 2, align = "l")
+
+
+filedir <- paste0(here(out_path), "/GAMM_wc/factorial/")
 filepath <- paste0(filedir, "/gamm_wc_hp_data.rds")
 filepath
 write_rds(my.hp.data, 
           file = filepath)
 
-
 ```
 
-#### Variation partitioning for hsl species
+
+#### Variation partitioning for hs species
 ```{r}
 hs_gamms <- readRDS(here("./Output/Spatial/GAM/GAMM_hs/factorial//gamm_model_select_factorial.rds"))
 
@@ -139,12 +165,41 @@ rsqs <- sapply(hs_gamms,function(x) {
 my.hp.data <- data.frame(cbind(term_combos, rsqs))
 
 # Hierarchical partitioning based on ASV
-asv.hp(my.hp.data)
+var_part <- asv.hp(my.hp.data, commonality = TRUE)
 
-# Hierarchical partitioning and commonality analysis
-asv.hp(my.hp.data, commonality = TRUE)
+part_out <- data.frame(var_part$hierarchical.partitioning)
+
+part_out
+
+#change negative values to zero and recalculate percent
+part_out <- part_out %>% 
+  mutate(Percent_contribution = pmax(I.perc..., 0)) %>%
+  mutate(Percent_contribution = (Percent_contribution / sum(Percent_contribution, na.rm = TRUE)) * 100) %>%
+  select(Percent_contribution)
+
+part_out
 
 
+filepath <- paste0(filedir, "/gamm_hs_hp_data.rds")
+filepath
+write_rds(my.hp.data, 
+          file = filepath)
+```
+
+
+#### Write the tables for output
+```{r}
+
+
+# make table into dataframe for write_csv
+
+
+write_csv(part_out, file = paste0(out_path, "/GAMM_hs/factorial/hi_part.csv"))
+
+kable(part_out, digits = 2, align = "l")
+
+
+filedir <- paste0(here(out_path), "/GAMM_hs/factorial/")
 filepath <- paste0(filedir, "/gamm_hs_hp_data.rds")
 filepath
 write_rds(my.hp.data, 
