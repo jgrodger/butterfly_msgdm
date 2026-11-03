@@ -38,8 +38,12 @@ conflicts_prefer(knitrProgressBar::progress_estimated)
 
 data_path <- here("Data/Processed_Data/Spatial//" )
 gamm_path <-  here(paste0("Output/Spatial/GAM/GAMM_", params$dataset, "//factorial//gamm_model_select_factorial.rds"))
+var_part_path <-  here(paste0("Output/Spatial/GAM/GAMM_", params$dataset, "//factorial//hi_part.csv"))
 out_path <-  here(paste0("Output/Spatial/GAM/GAMM_", params$dataset, "/", params$analysis, "/", params$corStruct, "//"))
 if(!dir.exists(out_path)) dir.create(out_path)
+
+
+
 ```
 
 #### Load GAMM output 
@@ -55,7 +59,7 @@ write_rds(my_gamm,
 #choose the one specified in params
 # get() finds object with name specified as a character string
 #my_gamm <- get(paste0("gamm_", params$corStruct))
-
+var_part <- read_csv(var_part_path)
 ```
 
 #### save gamm$gam summary output as text
@@ -132,7 +136,7 @@ smooth_sum <- smooth_sum %>%
 
 #get names for table columns
 
-my_names <- c("Smooth term", "edf", "Ref.df", "F", "p", "Stars")
+my_names <- c("Smooth_term", "edf", "Ref.df", "F_stat", "p", "Stars")
 
 #separate out columns
 smooth_sum <- smooth_sum %>%
@@ -142,6 +146,12 @@ smooth_sum <- smooth_sum %>%
   separate_wider_delim(column, delim = " ", names = my_names) %>%
   mutate(p = paste0(p, Stars), .keep = "unused") %>%
   mutate_all(funs(type.convert(as.character(.), as.is = TRUE))) 
+
+smooth_sum <- cbind(smooth_sum, var_part)
+
+smooth_sum <- select(smooth_sum, Smooth_term, Percent_contribution, edf, Ref.df, F_stat, p)
+
+
 
 # check <- smooth_sum %>%
 #   mutate(
