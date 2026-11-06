@@ -24,6 +24,7 @@ library(knitr)
 library(knitrProgressBar)
 library(tictoc)
 library(gam.hp)
+library(gratia)
 library(here)
 library(conflicted)
 conflicts_prefer(dplyr::filter)
@@ -66,6 +67,45 @@ var_part <- read_csv(var_part_path)
 ```{r}
 out<-capture.output(summary(my_gamm$gam))
 cat(out,file = paste0(out_path, "gam_summ.txt"),sep="\n",append=FALSE)
+```
+
+
+#### check concurvity (also don in file 13)
+```{r}
+
+
+kable(concurvity(my_gamm$gam, full = TRUE), digits = 2)
+kable(concurvity(my_gamm$gam, full = FALSE)$worst, digits = 2)
+print("observed")
+kable(concurvity(my_gamm$gam, full = FALSE)$observed, digits = 2)
+print("estimate")
+kable(concurvity(my_gamm$gam, full = FALSE)$estimate, digits = 2)
+```
+
+#### residual plots
+```{r}
+residuals_linpred_plot(my_gamm$gam) +
+  theme_minimal()
+
+appraise(my_gamm$gam)
+
+
+check <- my_gamm$gam$model
+
+check <- add_residuals(check, my_gamm$gam, "residuals")
+
+
+plot(check$residuals ~ check$mean.ann.temp)
+plot(check$residuals ~ check$log10.mean.ann.rain)
+plot(check$residuals ~ check$topographic.wetness)
+plot(check$residuals ~ check$ph)
+plot(check$residuals ~ check$total.n)
+plot(check$residuals ~ check$tree.density)
+plot(check$residuals ~ check$log10.pesticide.risk)
+plot(check$residuals ~ check$log10.humans)
+
+
+
 ```
 
 

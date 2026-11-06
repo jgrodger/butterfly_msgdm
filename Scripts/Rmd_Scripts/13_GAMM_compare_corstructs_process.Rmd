@@ -13,7 +13,7 @@ knitr::opts_chunk$set(echo = TRUE)
 
 #### Packages
 ```{r}
-here::i_am("Scripts/Rmd_Scripts/13_GAMM_compare_corstructs_process")
+here::i_am("Scripts/Rmd_Scripts/13_GAMM_compare_corstructs_process.Rmd")
 library(tidyverse)
 library(tmap)
 library(mgcv)
